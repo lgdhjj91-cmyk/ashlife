@@ -1,0 +1,228 @@
+.cart-page {
+  padding-top: var(--spacing-lg);
+}
+
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 10vh;
+}
+
+.empty-cart-icon {
+  width: 120px;
+  height: 120px;
+  background-color: var(--primary-light);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.cart-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
+}
+
+.cart-items-section {
+  flex-basis: 100%;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  gap: var(--spacing-md);
+}
+
+.cart-item-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  background-color: var(--border-color);
+}
+
+.cart-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-item-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.cart-item-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cart-item-name:hover {
+  color: var(--primary-color);
+}
+
+.cart-item-price {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+.quantity-selector.small {
+  border: 1px solid var(--border-color);
+}
+
+.quantity-selector.small .qty-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.remove-btn {
+  color: #ff6b6b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.remove-btn:hover {
+  opacity: 0.7;
+}
+
+.cart-item-subtotal {
+  display: none;
+  font-weight: 800;
+  color: var(--primary-color);
+  min-width: 80px;
+  text-align: right;
+}
+
+.clear-cart-btn {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+}
+
+.clear-cart-btn:hover {
+  color: #ff6b6b;
+}
+
+.cart-summary-section {
+  flex-basis: 100%;
+}
+
+.summary-card {
+  background: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 90px;
+}
+
+.summary-card h3 {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 2px dashed var(--border-color);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-xl);
+}
+
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-order-btn {
+  padding: 1rem;
+  font-size: 1rem;
+  background-color: #25D366; /* WhatsApp Green */
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.confirm-order-btn:hover {
+  background-color: #128c7e;
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.5);
+  color: white;
+}
+
+.checkout-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: var(--spacing-sm);
+}
+
+@media (min-width: 900px) {
+  .cart-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .cart-items-section {
+    flex-basis: 60%;
+  }
+  
+  .cart-summary-section {
+    flex-basis: 40%;
+  }
+
+  .cart-item-subtotal {
+    display: block;
+  }
+}
