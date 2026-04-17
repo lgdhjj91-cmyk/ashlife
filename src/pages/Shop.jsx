@@ -1,35 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import ProductCard from '../components/ProductCard';
+import ProductList from '../components/ProductList';
 import { useProducts } from '../context/ProductContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Shop.css';
 
-const categories = [
-  'All',
-  'Stationery',
-  'DIY Crafts',
-  'Cute Accessories',
-  'Home Gadgets',
-  'Cleaning Tools',
-  'Lifestyle Items',
-  'Festival Items'
+// Internal EN keys used for filtering (must match JSON category field)
+const CATEGORY_MAP = [
+  { en: 'All',              key: 'cat_all' },
+  { en: 'Stationery',      key: 'cat_stationery' },
+  { en: 'DIY Crafts',      key: 'cat_diy' },
+  { en: 'Cute Accessories',key: 'cat_accessories' },
+  { en: 'Home Gadgets',    key: 'cat_gadgets' },
+  { en: 'Cleaning Tools',  key: 'cat_cleaning' },
+  { en: 'Lifestyle Items', key: 'cat_lifestyle' },
+  { en: 'Festival Items',  key: 'cat_festival' },
 ];
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
-  
+
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
-  const { products } = useProducts();
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const { products, loading } = useProducts();
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     setActiveCategory(searchParams.get('category') || 'All');
   }, [searchParams]);
 
   useEffect(() => {
+    if (!products) return;
     let result = products;
 
     if (activeCategory !== 'All') {
@@ -38,16 +42,25 @@ const Shop = () => {
 
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(lowerQuery) || 
-        p.description.toLowerCase().includes(lowerQuery)
-      );
+      result = result.filter(p => {
+        const nameEn = p.name?.toLowerCase() || '';
+        const nameZh = p.name_zh?.toLowerCase() || '';
+        const descEn = p.description?.toLowerCase() || '';
+        const descZh = p.description_zh?.toLowerCase() || '';
+        return (
+          nameEn.includes(lowerQuery) ||
+          nameZh.includes(lowerQuery) ||
+          descEn.includes(lowerQuery) ||
+          descZh.includes(lowerQuery)
+        );
+      });
     }
 
     setFilteredProducts(result);
   }, [activeCategory, searchQuery, products]);
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
     setActiveCategory(category);
     if (category === 'All') {
       setSearchParams({});
@@ -59,58 +72,59 @@ const Shop = () => {
   return (
     <div className="page container animate-fade-in shop-page">
       <div className="shop-header">
-        <h1>Shop All Products</h1>
-        
-        <div className="search-bar">
-          <Search size={20} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search for cute items..." 
-            className="input-base"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <h1>{t('shop_title')}</h1>
+
+        <div className="shop-filters">
+          <div className="search-bar">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder={t('search_placeholder')}
+              className="input-base"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="category-dropdown">
+            <select
+              value={activeCategory}
+              onChange={handleCategoryChange}
+              className="input-base category-select"
+              aria-label="Filter by category"
+            >
+              {CATEGORY_MAP.map(({ en, key }) => (
+                <option key={en} value={en}>
+                  {t(key)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="shop-layout">
-        {/* Sidebar Filter for Desktop / Scroller for Mobile */}
-        <aside className="shop-sidebar">
-          <h3>Categories</h3>
-          <div className="category-list">
-            {categories.map(cat => (
-              <button 
-                key={cat}
-                className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-                onClick={() => handleCategoryChange(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <main className="shop-content">
-          <div className="shop-results-info">
-            <p>Showing {filteredProducts.length} products</p>
-          </div>
-
-          {filteredProducts.length > 0 ? (
-            <div className="grid-mobile-1 grid-sm-2 grid-md-3">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+        <main className="shop-content full-width">
+          {loading ? (
+            <div className="loading-state">
+              <p>{t('loading')}</p>
             </div>
           ) : (
-            <div className="empty-state">
-              <p>No products found matching your criteria. Try a different search!</p>
-              <button className="btn btn-primary mt-2" onClick={() => {
-                setSearchQuery('');
-                handleCategoryChange('All');
-              }}>
-                Clear Filters
-              </button>
-            </div>
+            <>
+              <div className="shop-results-info">
+                <p>{t('showing')} {filteredProducts.length} {t('products')}</p>
+                {filteredProducts.length === 0 && (
+                  <button className="btn btn-primary ml-2" onClick={() => {
+                    setSearchQuery('');
+                    setActiveCategory('All');
+                    setSearchParams({});
+                  }}>
+                    {t('clear_filters')}
+                  </button>
+                )}
+              </div>
+              <ProductList products={filteredProducts} />
+            </>
           )}
         </main>
       </div>

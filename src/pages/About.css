@@ -38,8 +38,18 @@
   display: inline-block;
 }
 
-.chinese-section h2 {
-  border-bottom-color: var(--accent-color);
+.about-content {
+  margin-bottom: var(--spacing-xl);
+}
+
+.about-single-col {
+  display: flex;
+  justify-content: center;
+}
+
+.about-single-col .about-card {
+  max-width: 680px;
+  width: 100%;
 }
 
 .content-body {

@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Header.css';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartCount } = useCart();
+  const { t, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
@@ -25,13 +26,21 @@ const Header = () => {
         </Link>
 
         <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
-          <Link to="/" onClick={closeMenu}>Home</Link>
-          <Link to="/shop" onClick={closeMenu}>Shop</Link>
-          <Link to="/about" onClick={closeMenu}>About Us</Link>
-          <Link to="/admin" onClick={closeMenu}>Admin</Link>
+          <Link to="/" onClick={closeMenu}>{t('nav_home')}</Link>
+          <Link to="/shop" onClick={closeMenu}>{t('nav_shop')}</Link>
+          <Link to="/about" onClick={closeMenu}>{t('nav_about')}</Link>
+          <Link to="/admin" onClick={closeMenu}>{t('nav_admin')}</Link>
         </nav>
 
         <div className="header-actions">
+          <button
+            className="lang-toggle-btn"
+            onClick={toggleLanguage}
+            aria-label="Toggle language"
+            title="Switch language / 切换语言"
+          >
+            {t('lang_toggle')}
+          </button>
           <button className="icon-btn" onClick={() => navigate('/shop')} aria-label="Search">
             <Search size={22} />
           </button>

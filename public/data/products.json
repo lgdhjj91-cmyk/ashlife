@@ -1,0 +1,171 @@
+[
+  {
+    "id": "1",
+    "name": "Cute Bear Marker Pen Set",
+    "name_zh": "可爱小熊马克笔套装",
+    "description": "Set of 6 pastel colored marker pens with cute bear designs, perfect for highlighting and note-taking.",
+    "description_zh": "6支马卡龙色系马克笔套装，印有可爱小熊图案，非常适合荧光标注和笔记书写。",
+    "category": "Stationery",
+    "category_zh": "文具",
+    "price": 8.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample.jpg",
+    "images": [
+      "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample.jpg",
+      "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-2.jpg"
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Retractable Gel Pens 0.5mm",
+    "name_zh": "按压式中性笔 0.5mm",
+    "description": "Smooth writing retractable gel pens in aesthetic pastel colors.",
+    "description_zh": "顺滑书写的按压式中性笔，马卡龙渐变配色，颜值超高。",
+    "category": "Stationery",
+    "category_zh": "文具",
+    "price": 5.90,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-2.jpg"
+  },
+  {
+    "id": "3",
+    "name": "Acrylic Photo Keychain DIY Kit",
+    "name_zh": "亚克力照片钥匙扣 DIY 套装",
+    "description": "Create your own custom photo keychains. Includes blank acrylics and rings.",
+    "description_zh": "自制专属照片钥匙扣，附赠空白亚克力片和钥匙圈，超适合送礼。",
+    "category": "DIY Crafts",
+    "category_zh": "DIY 手工",
+    "price": 12.00,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-3.jpg"
+  },
+  {
+    "id": "4",
+    "name": "Resin Cream Gel Mix Color",
+    "name_zh": "奶油胶 DIY 混色套装",
+    "description": "Simulated cream glue for DIY phone case making and decorations.",
+    "description_zh": "仿真奶油胶，可用于 DIY 手机壳装饰，颜色丰富，效果逼真。",
+    "category": "DIY Crafts",
+    "category_zh": "DIY 手工",
+    "price": 6.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-4.jpg"
+  },
+  {
+    "id": "5",
+    "name": "Bear Door Stopper",
+    "name_zh": "小熊硅胶门挡",
+    "description": "Cute silicone bear door stopper to protect walls from doorknob hits.",
+    "description_zh": "可爱小熊造型硅胶门挡，防止门把手碰墙，实用又治愈。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 4.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-5.jpg"
+  },
+  {
+    "id": "6",
+    "name": "Cable Wire Protector 4-pack",
+    "name_zh": "数据线保护套（4件装）",
+    "description": "Adorable animal-shaped bite covers to protect your charging cables.",
+    "description_zh": "可爱动物造型咬线器，有效保护充电线不断裂，萌感十足。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 3.90,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/sample.jpg"
+  },
+  {
+    "id": "7",
+    "name": "Nano Sponge Eraser (10 pieces)",
+    "name_zh": "纳米海绵魔力擦（10片装）",
+    "description": "Magic cleaning sponge for removing stains effectively without extra agents.",
+    "description_zh": "神奇纳米海绵，无需清洁剂即可高效去污，居家必备好物。",
+    "category": "Cleaning Tools",
+    "category_zh": "清洁工具",
+    "price": 5.00,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample.jpg"
+  },
+  {
+    "id": "8",
+    "name": "Cute Animal Bag Hook",
+    "name_zh": "可爱动物包包挂钩",
+    "description": "Portable bag hook for tables with adorable animal designs.",
+    "description_zh": "便携桌边挂包钩，超萌动物造型，出门必备神器。",
+    "category": "Cute Accessories",
+    "category_zh": "可爱配件",
+    "price": 7.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-2.jpg"
+  },
+  {
+    "id": "9",
+    "name": "Disposable Travel Towels",
+    "name_zh": "一次性旅行压缩毛巾",
+    "description": "Compressed face towels for easy travel, expanding beautifully with water.",
+    "description_zh": "旅行专用压缩毛巾，遇水迅速膨胀成标准尺寸，携带方便卫生。",
+    "category": "Lifestyle Items",
+    "category_zh": "生活用品",
+    "price": 9.90,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-3.jpg"
+  },
+  {
+    "id": "10",
+    "name": "CNY Red Envelopes 2025 (10-pack)",
+    "name_zh": "2025 新年红包（10个装）",
+    "description": "Beautiful Year of the Snake red packets with intricate designs.",
+    "description_zh": "2025 蛇年限定红包，精美烫金设计，送礼自用两相宜。",
+    "category": "Festival Items",
+    "category_zh": "节日礼品",
+    "price": 3.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-4.jpg"
+  },
+  {
+    "id": "11",
+    "name": "Pastel Sticky Notes",
+    "name_zh": "马卡龙便利贴",
+    "description": "Pack of 50 pastel sticky notes.",
+    "description_zh": "50张马卡龙色系便利贴，颜值高，粘性好，记录生活小确幸。",
+    "category": "Stationery",
+    "category_zh": "文具",
+    "price": 2.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-5.jpg"
+  },
+  {
+    "id": "12",
+    "name": "Desk Organizer",
+    "name_zh": "桌面多格收纳盒",
+    "description": "Multi-compartment organizer for your aesthetic desk setup.",
+    "description_zh": "多格桌面收纳盒，让您的桌面整洁又好看，提升学习效率。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 15.00,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/sample.jpg"
+  },
+  {
+    "id": "13",
+    "name": "DIY Beads Kit",
+    "name_zh": "DIY 串珠手工套装",
+    "description": "A massive collection of aesthetic beads to make your own jewelry.",
+    "description_zh": "超大容量串珠套装，各种颜色与形状，轻松 DIY 专属饰品。",
+    "category": "DIY Crafts",
+    "category_zh": "DIY 手工",
+    "price": 18.00,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample.jpg"
+  },
+  {
+    "id": "14",
+    "name": "Fluffy Keyring",
+    "name_zh": "毛绒钥匙挂件",
+    "description": "Soft and fluffy keyring to attach to your keys or bag.",
+    "description_zh": "超软毛绒钥匙挂件，可挂在钥匙或包包上，软萌满分。",
+    "category": "Cute Accessories",
+    "category_zh": "可爱配件",
+    "price": 6.00,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-2.jpg"
+  },
+  {
+    "id": "15",
+    "name": "Mini Vacuum Sweeper",
+    "name_zh": "迷你桌面吸尘器",
+    "description": "Cute desktop vacuum cleaner for dust and eraser shavings.",
+    "description_zh": "可爱迷你桌面吸尘器，轻松清理橡皮屑和灰尘，桌面清洁小助手。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 12.50,
+    "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-3.jpg"
+  }
+]

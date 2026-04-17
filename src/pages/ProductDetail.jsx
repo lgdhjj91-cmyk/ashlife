@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
+import { useLanguage } from '../context/LanguageContext';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -10,6 +11,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { products } = useProducts();
+  const { t, language } = useLanguage();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState('');
@@ -25,9 +27,9 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="page container text-center mt-4">
-        <h2>Product not found</h2>
+        <h2>{t('product_not_found')}</h2>
         <button className="btn btn-primary mt-2" onClick={() => navigate('/shop')}>
-          Return to Shop
+          {t('return_to_shop')}
         </button>
       </div>
     );
@@ -35,7 +37,6 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
-    // Optional feedback like a toast could go here
   };
 
   const handleQuantityChange = (type) => {
@@ -46,27 +47,31 @@ const ProductDetail = () => {
     }
   };
 
+  const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
+  const displayDesc = language === 'zh' && product.description_zh ? product.description_zh : product.description;
+  const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
+
   return (
     <div className="page container animate-fade-in product-detail-page">
       <Link to="/shop" className="back-link">
         <ArrowLeft size={20} />
-        Back to Shop
+        {t('back_to_shop')}
       </Link>
 
       <div className="detail-layout">
         <div className="detail-image-section">
           <div className="main-image-wrapper">
-            <img src={mainImage} alt={product.name} />
+            <img src={mainImage} alt={displayName} loading="lazy" />
           </div>
           {product.images && product.images.length > 1 && (
             <div className="thumbnail-gallery">
               {product.images.map((imgUrl, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`thumbnail ${mainImage === imgUrl ? 'active' : ''}`}
                   onClick={() => setMainImage(imgUrl)}
                 >
-                  <img src={imgUrl} alt={`${product.name} view ${index + 1}`} />
+                  <img src={imgUrl} alt={`${displayName} view ${index + 1}`} loading="lazy" />
                 </div>
               ))}
             </div>
@@ -74,29 +79,29 @@ const ProductDetail = () => {
         </div>
 
         <div className="detail-info-section">
-          <span className="product-category-badge">{product.category}</span>
-          <h1 className="product-title">{product.name}</h1>
+          <span className="product-category-badge">{displayCategory}</span>
+          <h1 className="product-title">{displayName}</h1>
           <div className="product-price-large">RM {product.price.toFixed(2)}</div>
-          
+
           <div className="product-description">
-            <h3>Description</h3>
-            <p>{product.description}</p>
+            <h3>{t('description')}</h3>
+            <p>{displayDesc}</p>
           </div>
 
           <div className="purchase-actions">
             <div className="quantity-selector">
-              <button 
-                type="button" 
-                className="qty-btn" 
+              <button
+                type="button"
+                className="qty-btn"
                 onClick={() => handleQuantityChange('dec')}
                 disabled={quantity <= 1}
               >
                 <Minus size={16} />
               </button>
               <span className="qty-value">{quantity}</span>
-              <button 
-                type="button" 
-                className="qty-btn" 
+              <button
+                type="button"
+                className="qty-btn"
                 onClick={() => handleQuantityChange('inc')}
               >
                 <Plus size={16} />
@@ -105,13 +110,13 @@ const ProductDetail = () => {
 
             <button className="btn btn-primary w-full add-btn-large" onClick={handleAddToCart}>
               <ShoppingBag size={20} />
-              Add to Cart - RM {(product.price * quantity).toFixed(2)}
+              {t('add_to_cart')} - RM {(product.price * quantity).toFixed(2)}
             </button>
           </div>
-          
+
           <div className="delivery-info">
-            <p>🛍️ <strong>Fast dispatch</strong> - Your order will be confirmed manually via WhatsApp.</p>
-            <p>💖 <strong>Cute Packaging</strong> - Every item is packed with care.</p>
+            <p>🛍️ <strong>{t('delivery_fast')}</strong> - {t('delivery_fast_note')}</p>
+            <p>💖 <strong>{t('delivery_pack')}</strong> - {t('delivery_pack_note')}</p>
           </div>
         </div>
       </div>

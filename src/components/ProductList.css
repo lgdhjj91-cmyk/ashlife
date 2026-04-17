@@ -1,0 +1,41 @@
+.product-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #eaeaea);
+}
+
+.page-indicator {
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.btn-outline {
+  background: white;
+  border: 1px solid var(--border-color, #eaeaea);
+  color: var(--text-color, #333);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary-color, #ff69b4);
+  color: white;
+  border-color: var(--primary-color, #ff69b4);
+}
+
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
