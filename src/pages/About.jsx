@@ -41,7 +41,7 @@ const About = () => {
         <h3>{t('contact_title')}</h3>
         <p>{t('contact_sub')}</p>
         <a
-          href="https://wa.me/60123456789?text=Hello%20ASHLIFE%21%20I%20have%20an%20enquiry."
+          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || '60123456789'}?text=Hello%20ASHLIFE%21%20I%20have%20an%20enquiry.`}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-primary mt-2"

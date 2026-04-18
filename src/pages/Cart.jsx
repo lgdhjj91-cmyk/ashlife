@@ -30,7 +30,7 @@ const Cart = () => {
   const handleCheckout = (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
-    const shopWhatsApp = '60123456789';
+    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '60123456789';
     const message = encodeURIComponent(generateWhatsAppMessage());
     window.open(`https://wa.me/${shopWhatsApp}?text=${message}`, '_blank');
   };

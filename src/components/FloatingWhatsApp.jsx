@@ -4,7 +4,7 @@ import './FloatingWhatsApp.css';
 const FloatingWhatsApp = () => {
   const [hovered, setHovered] = useState(false);
 
-  const phoneNumber = "601133046104";
+  const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "601133046104";
   const defaultMessage = "Hello ASHLIFE! I'd like to know more about your products. 😊";
 
   const encodedMessage = encodeURIComponent(defaultMessage);
