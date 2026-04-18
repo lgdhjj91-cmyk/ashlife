@@ -4,7 +4,7 @@ const translations = {
     nav_home: 'Home',
     nav_shop: 'Shop',
     nav_about: 'About Us',
-    nav_admin: 'Admin',
+    nav_admin: 'Sign In',
     lang_toggle: '中文',
 
     // ── Home ────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ const translations = {
     nav_home: '首页',
     nav_shop: '商店',
     nav_about: '关于我们',
-    nav_admin: '管理',
+    nav_admin: '登录',
     lang_toggle: 'EN',
 
     // ── Home ────────────────────────────────────────────────────────────────

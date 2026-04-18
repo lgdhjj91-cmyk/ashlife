@@ -13,11 +13,12 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
+  const basename = import.meta.env.BASE_URL;
   return (
     <LanguageProvider>
       <ProductProvider>
         <CartProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={basename}>
             <div className="app">
               <Header />
               <Routes>

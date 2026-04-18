@@ -2,14 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDTaRRmVZj7kk0h3eoTzkC2US8Vv8o7uyI",
-  authDomain: "ashlife-6da65.firebaseapp.com",
-  databaseURL: "https://ashlife-6da65-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ashlife-6da65",
-  storageBucket: "ashlife-6da65.firebasestorage.app",
-  messagingSenderId: "73233283040",
-  appId: "1:73233283040:web:5ac99df489467d04c55d85",
-  measurementId: "G-VWG95BHSEE"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
