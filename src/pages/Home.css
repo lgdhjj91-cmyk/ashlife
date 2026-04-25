@@ -1,136 +1,394 @@
-.hero {
-  background-color: var(--primary-light);
-  background-image: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-purple) 100%);
-  color: white;
-  padding: var(--spacing-xl) 0;
-  text-align: center;
-  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
-  margin-bottom: var(--spacing-xl);
-  min-height: 300px;
+.home-page {
+  background: var(--background-color);
+}
+
+.hero-shop {
+  position: relative;
+  min-height: clamp(410px, 54vh, 520px);
+  margin-top: -80px;
+  padding-top: 80px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.hero-content h1 {
-  font-size: 2.5rem;
-  color: white;
-  margin-bottom: var(--spacing-sm);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.hero-content p {
-  font-size: 1.25rem;
-  margin-bottom: var(--spacing-lg);
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.hero .btn-primary {
-  background-color: white;
-  color: var(--primary-color);
-  font-size: 1.125rem;
-  padding: 0.75rem 2rem;
-}
-
-.hero .btn-primary:hover {
-  background-color: var(--background-color);
-  transform: translateY(-2px);
-}
-
-.categories-banner {
-  margin-bottom: var(--spacing-xl);
-  overflow-x: auto;
-  padding-bottom: var(--spacing-sm);
-  /* Hide scrollbar for neatness */
-  scrollbar-width: none; 
-}
-
-.categories-banner::-webkit-scrollbar {
-  display: none; 
-}
-
-.category-pills {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: nowrap;
-}
-
-.category-pill {
-  white-space: nowrap;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: white;
-  border-radius: var(--border-radius-pill);
-  box-shadow: var(--shadow-sm);
-  font-weight: 600;
+  align-items: center;
+  overflow: hidden;
+  background-color: #f7faf6;
+  background-image: linear-gradient(90deg, rgba(247, 250, 246, 0.96) 0%, rgba(247, 250, 246, 0.86) 31%, rgba(247, 250, 246, 0.18) 46%, rgba(247, 250, 246, 0) 62%), url('/brand/ashlife-hero-studio.jpg');
+  background-size: cover;
+  background-position: center;
   color: var(--text-primary);
+}
+
+.hero-shop-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  display: grid;
+  grid-template-columns: minmax(280px, 520px) 1fr;
+  gap: var(--spacing-lg);
+  align-items: end;
+  text-align: left;
+}
+
+.hero-text-stack {
+  max-width: 520px;
+}
+
+.eyebrow,
+.section-kicker {
+  color: var(--secondary-color);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+}
+
+.hero-shop h1 {
+  color: var(--text-primary);
+  max-width: 520px;
+  font-size: clamp(2.25rem, 4.8vw, 4.35rem);
+  line-height: 0.98;
+  margin: var(--spacing-sm) 0 var(--spacing-md);
+  text-align: left;
+}
+
+.hero-copy {
+  max-width: 500px;
+  color: var(--text-secondary);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin: var(--spacing-xl) 0;
+}
+
+.hero-whatsapp {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.92);
+}
+
+.home-intro-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--spacing-xl);
+  align-items: end;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+.home-intro-band h2,
+.section-header h2,
+.archive-copy h2,
+.storefront-panel h3 {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--text-primary);
+}
+
+.home-intro-band h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.home-intro-band p,
+.section-header p,
+.storefront-panel p,
+.archive-copy p,
+.help-item p {
+  color: var(--text-secondary);
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: var(--border-radius-pill);
+  border: 1px solid rgba(22, 122, 114, 0.24);
+  background: rgba(22, 122, 114, 0.08);
+  color: var(--primary-color);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.status-pill.muted {
+  background: rgba(242, 118, 147, 0.1);
+  border-color: rgba(242, 118, 147, 0.28);
+  color: var(--accent-pink);
+}
+
+.storefront-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.storefront-panel,
+.highlight-product,
+.help-item {
+  background: var(--surface-color);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
-.category-pill:hover {
-  background-color: var(--primary-light);
-  color: white;
-  border-color: var(--primary-light);
-  transform: translateY(-2px);
-}
-
-.sections-wrapper {
+.storefront-panel {
+  padding: var(--spacing-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-md);
+}
+
+.panel-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  color: #fff;
+  background: var(--primary-color);
+}
+
+.creative-panel .panel-icon {
+  background: var(--accent-pink);
+}
+
+.mini-category-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+}
+
+.mini-category-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: var(--border-radius-pill);
+  padding: 0.45rem 0.7rem;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.creative-thumb-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-top: auto;
+}
+
+.creative-thumb-row img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
 }
 
 .home-section {
-  margin-bottom: var(--spacing-lg);
-}
-
-.section-padded {
-  padding: var(--spacing-xl);
-  border-radius: var(--border-radius-lg);
-}
-
-.bg-pastel-yellow {
-  background-color: rgba(253, 253, 150, 0.2);
-}
-
-.bg-pastel-blue {
-  background-color: rgba(174, 198, 207, 0.2);
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: end;
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: var(--spacing-sm);
+}
+
+.section-header.compact {
+  margin-bottom: var(--spacing-md);
 }
 
 .section-header h2 {
-  font-size: 1.75rem;
-  color: var(--text-primary);
-  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.section-header p {
+  max-width: 700px;
+  margin-top: var(--spacing-xs);
 }
 
 .view-all {
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: var(--border-radius-pill);
+  border: 1px solid var(--primary-color);
   color: var(--primary-color);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 800;
 }
 
 .view-all:hover {
-  text-decoration: underline;
+  background: var(--primary-color);
+  color: #fff;
 }
 
-@media (max-width: 768px) {
-  .hero-content h1 {
-    font-size: 2rem;
+.highlight-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.highlight-product {
+  overflow: hidden;
+}
+
+.highlight-product img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.highlight-product div {
+  padding: var(--spacing-md);
+}
+
+.highlight-product span {
+  color: var(--primary-color);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.highlight-product h3 {
+  margin-top: var(--spacing-xs);
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.archive-band {
+  background: #eef7f5;
+  border-block: 1px solid #dcebe8;
+  margin: var(--spacing-xl) 0;
+}
+
+.archive-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--spacing-xl);
+  align-items: center;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+.archive-copy h2 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+  margin-bottom: var(--spacing-md);
+}
+
+.archive-copy p {
+  margin-bottom: var(--spacing-lg);
+}
+
+.archive-gallery {
+  display: grid;
+  grid-template-columns: 0.72fr 1fr;
+  gap: var(--spacing-md);
+  align-items: stretch;
+}
+
+.archive-gallery img {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  object-fit: cover;
+  border-radius: var(--border-radius-md);
+  border: 1px solid rgba(22, 122, 114, 0.18);
+  box-shadow: var(--shadow-sm);
+}
+
+.archive-gallery .poster-image {
+  object-position: top center;
+}
+
+.help-section {
+  padding-bottom: var(--spacing-xl);
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.help-item {
+  padding: var(--spacing-lg);
+}
+
+.help-item svg {
+  color: var(--primary-color);
+}
+
+.help-item span {
+  display: block;
+  color: var(--accent-color);
+  font-weight: 900;
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+}
+
+@media (max-width: 900px) {
+  .hero-shop-content {
+    grid-template-columns: 1fr;
   }
-  
-  .section-padded {
-    padding: var(--spacing-md) !important;
+
+  .home-intro-band,
+  .storefront-grid,
+  .archive-layout,
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .highlight-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .archive-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-shop {
+    min-height: 560px;
+    background-position: center top;
+    background-image: linear-gradient(180deg, rgba(247, 250, 246, 0.98) 0%, rgba(247, 250, 246, 0.92) 48%, rgba(247, 250, 246, 0.2) 100%), url('/brand/ashlife-hero-studio.jpg');
+  }
+
+  .hero-actions,
+  .section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-actions .btn,
+  .view-all {
+    width: 100%;
+  }
+
+  .storefront-panel {
+    padding: var(--spacing-lg);
+  }
+
+  .highlight-product-grid,
+  .archive-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .archive-gallery img {
+    min-height: 220px;
   }
 }

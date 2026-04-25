@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, Minus, Plus } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,17 +12,12 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { products } = useProducts();
   const { t, language } = useLanguage();
-  const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [mainImage, setMainImage] = useState('');
+  const [selectedImage, setSelectedImage] = useState('');
 
-  useEffect(() => {
-    const found = products.find(p => p.id === id);
-    if (found) {
-      setProduct(found);
-      setMainImage(found.image);
-    }
-  }, [id, products]);
+  const product = useMemo(() => products.find(p => p.id === id), [id, products]);
+  const productImages = product?.images?.length ? product.images : product?.image ? [product.image] : [];
+  const mainImage = productImages.includes(selectedImage) ? selectedImage : product?.image;
 
   if (!product) {
     return (
@@ -69,7 +64,7 @@ const ProductDetail = () => {
                 <div
                   key={index}
                   className={`thumbnail ${mainImage === imgUrl ? 'active' : ''}`}
-                  onClick={() => setMainImage(imgUrl)}
+                  onClick={() => setSelectedImage(imgUrl)}
                 >
                   <img src={imgUrl} alt={`${displayName} view ${index + 1}`} loading="lazy" />
                 </div>
@@ -115,8 +110,8 @@ const ProductDetail = () => {
           </div>
 
           <div className="delivery-info">
-            <p>🛍️ <strong>{t('delivery_fast')}</strong> - {t('delivery_fast_note')}</p>
-            <p>💖 <strong>{t('delivery_pack')}</strong> - {t('delivery_pack_note')}</p>
+            <p><MessageCircle size={18} /><strong>{t('delivery_fast')}</strong> - {t('delivery_fast_note')}</p>
+            <p><PackageCheck size={18} /><strong>{t('delivery_pack')}</strong> - {t('delivery_pack_note')}</p>
           </div>
         </div>
       </div>

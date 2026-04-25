@@ -23,8 +23,9 @@
   font-family: 'Quicksand', sans-serif;
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--primary-color);
+  color: #FFA6C9;
   letter-spacing: 1px;
+  line-height: 1;
 }
 
 .nav-links {

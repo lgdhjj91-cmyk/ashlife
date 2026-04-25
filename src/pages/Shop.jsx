@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Cable, Home, Paintbrush, Search, Sparkles } from 'lucide-react';
 import ProductList from '../components/ProductList';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,12 +9,12 @@ import './Shop.css';
 // Internal EN keys used for filtering (must match JSON category field)
 const CATEGORY_MAP = [
   { en: 'All',              key: 'cat_all' },
+  { en: 'Home Gadgets',     key: 'cat_cable' },
+  { en: 'Cleaning Tools',   key: 'cat_home_kitchen' },
+  { en: 'Lifestyle Items',  key: 'cat_work' },
   { en: 'Stationery',      key: 'cat_stationery' },
   { en: 'DIY Crafts',      key: 'cat_diy' },
   { en: 'Cute Accessories',key: 'cat_accessories' },
-  { en: 'Home Gadgets',    key: 'cat_gadgets' },
-  { en: 'Cleaning Tools',  key: 'cat_cleaning' },
-  { en: 'Lifestyle Items', key: 'cat_lifestyle' },
   { en: 'Festival Items',  key: 'cat_festival' },
 ];
 
@@ -22,18 +22,19 @@ const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
 
-  const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const activeCategory = initialCategory;
   const [searchQuery, setSearchQuery] = useState('');
   const { products, loading } = useProducts();
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const { t, language } = useLanguage();
+  const rangeCards = [
+    { to: '/shop?category=Home%20Gadgets', icon: <Cable size={20} />, label: t('cat_cable'), text: language === 'zh' ? '魔术贴、电线收纳、桌面整理' : 'Hook-and-loop, cable care and desk tidy tools' },
+    { to: '/shop?category=Cleaning%20Tools', icon: <Home size={20} />, label: t('cat_home_kitchen'), text: language === 'zh' ? '厨房、清洁、居家小工具' : 'Kitchen, cleaning and home helper items' },
+    { to: '/shop?category=DIY%20Crafts', icon: <Paintbrush size={20} />, label: t('cat_diy'), text: language === 'zh' ? '树脂、手作、儿童创意材料' : 'Resin, craft and kids creative supplies' },
+    { to: '/shop?category=Stationery', icon: <Sparkles size={20} />, label: t('cat_stationery'), text: language === 'zh' ? '便签、笔类、学习与办公用品' : 'Memo pads, pens, study and office supplies' },
+  ];
 
-  useEffect(() => {
-    setActiveCategory(searchParams.get('category') || 'All');
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!products) return;
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
     let result = products;
 
     if (activeCategory !== 'All') {
@@ -56,12 +57,11 @@ const Shop = () => {
       });
     }
 
-    setFilteredProducts(result);
+    return result;
   }, [activeCategory, searchQuery, products]);
 
   const handleCategoryChange = (e) => {
     const category = e.target.value;
-    setActiveCategory(category);
     if (category === 'All') {
       setSearchParams({});
     } else {
@@ -72,7 +72,11 @@ const Shop = () => {
   return (
     <div className="page container animate-fade-in shop-page">
       <div className="shop-header">
-        <h1>{t('shop_title')}</h1>
+        <div className="shop-title-copy">
+          <p className="section-kicker">ASHLIFE</p>
+          <h1>{t('shop_title')}</h1>
+          <p>{t('shop_intro')}</p>
+        </div>
 
         <div className="shop-filters">
           <div className="search-bar">
@@ -103,6 +107,16 @@ const Shop = () => {
         </div>
       </div>
 
+      <div className="shop-range-cards">
+        {rangeCards.map(({ to, icon, label, text }) => (
+          <Link to={to} className="shop-range-card" key={label}>
+            {icon}
+            <span>{label}</span>
+            <p>{text}</p>
+          </Link>
+        ))}
+      </div>
+
       <div className="shop-layout">
         <main className="shop-content full-width">
           {loading ? (
@@ -116,14 +130,13 @@ const Shop = () => {
                 {filteredProducts.length === 0 && (
                   <button className="btn btn-primary ml-2" onClick={() => {
                     setSearchQuery('');
-                    setActiveCategory('All');
                     setSearchParams({});
                   }}>
                     {t('clear_filters')}
                   </button>
                 )}
               </div>
-              <ProductList products={filteredProducts} />
+              <ProductList key={`${activeCategory}-${searchQuery}`} products={filteredProducts} />
             </>
           )}
         </main>

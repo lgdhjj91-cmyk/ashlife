@@ -50,8 +50,7 @@ const Header = () => {
           </Link>
         </div>
       </div>
-      
-      {/* Overlay for mobile menu */}
+
       {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
     </header>
   );

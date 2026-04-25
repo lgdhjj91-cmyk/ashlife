@@ -1,21 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Pastel Color Palette */
-  --primary-color: #FFA6C9; /* Soft Pink */
-  --primary-light: #FFC0CB;
-  --secondary-color: #98FF98; /* Mint Green */
-  --secondary-light: #C1FFC1;
-  --accent-color: #AEC6CF; /* Pastel Blue */
-  --accent-yellow: #FDFD96; /* Pastel Yellow */
-  --accent-purple: #C3B1E1; /* Pastel Purple */
+  /* ASHLIFE product-led palette */
+  --primary-color: #167A72;
+  --primary-light: #2DA89B;
+  --secondary-color: #F3C44E;
+  --secondary-light: #FFF2BF;
+  --accent-color: #FF8A3D;
+  --accent-yellow: #F3C44E;
+  --accent-purple: #7665A8;
+  --accent-pink: #F27693;
 
   /* Neutrals */
-  --background-color: #FAFAFA;
+  --background-color: #F7FAF9;
   --surface-color: #FFFFFF;
-  --text-primary: #4A4A4A;
-  --text-secondary: #8E8E8E;
-  --border-color: #F0F0F0;
+  --text-primary: #172522;
+  --text-secondary: #64716E;
+  --border-color: #E2EAE7;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -25,13 +26,13 @@
   --spacing-xl: 2rem;
 
   /* Borders & Shadows */
-  --border-radius-sm: 8px;
-  --border-radius-md: 16px;
-  --border-radius-lg: 24px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
   --border-radius-pill: 999px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 8px 24px rgba(23, 37, 34, 0.06);
+  --shadow-md: 0 14px 36px rgba(23, 37, 34, 0.1);
+  --shadow-lg: 0 22px 48px rgba(23, 37, 34, 0.14);
 }
 
 * {
@@ -104,13 +105,13 @@ button {
 .btn-primary {
   background-color: var(--primary-color);
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 166, 201, 0.4);
+  box-shadow: 0 10px 24px rgba(22, 122, 114, 0.22);
 }
 
 .btn-primary:hover, .btn-primary:active {
-  background-color: #ff91b9;
+  background-color: #10635c;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 166, 201, 0.5);
+  box-shadow: 0 14px 30px rgba(22, 122, 114, 0.28);
 }
 
 .btn-secondary {
@@ -139,7 +140,7 @@ button {
 
 .input-base:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(255, 166, 201, 0.1);
+  box-shadow: 0 0 0 4px rgba(22, 122, 114, 0.12);
 }
 
 /* Card */

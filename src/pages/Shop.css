@@ -6,11 +6,24 @@
 
 .shop-header {
   margin-top: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacing-md);
-  align-items: center;
-  text-align: center;
+  align-items: end;
+}
+
+.shop-title-copy {
+  max-width: 760px;
+}
+
+.shop-title-copy h1 {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1;
+  margin: var(--spacing-xs) 0 var(--spacing-sm);
+}
+
+.shop-title-copy p:not(.section-kicker) {
+  color: var(--text-secondary);
 }
 
 .shop-filters {
@@ -35,7 +48,7 @@
 
 .search-bar .input-base {
   padding-left: 48px;
-  border-radius: var(--border-radius-pill);
+  border-radius: var(--border-radius-md);
 }
 
 .category-dropdown {
@@ -44,9 +57,49 @@
 
 .category-select {
   width: 100%;
-  border-radius: var(--border-radius-pill);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   appearance: auto; /* Use default dropdown arrow initially */
+}
+
+.shop-range-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.shop-range-card {
+  display: grid;
+  gap: var(--spacing-xs);
+  align-content: start;
+  min-height: 140px;
+  padding: var(--spacing-md);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.shop-range-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(22, 122, 114, 0.35);
+  box-shadow: var(--shadow-md);
+}
+
+.shop-range-card svg {
+  color: var(--primary-color);
+}
+
+.shop-range-card span {
+  color: var(--text-primary);
+  font-weight: 900;
+}
+
+.shop-range-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .shop-layout {
@@ -86,10 +139,7 @@
 
 @media (min-width: 768px) {
   .shop-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    text-align: left;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .shop-filters {
@@ -104,5 +154,17 @@
 
   .category-dropdown {
     width: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-range-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .shop-range-cards {
+    grid-template-columns: 1fr;
   }
 }

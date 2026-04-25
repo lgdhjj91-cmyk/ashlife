@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { database } from '../firebase';
-import { ref, onValue, push, update, remove, set } from 'firebase/database';
+import { ref, onValue, push, update, remove } from 'firebase/database';
 
 const ProductContext = createContext();
 
@@ -12,6 +12,22 @@ export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dbConnected, setDbConnected] = useState(true);
+
+  const loadLocalProducts = useCallback(async () => {
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}data/products.json`);
+      if (!response.ok) {
+        throw new Error(`Local catalogue returned ${response.status}`);
+      }
+      const fallbackProducts = await response.json();
+      setProducts(fallbackProducts);
+      localStorage.setItem('ashlife_products', JSON.stringify(fallbackProducts));
+      return true;
+    } catch (error) {
+      console.error('Failed to load local products:', error);
+      return false;
+    }
+  }, []);
 
   // Subscribe to Firebase Realtime Database
   useEffect(() => {
@@ -30,11 +46,12 @@ export const ProductProvider = ({ children }) => {
           setProducts(productsArray);
           // Cache to localStorage for offline fallback
           localStorage.setItem('ashlife_products', JSON.stringify(productsArray));
+          setDbConnected(true);
+          setLoading(false);
         } else {
-          setProducts([]);
+          setDbConnected(false);
+          loadLocalProducts().finally(() => setLoading(false));
         }
-        setDbConnected(true);
-        setLoading(false);
       },
       (error) => {
         console.error('Firebase read error:', error);
@@ -47,14 +64,16 @@ export const ProductProvider = ({ children }) => {
           } catch (e) {
             console.error('Failed to parse cached products', e);
           }
+          setLoading(false);
+        } else {
+          loadLocalProducts().finally(() => setLoading(false));
         }
-        setLoading(false);
       }
     );
 
     // Cleanup listener on unmount
     return () => unsubscribe();
-  }, []);
+  }, [loadLocalProducts]);
 
   const addProduct = useCallback(async (newProduct) => {
     try {

@@ -21,9 +21,10 @@
   flex-direction: column;
   gap: var(--spacing-xl);
   background: white;
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-md);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .detail-image-section {
@@ -106,7 +107,7 @@
   display: flex;
   align-items: center;
   border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-pill);
+  border-radius: var(--border-radius-md);
   width: max-content;
   overflow: hidden;
 }
@@ -153,6 +154,14 @@
   margin-bottom: var(--spacing-xs);
   font-size: 0.875rem;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.delivery-info svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
 }
 
 .delivery-info p:last-child {
