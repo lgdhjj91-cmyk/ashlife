@@ -5,6 +5,8 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Header.css';
 
+const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.png`;
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartCount } = useCart();
@@ -22,7 +24,7 @@ const Header = () => {
         </button>
 
         <Link to="/" className="logo" onClick={closeMenu}>
-          ASHLIFE
+          <img src={logoSrc} alt="ASHLIFE Solutions" className="logo-mark" />
         </Link>
 
         <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`}>

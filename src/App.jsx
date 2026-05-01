@@ -4,6 +4,7 @@ import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { LanguageProvider } from './context/LanguageContext';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/admin" element={<AdminLogin />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
               </Routes>
+              <Footer />
             </div>
           </BrowserRouter>
         </CartProvider>

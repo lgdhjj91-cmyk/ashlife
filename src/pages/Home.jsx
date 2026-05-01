@@ -15,33 +15,19 @@ import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Home.css';
 
+const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 const SHOPEE_HIGHLIGHTS = [
-  {
-    title: 'Hook & Loop Cable Tie Roll',
-    tag: 'Cable Management',
-    image: '/brand/shopee/cable-tie.jpg',
-  },
-  {
-    title: 'Self-Adhesive Hook & Loop Tape',
-    tag: 'DIY Fastening',
-    image: '/brand/shopee/hook-loop-tape.jpg',
-  },
-  {
-    title: 'Silicone Garlic Peeler Set',
-    tag: 'Kitchen Shortcut',
-    image: '/brand/shopee/kitchen-tool.jpg',
-  },
-  {
-    title: 'Webcam Privacy Cover',
-    tag: 'Work Essentials',
-    image: '/brand/shopee/webcam-cover.jpg',
-  },
+  { title: 'Hook & Loop Cable Tie Roll', tag: 'Cable Management', image: asset('/brand/shopee/cable-tie.jpg') },
+  { title: 'Self-Adhesive Hook & Loop Tape', tag: 'DIY Fastening', image: asset('/brand/shopee/hook-loop-tape.jpg') },
+  { title: 'Silicone Garlic Peeler Set', tag: 'Kitchen Shortcut', image: asset('/brand/shopee/kitchen-tool.jpg') },
+  { title: 'Webcam Privacy Cover', tag: 'Work Essentials', image: asset('/brand/shopee/webcam-cover.jpg') },
 ];
 
 const CREATIVE_HIGHLIGHTS = [
-  '/brand/shop-product-2-optimized.jpg',
-  '/brand/craft-feature-1-optimized.jpg',
-  '/brand/craft-feature-2-optimized.jpg',
+  asset('/brand/shop-product-2-optimized.jpg'),
+  asset('/brand/craft-feature-1-optimized.jpg'),
+  asset('/brand/craft-feature-2-optimized.jpg'),
 ];
 
 const copy = {
@@ -58,16 +44,14 @@ const copy = {
     shopText:
       'Stationery, dolls, nano blocks, stickers and DIY resin pieces are no longer the main active shop, but they still tell customers what ASHLIFE feels like.',
     activeTitle: 'Current focus products',
-    activeIntro:
-      'A quick look at the kinds of items customers can expect from the active ASHLIFE Shopee range.',
+    activeIntro: 'A quick look at the kinds of items customers can expect from the active ASHLIFE Shopee range.',
     archiveTitle: 'Cute and creative corner',
     archiveIntro:
       'The older shop visuals stay on the site as a brand story and inspiration area, instead of being shown as a live inventory promise.',
     shopNow: 'Browse catalogue',
     chat: 'Ask availability',
     featuredTitle: 'Browse the website catalogue',
-    featuredIntro:
-      'These products come from the current site catalogue. Stock and ordering are confirmed through WhatsApp.',
+    featuredIntro: 'These products come from the current site catalogue. Stock and ordering are confirmed through WhatsApp.',
     howTitle: 'How ASHLIFE helps',
     howOne: 'Find the right small tool for home, office, cable, kitchen or craft needs.',
     howTwo: 'Confirm whether the item is active on Shopee or better handled through WhatsApp.',
@@ -77,19 +61,15 @@ const copy = {
     shopeeStatus: 'Shopee 现售',
     shopStatus: '旧店故事与灵感',
     linesTitle: 'ASHLIFE 的两个方向，合成一个实用小店',
-    linesIntro:
-      '现在 Shopee 主打日常实用小物；旧店系列保留文具、礼品、迷你玩具与树脂手作的可爱感。',
+    linesIntro: '现在 Shopee 主打日常实用小物；旧店系列保留文具、礼品、迷你玩具与树脂手作的可爱感。',
     shopeeTitle: 'Shopee 实用系列',
-    shopeeText:
-      '电线收纳、魔术贴、粘贴工具、厨房用品、家居整理和办公桌小物，是目前仍在发展的现售方向。',
+    shopeeText: '电线收纳、魔术贴、粘贴工具、厨房用品、家居整理和办公桌小物，是目前仍在发展的现售方向。',
     shopTitle: '创意小店根源',
-    shopText:
-      '文具、公仔、微型积木、贴纸与 DIY 树脂材料不再是主要现售店，但它们继续代表 ASHLIFE 的可爱与创意。',
+    shopText: '文具、公仔、微型积木、贴纸与 DIY 树脂材料不再是主要现售店，但它们继续代表 ASHLIFE 的可爱与创意。',
     activeTitle: '当前主打商品',
     activeIntro: '快速了解 ASHLIFE Shopee 现售系列会出现的商品类型。',
     archiveTitle: '可爱创意角落',
-    archiveIntro:
-      '旧店素材会以品牌故事和灵感形式保留，不会让顾客误会全部都是实时库存。',
+    archiveIntro: '旧店素材会以品牌故事和灵感形式保留，不会让顾客误会全部都是实时库存。',
     shopNow: '浏览商品',
     chat: '询问库存',
     featuredTitle: '网站商品目录',
@@ -114,7 +94,7 @@ const Home = () => {
 
   return (
     <div className="page animate-fade-in home-page">
-      <section className="hero-shop">
+      <section className="hero-shop" style={{ '--hero-image': `url(${asset('/brand/ashlife-hero-wide-v2.jpg')})` }}>
         <div className="container hero-shop-content">
           <div className="hero-text-stack">
             <p className="eyebrow">{t('hero_eyebrow')}</p>
@@ -202,8 +182,8 @@ const Home = () => {
             </a>
           </div>
           <div className="archive-gallery">
-            <img className="poster-image" src="/brand/shop-poster-optimized.jpg" alt="ASHLIFE creative shop promotion" loading="lazy" />
-            <img src="/brand/shop-product-2-optimized.jpg" alt="Creative mini figures and cute shop items" loading="lazy" />
+            <img className="poster-image" src={asset('/brand/shop-poster-optimized.jpg')} alt="ASHLIFE creative shop promotion" loading="lazy" />
+            <img src={asset('/brand/shop-product-2-optimized.jpg')} alt="Creative mini figures and cute shop items" loading="lazy" />
           </div>
         </div>
       </section>

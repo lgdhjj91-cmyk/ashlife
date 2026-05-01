@@ -4,16 +4,17 @@
 
 .hero-shop {
   position: relative;
-  min-height: clamp(410px, 54vh, 520px);
+  min-height: clamp(460px, 50vw, 560px);
   margin-top: -80px;
   padding-top: 80px;
   display: flex;
   align-items: center;
   overflow: hidden;
   background-color: #f7faf6;
-  background-image: linear-gradient(90deg, rgba(247, 250, 246, 0.96) 0%, rgba(247, 250, 246, 0.86) 31%, rgba(247, 250, 246, 0.18) 46%, rgba(247, 250, 246, 0) 62%), url('/brand/ashlife-hero-studio.jpg');
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(90deg, rgba(247, 250, 246, 0.98) 0%, rgba(247, 250, 246, 0.9) 31%, rgba(247, 250, 246, 0.2) 47%, rgba(247, 250, 246, 0) 68%), var(--hero-image);
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: center bottom;
   color: var(--text-primary);
 }
 
@@ -74,9 +75,9 @@
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: var(--spacing-xl);
-  align-items: end;
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
+  align-items: center;
+  padding-top: 4.5rem;
+  padding-bottom: 2.75rem;
 }
 
 .home-intro-band h2,
@@ -122,7 +123,8 @@
 .storefront-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-lg);
+  gap: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .storefront-panel,
@@ -135,7 +137,8 @@
 }
 
 .storefront-panel {
-  padding: var(--spacing-xl);
+  min-height: 360px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
@@ -192,8 +195,8 @@
 }
 
 .home-section {
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
 }
 
 .section-header {
@@ -201,7 +204,7 @@
   justify-content: space-between;
   align-items: end;
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 2rem;
 }
 
 .section-header.compact {
@@ -237,11 +240,12 @@
 .highlight-product-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-md);
+  gap: 1.5rem;
 }
 
 .highlight-product {
   overflow: hidden;
+  min-height: 100%;
 }
 
 .highlight-product img {
@@ -272,7 +276,7 @@
 .archive-band {
   background: #eef7f5;
   border-block: 1px solid #dcebe8;
-  margin: var(--spacing-xl) 0;
+  margin: 3.5rem 0;
 }
 
 .archive-layout {
@@ -280,8 +284,8 @@
   grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
   gap: var(--spacing-xl);
   align-items: center;
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
+  padding-top: 4rem;
+  padding-bottom: 4rem;
 }
 
 .archive-copy h2 {
@@ -316,7 +320,7 @@
 }
 
 .help-section {
-  padding-bottom: var(--spacing-xl);
+  padding-bottom: 3.5rem;
 }
 
 .help-grid {
@@ -363,9 +367,10 @@
 
 @media (max-width: 640px) {
   .hero-shop {
-    min-height: 560px;
+    min-height: 620px;
     background-position: center top;
-    background-image: linear-gradient(180deg, rgba(247, 250, 246, 0.98) 0%, rgba(247, 250, 246, 0.92) 48%, rgba(247, 250, 246, 0.2) 100%), url('/brand/ashlife-hero-studio.jpg');
+    background-size: auto 100%;
+    background-image: linear-gradient(180deg, rgba(247, 250, 246, 0.98) 0%, rgba(247, 250, 246, 0.92) 48%, rgba(247, 250, 246, 0.2) 100%), var(--hero-image);
   }
 
   .hero-actions,
@@ -381,6 +386,7 @@
 
   .storefront-panel {
     padding: var(--spacing-lg);
+    min-height: auto;
   }
 
   .highlight-product-grid,

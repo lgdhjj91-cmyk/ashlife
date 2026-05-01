@@ -12,9 +12,6 @@ const translations = {
       'ASHLIFE curates practical Shopee-ready tools for cable care, home fixes, kitchen shortcuts and desk organization, while keeping our playful stationery and craft roots alive.',
     hero_btn: 'Explore Products',
     hero_secondary: 'Message Us',
-    hero_stat_active: 'Active Shopee range',
-    hero_stat_range: 'Home, work and DIY',
-    hero_stat_ready: 'Manual WhatsApp ordering',
 
     cat_stationery: 'Stationery',
     cat_diy: 'DIY Crafts',
@@ -55,8 +52,7 @@ const translations = {
     phone_number: 'Phone Number',
     phone_placeholder: 'e.g. 0123456789',
     confirm_order: 'Confirm Order on WhatsApp',
-    checkout_note:
-      'This opens WhatsApp with your order details pre-filled. Payment and stock are confirmed manually.',
+    checkout_note: 'This opens WhatsApp with your order details pre-filled. Payment and stock are confirmed manually.',
     clear_cart: 'Clear Cart',
     empty_cart_title: 'Your cart is empty',
     empty_cart_sub: "Looks like you haven't added any items yet.",
@@ -109,9 +105,6 @@ const translations = {
       'ASHLIFE 精选适合 Shopee 销售的电线收纳、家居修补、厨房工具与桌面整理用品，同时保留文具、手作与儿童创意商品的可爱基因。',
     hero_btn: '查看商品',
     hero_secondary: 'WhatsApp 咨询',
-    hero_stat_active: 'Shopee 现售系列',
-    hero_stat_range: '家居、办公、DIY',
-    hero_stat_ready: 'WhatsApp 人工确认',
 
     cat_stationery: '文具',
     cat_diy: 'DIY 手作',
