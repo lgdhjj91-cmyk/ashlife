@@ -40,17 +40,17 @@
 .about-bridge {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 2rem;
+  gap: 4rem;
   align-items: center;
-  padding-top: 5rem;
-  padding-bottom: 3.25rem;
+  padding-top: 6rem;
+  padding-bottom: 5rem;
 }
 
 .about-bridge h2 {
   max-width: 560px;
   font-size: clamp(2rem, 4vw, 2.8rem);
-  line-height: 1.08;
-  margin-top: 0.75rem;
+  line-height: 1.2;
+  margin-top: 1rem;
 }
 
 .about-bridge p,
@@ -63,8 +63,8 @@
 .about-story-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2rem;
-  padding-bottom: 5rem;
+  gap: 3rem;
+  padding-bottom: 7rem;
 }
 
 .about-story,
@@ -78,10 +78,10 @@
 
 .about-story {
   min-height: 300px;
-  padding: 2rem;
+  padding: 3rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 1.5rem;
 }
 
 .about-story svg,
@@ -119,14 +119,14 @@
 .about-copy-section {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-  gap: 2rem;
+  gap: 4rem;
   align-items: start;
-  padding-top: 1rem;
-  padding-bottom: 4rem;
+  padding-top: 2rem;
+  padding-bottom: 7rem;
 }
 
 .about-long-copy {
-  padding-right: 1rem;
+  padding-right: 2rem;
 }
 
 .about-copy-section p {
@@ -135,7 +135,7 @@
 }
 
 .promise-panel {
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 .promise-panel h3 {
@@ -223,14 +223,14 @@
   }
 
   .about-bridge {
-    gap: 1.25rem;
+    gap: 2rem;
     padding-top: 4rem;
-    padding-bottom: 2.5rem;
+    padding-bottom: 3.5rem;
   }
 
   .about-story-grid {
-    gap: 1.5rem;
-    padding-bottom: 4rem;
+    gap: 2rem;
+    padding-bottom: 5rem;
   }
 
   .about-hero {
@@ -249,7 +249,7 @@
   }
 
   .about-story {
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
   }
 
   .contact-actions,

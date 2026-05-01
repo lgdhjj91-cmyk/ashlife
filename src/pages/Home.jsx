@@ -121,7 +121,7 @@ const Home = () => {
         </div>
         <p>{text.linesIntro}</p>
       </section>
-
+      <br></br>
       <section className="container storefront-grid">
         <article className="storefront-panel essentials-panel">
           <div className="panel-icon"><Store size={22} /></div>
@@ -205,7 +205,7 @@ const Home = () => {
           ))}
         </div>
       </section>
-
+      <br></br>
       {featuredProducts.length > 0 && (
         <section className="container home-section">
           <div className="section-header">

@@ -76,6 +76,7 @@ const About = () => {
         <div>
           <span className="story-label">{text.activeLabel}</span>
           <h2>{text.bridgeTitle}</h2>
+          <br></br>
         </div>
         <p>{text.bridgeText}</p>
       </section>
@@ -90,12 +91,13 @@ const About = () => {
 
         <article className="about-story creative-story">
           <Sparkles size={28} />
+
           <span className="story-label archive">{text.archiveLabel}</span>
           <h2>{text.archiveTitle}</h2>
           <p>{text.archiveText}</p>
         </article>
       </section>
-
+      <br></br>
       <section className="container about-copy-section">
         <div className="about-long-copy">
           <h2>{t('about_welcome')}</h2>
