@@ -12,6 +12,7 @@ import Cart from './pages/Cart';
 import About from './pages/About';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import DIY from './pages/DIY';
 
 function App() {
   const basename = import.meta.env.BASE_URL;
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/diy" element={<DIY />} />
                 <Route path="/admin" element={<AdminLogin />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
               </Routes>

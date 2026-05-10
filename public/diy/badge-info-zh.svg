@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">25mm 定制徽章说明</title>
+  <desc id="desc">ASHLIFE 25mm 定制徽章中文说明图。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1f5"/>
+      <stop offset="1" stop-color="#ffe1ea"/>
+    </linearGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#ffc7d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#bg)"/>
+  <text x="500" y="102" text-anchor="middle" fill="#ef4776" font-family="Microsoft YaHei, Arial, sans-serif" font-size="68" font-weight="900">25MM 圆形别针徽章</text>
+  <rect x="250" y="132" width="500" height="58" rx="29" fill="#ef4776"/>
+  <text x="500" y="171" text-anchor="middle" fill="#ffffff" font-family="Microsoft YaHei, Arial, sans-serif" font-size="30" font-weight="900">可定制你的专属图案</text>
+
+  <circle cx="605" cy="520" r="260" fill="url(#pin)" stroke="#fff" stroke-width="16"/>
+  <circle cx="708" cy="430" r="180" fill="#f9f9f9" stroke="#e9d6d6" stroke-width="14"/>
+  <rect x="635" y="382" width="180" height="46" rx="23" fill="#f2f2f2" stroke="#d7d7d7" stroke-width="8"/>
+  <line x1="660" y1="416" x2="790" y2="472" stroke="#595959" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="575" cy="560" r="225" fill="#ffd9e5" opacity=".86"/>
+  <text x="575" y="552" text-anchor="middle" fill="#111" font-family="Microsoft YaHei, Arial, sans-serif" font-size="45" font-weight="900" transform="rotate(12 575 552)">放你的</text>
+  <text x="575" y="610" text-anchor="middle" fill="#111" font-family="Microsoft YaHei, Arial, sans-serif" font-size="45" font-weight="900" transform="rotate(12 575 610)">照片 / 图案</text>
+
+  <g font-family="Microsoft YaHei, Arial, sans-serif" fill="#1f2933">
+    <circle cx="122" cy="275" r="46" fill="#fff"/>
+    <text x="122" y="291" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">✓</text>
+    <text x="190" y="268" font-size="28" font-weight="900">25mm 圆形尺寸</text>
+    <text x="190" y="304" font-size="22" font-weight="700" fill="#5d6670">小巧可爱，方便佩戴</text>
+
+    <circle cx="122" cy="405" r="46" fill="#fff"/>
+    <text x="122" y="421" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">5</text>
+    <text x="190" y="398" font-size="28" font-weight="900">最低 5 件起订</text>
+    <text x="190" y="434" font-size="22" font-weight="700" fill="#5d6670">RM3 / 件，钥匙扣同价</text>
+
+    <circle cx="122" cy="535" r="46" fill="#fff"/>
+    <text x="122" y="551" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">★</text>
+    <text x="190" y="528" font-size="28" font-weight="900">亮面彩色印刷</text>
+    <text x="190" y="564" font-size="22" font-weight="700" fill="#5d6670">适合同人图、礼物和活动</text>
+
+    <circle cx="122" cy="665" r="46" fill="#fff"/>
+    <text x="122" y="681" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">针</text>
+    <text x="190" y="658" font-size="28" font-weight="900">背面带别针</text>
+    <text x="190" y="694" font-size="22" font-weight="700" fill="#5d6670">可直接佩戴或展示</text>
+  </g>
+
+  <rect x="70" y="836" width="260" height="70" rx="20" fill="#ef4776"/>
+  <text x="200" y="882" text-anchor="middle" fill="#ffffff" font-family="Microsoft YaHei, Arial, sans-serif" font-size="30" font-weight="900">现货定制</text>
+  <text x="680" y="885" text-anchor="middle" fill="#ef4776" font-family="Microsoft YaHei, Arial, sans-serif" font-size="38" font-weight="900">做出你的风格</text>
+</svg>

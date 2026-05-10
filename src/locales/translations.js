@@ -3,6 +3,7 @@ const translations = {
     nav_home: 'Home',
     nav_shop: 'Shop',
     nav_about: 'About',
+    nav_diy: 'DIY Custom',
     nav_admin: 'Sign In',
     lang_toggle: '中文',
 
@@ -96,6 +97,7 @@ const translations = {
     nav_home: '首页',
     nav_shop: '商品',
     nav_about: '关于',
+    nav_diy: 'DIY 定制',
     nav_admin: '登录',
     lang_toggle: 'EN',
 

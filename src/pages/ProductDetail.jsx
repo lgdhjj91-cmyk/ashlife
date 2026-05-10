@@ -6,6 +6,27 @@ import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import './ProductDetail.css';
 
+// Helper: calculate final price and discount info
+const getDiscountInfo = (product) => {
+  const { price, discountType, discountValue } = product;
+  if (!discountType || discountType === 'none' || !discountValue) {
+    return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
+  }
+  if (discountType === 'percentage') {
+    const pct = Math.min(Math.max(parseFloat(discountValue) || 0, 0), 100);
+    const finalPrice = Math.max(0, price - price * pct / 100);
+    const savings = (price - finalPrice).toFixed(2);
+    return { hasDiscount: pct > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${savings}` };
+  }
+  if (discountType === 'amount') {
+    const amt = Math.max(parseFloat(discountValue) || 0, 0);
+    const finalPrice = Math.max(0, price - amt);
+    const pct = price > 0 ? Math.round((amt / price) * 100) : 0;
+    return { hasDiscount: amt > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${amt.toFixed(2)}` };
+  }
+  return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
+};
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,6 +51,11 @@ const ProductDetail = () => {
     );
   }
 
+  const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
+  const displayDesc = language === 'zh' && product.description_zh ? product.description_zh : product.description;
+  const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
+  const { hasDiscount, finalPrice, badge, savingsText } = getDiscountInfo(product);
+
   const handleAddToCart = () => {
     addToCart(product, quantity);
   };
@@ -41,10 +67,6 @@ const ProductDetail = () => {
       setQuantity(q => q + 1);
     }
   };
-
-  const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
-  const displayDesc = language === 'zh' && product.description_zh ? product.description_zh : product.description;
-  const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
 
   return (
     <div className="page container animate-fade-in product-detail-page">
@@ -76,7 +98,21 @@ const ProductDetail = () => {
         <div className="detail-info-section">
           <span className="product-category-badge">{displayCategory}</span>
           <h1 className="product-title">{displayName}</h1>
-          <div className="product-price-large">RM {product.price.toFixed(2)}</div>
+
+          <div className="product-price-detail-block">
+            {hasDiscount ? (
+              <>
+                {badge && <span className="detail-discount-badge">{badge}</span>}
+                <div className="detail-price-row">
+                  <span className="product-price-large sale-price-large">RM {finalPrice.toFixed(2)}</span>
+                  <span className="product-price-large-original">RM {product.price.toFixed(2)}</span>
+                </div>
+                {savingsText && <p className="savings-text">{savingsText}</p>}
+              </>
+            ) : (
+              <div className="product-price-large">RM {product.price.toFixed(2)}</div>
+            )}
+          </div>
 
           <div className="product-description">
             <h3>{t('description')}</h3>
@@ -105,7 +141,7 @@ const ProductDetail = () => {
 
             <button className="btn btn-primary w-full add-btn-large" onClick={handleAddToCart}>
               <ShoppingBag size={20} />
-              {t('add_to_cart')} - RM {(product.price * quantity).toFixed(2)}
+              {t('add_to_cart')} - RM {(finalPrice * quantity).toFixed(2)}
             </button>
           </div>
 

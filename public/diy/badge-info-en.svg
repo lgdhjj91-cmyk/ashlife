@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">25mm custom badge info</title>
+  <desc id="desc">English info card for ASHLIFE 25mm custom pin button badge.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1f5"/>
+      <stop offset="1" stop-color="#ffe1ea"/>
+    </linearGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#ffc7d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#bg)"/>
+  <text x="500" y="102" text-anchor="middle" fill="#ef4776" font-family="Arial, sans-serif" font-size="68" font-weight="900">25MM PIN BUTTON BADGE</text>
+  <rect x="250" y="132" width="500" height="58" rx="29" fill="#ef4776"/>
+  <text x="500" y="171" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="900">CUSTOM YOUR OWN DESIGN</text>
+
+  <circle cx="605" cy="520" r="260" fill="url(#pin)" stroke="#fff" stroke-width="16"/>
+  <circle cx="708" cy="430" r="180" fill="#f9f9f9" stroke="#e9d6d6" stroke-width="14"/>
+  <rect x="635" y="382" width="180" height="46" rx="23" fill="#f2f2f2" stroke="#d7d7d7" stroke-width="8"/>
+  <line x1="660" y1="416" x2="790" y2="472" stroke="#595959" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="575" cy="560" r="225" fill="#ffd9e5" opacity=".86"/>
+  <text x="575" y="540" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="42" font-weight="800" transform="rotate(12 575 540)">PLACE YOUR</text>
+  <text x="575" y="596" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="42" font-weight="800" transform="rotate(12 575 596)">PHOTO HERE</text>
+
+  <g font-family="Arial, sans-serif" fill="#1f2933">
+    <circle cx="122" cy="275" r="46" fill="#fff"/>
+    <text x="122" y="291" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">✓</text>
+    <text x="190" y="268" font-size="28" font-weight="800">25mm round size</text>
+    <text x="190" y="304" font-size="22" font-weight="700" fill="#5d6670">Small, cute and easy to wear</text>
+
+    <circle cx="122" cy="405" r="46" fill="#fff"/>
+    <text x="122" y="421" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">5</text>
+    <text x="190" y="398" font-size="28" font-weight="800">Minimum 5 pieces</text>
+    <text x="190" y="434" font-size="22" font-weight="700" fill="#5d6670">RM3 each, same as keychain</text>
+
+    <circle cx="122" cy="535" r="46" fill="#fff"/>
+    <text x="122" y="551" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">★</text>
+    <text x="190" y="528" font-size="28" font-weight="800">Glossy vibrant print</text>
+    <text x="190" y="564" font-size="22" font-weight="700" fill="#5d6670">Good for fan art and gifts</text>
+
+    <circle cx="122" cy="665" r="46" fill="#fff"/>
+    <text x="122" y="681" text-anchor="middle" fill="#ef4776" font-size="26" font-weight="900">PIN</text>
+    <text x="190" y="658" font-size="28" font-weight="800">Pin-back badge</text>
+    <text x="190" y="694" font-size="22" font-weight="700" fill="#5d6670">Ready to attach and display</text>
+  </g>
+
+  <rect x="70" y="836" width="260" height="70" rx="20" fill="#ef4776"/>
+  <text x="200" y="882" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="900">READY STOCK</text>
+  <text x="680" y="885" text-anchor="middle" fill="#ef4776" font-family="Arial, sans-serif" font-size="38" font-weight="900">SHOW YOUR STYLE</text>
+</svg>

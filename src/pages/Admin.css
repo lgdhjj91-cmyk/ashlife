@@ -185,3 +185,112 @@
   color: var(--text-secondary);
   margin-top: 2px;
 }
+
+/* -- Discount Form Styles -- */
+.discount-section {
+  background: #fafafa;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.discount-type-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.discount-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.discount-radio input[type="radio"] {
+  display: none;
+}
+
+.discount-radio.active {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  color: white;
+}
+
+.discount-value-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.discount-prefix {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--primary-color);
+  min-width: 24px;
+}
+
+.discount-value-row input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.discount-preview {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ff3b5c;
+  background: #fff0f3;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.discount-pill {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff3b5c, #ff6b35);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.db-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.db-status.connected {
+  background: #e6f9ef;
+  color: #22a060;
+}
+
+.db-status.disconnected {
+  background: #fff0f3;
+  color: #ff3b5c;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}

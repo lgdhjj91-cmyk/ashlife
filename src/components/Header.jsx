@@ -30,6 +30,7 @@ const Header = () => {
         <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
           <Link to="/" onClick={closeMenu}>{t('nav_home')}</Link>
           <Link to="/shop" onClick={closeMenu}>{t('nav_shop')}</Link>
+          <Link to="/diy" onClick={closeMenu}>{t('nav_diy')}</Link>
           <Link to="/about" onClick={closeMenu}>{t('nav_about')}</Link>
           <Link to="/admin" onClick={closeMenu}>{t('nav_admin')}</Link>
         </nav>

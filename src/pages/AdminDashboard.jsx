@@ -29,6 +29,8 @@ const AdminDashboard = () => {
     description: '',
     description_zh: '',
     price: '',
+    discountType: 'none',
+    discountValue: '',
     category: 'Stationery',
     category_zh: '',
     image: '',
@@ -81,6 +83,8 @@ const AdminDashboard = () => {
       description: '',
       description_zh: '',
       price: '',
+      discountType: 'none',
+      discountValue: '',
       category: 'Stationery',
       category_zh: '',
       image: '',
@@ -97,6 +101,8 @@ const AdminDashboard = () => {
       description: product.description || '',
       description_zh: product.description_zh || '',
       price: product.price || '',
+      discountType: product.discountType || 'none',
+      discountValue: product.discountValue || '',
       category: product.category || 'Stationery',
       category_zh: product.category_zh || '',
       image: product.image || '',
@@ -130,6 +136,7 @@ const AdminDashboard = () => {
     setSaving(true);
 
     const priceNum = parseFloat(formData.price) || 0;
+    const discountValueNum = parseFloat(formData.discountValue) || 0;
     const imagesArray = formData.images
       .split(',')
       .map(url => url.trim())
@@ -141,6 +148,8 @@ const AdminDashboard = () => {
       description: formData.description,
       description_zh: formData.description_zh || '',
       price: priceNum,
+      discountType: formData.discountType || 'none',
+      discountValue: formData.discountType !== 'none' ? discountValueNum : 0,
       category: formData.category,
       category_zh: formData.category_zh || categoryZhMap[formData.category] || '',
       image: formData.image,
@@ -197,6 +206,7 @@ const AdminDashboard = () => {
                   <th>Image</th>
                   <th>Name</th>
                   <th>Price</th>
+                  <th>Discount</th>
                   <th>Category</th>
                   <th>Actions</th>
                 </tr>
@@ -212,6 +222,13 @@ const AdminDashboard = () => {
                       {product.name_zh && <div className="text-secondary">{product.name_zh}</div>}
                     </td>
                     <td>RM {product.price.toFixed(2)}</td>
+                    <td>
+                      {product.discountType && product.discountType !== 'none' && product.discountValue ? (
+                        <span className="discount-pill">
+                          {product.discountType === 'percentage' ? `${product.discountValue}% OFF` : `RM ${parseFloat(product.discountValue).toFixed(2)} OFF`}
+                        </span>
+                      ) : <span className="text-secondary">—</span>}
+                    </td>
                     <td>{product.category}</td>
                     <td>
                       <div className="action-buttons">
@@ -251,6 +268,48 @@ const AdminDashboard = () => {
             <div className="form-group">
               <label>Price (RM)</label>
               <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} />
+            </div>
+
+            <div className="form-group discount-section">
+              <label>Discount</label>
+              <div className="discount-type-row">
+                <label className={`discount-radio ${formData.discountType === 'none' ? 'active' : ''}`}>
+                  <input type="radio" name="discountType" value="none" checked={formData.discountType === 'none'} onChange={handleInputChange} />
+                  No Discount
+                </label>
+                <label className={`discount-radio ${formData.discountType === 'percentage' ? 'active' : ''}`}>
+                  <input type="radio" name="discountType" value="percentage" checked={formData.discountType === 'percentage'} onChange={handleInputChange} />
+                  % Off
+                </label>
+                <label className={`discount-radio ${formData.discountType === 'amount' ? 'active' : ''}`}>
+                  <input type="radio" name="discountType" value="amount" checked={formData.discountType === 'amount'} onChange={handleInputChange} />
+                  RM Off
+                </label>
+              </div>
+              {formData.discountType !== 'none' && (
+                <div className="discount-value-row">
+                  <span className="discount-prefix">{formData.discountType === 'percentage' ? '%' : 'RM'}</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="discountValue"
+                    value={formData.discountValue}
+                    onChange={handleInputChange}
+                    placeholder={formData.discountType === 'percentage' ? 'e.g. 20' : 'e.g. 5.00'}
+                  />
+                  {formData.price && formData.discountValue && (
+                    <span className="discount-preview">
+                      Final: RM {
+                        formData.discountType === 'percentage'
+                          ? Math.max(0, parseFloat(formData.price) - parseFloat(formData.price) * parseFloat(formData.discountValue) / 100).toFixed(2)
+                          : Math.max(0, parseFloat(formData.price) - parseFloat(formData.discountValue)).toFixed(2)
+                      }
+                    </span>
+                  )}
+                </div>
+              )}
+              <span className="form-hint">Customers will see the original price crossed out with the discounted price shown.</span>
             </div>
 
             <div className="form-group">

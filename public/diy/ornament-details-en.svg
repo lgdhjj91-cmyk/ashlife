@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Shaking ornament product comparison</title>
+  <desc id="desc">English comparison card for ASHLIFE custom shaking ornaments.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dff7ff"/>
+      <stop offset="1" stop-color="#f5fbff"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#167a72" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <text x="450" y="72" text-anchor="middle" fill="#196ba8" font-family="Arial, sans-serif" font-size="28" font-weight="700">2026 Custom Shaking Ornament</text>
+  <text x="450" y="126" text-anchor="middle" fill="#1e75b7" font-family="Arial, sans-serif" font-size="52" font-weight="900">Upgraded Details</text>
+
+  <rect x="48" y="170" width="370" height="900" rx="26" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="482" y="170" width="370" height="900" rx="26" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="78" y="205" width="310" height="58" rx="29" fill="#1f80c8"/>
+  <rect x="512" y="205" width="310" height="58" rx="29" fill="#a3b0bb"/>
+  <text x="233" y="244" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="26" font-weight="800">Our Version</text>
+  <text x="667" y="244" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="26" font-weight="800">Ordinary Type</text>
+
+  <g font-family="Arial, sans-serif">
+    <circle cx="450" cy="350" r="44" fill="#38a9c7"/>
+    <text x="450" y="362" text-anchor="middle" fill="#ffffff" font-size="34" font-weight="900">VS</text>
+    <circle cx="450" cy="610" r="44" fill="#38a9c7"/>
+    <text x="450" y="622" text-anchor="middle" fill="#ffffff" font-size="34" font-weight="900">VS</text>
+    <circle cx="450" cy="870" r="44" fill="#38a9c7"/>
+    <text x="450" y="882" text-anchor="middle" fill="#ffffff" font-size="34" font-weight="900">VS</text>
+  </g>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="88" y="300" width="285" height="148" rx="18" fill="#e8f6ff"/>
+    <rect x="522" y="300" width="285" height="148" rx="18" fill="#edf2f5"/>
+    <circle cx="174" cy="374" r="46" fill="#ffced8"/>
+    <circle cx="230" cy="374" r="46" fill="#fff1ad"/>
+    <rect x="275" y="336" width="70" height="76" rx="12" fill="#9bd7ff"/>
+    <circle cx="616" cy="374" r="42" fill="#ffc9a8"/>
+    <rect x="666" y="330" width="86" height="82" rx="12" fill="#ccd8df"/>
+    <text x="88" y="500" fill="#1f80c8" font-size="27" font-weight="900">HD double-sided print</text>
+    <text x="88" y="536" fill="#34495e" font-size="22" font-weight="700">Clear color, thicker acrylic,</text>
+    <text x="88" y="568" fill="#34495e" font-size="22" font-weight="700">front and back protection.</text>
+    <text x="522" y="500" fill="#d33d3d" font-size="27" font-weight="900">Thin material</text>
+    <text x="522" y="536" fill="#34495e" font-size="22" font-weight="700">Blurry printing, dull color,</text>
+    <text x="522" y="568" fill="#34495e" font-size="22" font-weight="700">smaller visual effect.</text>
+
+    <rect x="88" y="590" width="285" height="120" rx="18" fill="#e8f6ff"/>
+    <rect x="522" y="590" width="285" height="120" rx="18" fill="#edf2f5"/>
+    <rect x="138" y="626" width="185" height="42" rx="12" fill="#d8eef7"/>
+    <rect x="170" y="612" width="120" height="70" rx="14" fill="#314e67"/>
+    <rect x="572" y="622" width="185" height="48" rx="14" fill="#e0e5e8"/>
+    <circle cx="665" cy="646" r="28" fill="#3f3f3f"/>
+    <text x="88" y="760" fill="#1f80c8" font-size="27" font-weight="900">Secure shaking structure</text>
+    <text x="88" y="796" fill="#34495e" font-size="22" font-weight="700">Upgraded connector keeps</text>
+    <text x="88" y="828" fill="#34495e" font-size="22" font-weight="700">the head stable and smooth.</text>
+    <text x="522" y="760" fill="#d33d3d" font-size="27" font-weight="900">Loose glue structure</text>
+    <text x="522" y="796" fill="#34495e" font-size="22" font-weight="700">Easy to detach after shaking</text>
+    <text x="522" y="828" fill="#34495e" font-size="22" font-weight="700">or long sunlight exposure.</text>
+
+    <rect x="88" y="858" width="285" height="120" rx="18" fill="#e8f6ff"/>
+    <rect x="522" y="858" width="285" height="120" rx="18" fill="#edf2f5"/>
+    <rect x="160" y="890" width="140" height="70" rx="14" fill="#f3c44e"/>
+    <rect x="178" y="902" width="104" height="44" rx="8" fill="#284b63"/>
+    <path d="M610 925h110v36H610z" fill="#dfe7eb"/>
+    <path d="M720 925l58 25v36l-58-25z" fill="#222"/>
+    <text x="88" y="1030" fill="#1f80c8" font-size="27" font-weight="900">Hidden battery cover</text>
+    <text x="88" y="1066" fill="#34495e" font-size="22" font-weight="700">Cleaner back cover for AAA</text>
+    <text x="88" y="1098" fill="#34495e" font-size="22" font-weight="700">battery model.</text>
+    <text x="522" y="1030" fill="#d33d3d" font-size="27" font-weight="900">Messy exposed wiring</text>
+    <text x="522" y="1066" fill="#34495e" font-size="22" font-weight="700">Back side looks untidy and</text>
+    <text x="522" y="1098" fill="#34495e" font-size="22" font-weight="700">less suitable for gifts.</text>
+  </g>
+
+  <circle cx="250" cy="1144" r="30" fill="#1f80c8"/>
+  <text x="250" y="1154" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="900">OK</text>
+  <circle cx="650" cy="1144" r="30" fill="#a3b0bb"/>
+  <text x="650" y="1156" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="34" font-weight="900">!</text>
+</svg>
