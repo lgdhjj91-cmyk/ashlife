@@ -2,7 +2,7 @@ import React from 'react';
 import { Facebook, ShoppingBag } from 'lucide-react';
 import './Footer.css';
 
-const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.png`;
+const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.webp`;
 
 const Footer = () => {
   return (

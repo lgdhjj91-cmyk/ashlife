@@ -208,6 +208,49 @@
   margin-top: var(--spacing-sm);
 }
 
+.checkout-options-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.checkout-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: var(--spacing-xs) 0;
+}
+
+.checkout-divider::before,
+.checkout-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.checkout-divider span {
+  padding: 0 var(--spacing-md);
+}
+
+.checkout-form-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.pay-online-btn {
+  padding: 1rem;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+
 @media (min-width: 900px) {
   .cart-layout {
     flex-direction: row;

@@ -54,7 +54,7 @@ const storyCopy = {
 const About = () => {
   const { t, language } = useLanguage();
   const text = storyCopy[language] || storyCopy.en;
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '60123254466';
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     'Hello ASHLIFE, I would like to know more about your products.'
   )}`;
@@ -68,7 +68,7 @@ const About = () => {
             <h1>{t('about_title')}</h1>
             <p>{t('about_subtitle')}</p>
           </div>
-          <img src={asset('/brand/ashlife-about-story.jpg')} alt="ASHLIFE practical and creative product story" />
+          <img src={asset('/brand/ashlife-about-story.webp')} alt="ASHLIFE practical and creative product story" />
         </div>
       </section>
 

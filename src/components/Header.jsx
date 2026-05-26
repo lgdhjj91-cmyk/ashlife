@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Header.css';
 
-const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.png`;
+const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.webp`;
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

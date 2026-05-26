@@ -125,41 +125,59 @@ const Cart = () => {
               <span>RM {cartTotal.toFixed(2)}</span>
             </div>
 
-            <form onSubmit={handleCheckout} className="checkout-form">
-              <div className="form-group">
-                <label htmlFor="name">{t('your_name')}</label>
-                <input
-                  type="text"
-                  id="name"
-                  className="input-base"
-                  required
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder={t('name_placeholder')}
-                />
+            <div className="checkout-options-box">
+              <div className="checkout-option">
+                <Link to="/checkout" className="btn btn-primary w-full pay-online-btn">
+                  💳 {t('pay_online')}
+                </Link>
+                <p className="checkout-note">
+                  {language === 'zh' ? '使用 MAE/TNG 二维码在线安全付款' : 'Pay securely online using MAE/TNG QR code'}
+                </p>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="phone">{t('phone_number')}</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  className="input-base"
-                  required
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder={t('phone_placeholder')}
-                />
+              <div className="checkout-divider">
+                <span>{language === 'zh' ? '或' : 'OR'}</span>
               </div>
 
-              <button type="submit" className="btn btn-primary w-full confirm-order-btn">
-                {t('confirm_order')}
-              </button>
+              <form onSubmit={handleCheckout} className="checkout-form">
+                <p className="checkout-form-title">
+                  {language === 'zh' ? '通过 WhatsApp 下单' : 'Order via WhatsApp'}
+                </p>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    id="name"
+                    className="input-base"
+                    required
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder={t('name_placeholder')}
+                    aria-label={t('your_name')}
+                  />
+                </div>
 
-              <p className="checkout-note">
-                {t('checkout_note')}
-              </p>
-            </form>
+                <div className="form-group">
+                  <input
+                    type="tel"
+                    id="phone"
+                    className="input-base"
+                    required
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder={t('phone_placeholder')}
+                    aria-label={t('phone_number')}
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-primary w-full confirm-order-btn">
+                  💬 {t('confirm_order')}
+                </button>
+
+                <p className="checkout-note">
+                  {t('checkout_note')}
+                </p>
+              </form>
+            </div>
           </div>
         </div>
       </div>

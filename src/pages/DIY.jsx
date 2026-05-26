@@ -64,8 +64,8 @@ const PRODUCTS = [
       ],
     },
     media: [
-      { type: 'image', src: asset('diy/badge-display-1.jpg'), alt: 'ASHLIFE custom badge display' },
-      { type: 'image', src: asset('diy/badge-display-2.jpg'), alt: 'Custom badge display tray' },
+      { type: 'image', src: asset('diy/badge-display-1.webp'), alt: 'ASHLIFE custom badge display' },
+      { type: 'image', src: asset('diy/badge-display-2.webp'), alt: 'Custom badge display tray' },
       {
         type: 'image',
         srcByLang: { en: asset('diy/badge-info-en.svg'), zh: asset('diy/badge-info-zh.svg') },
@@ -123,9 +123,9 @@ const PRODUCTS = [
       ],
     },
     media: [
-      { type: 'image', src: asset('diy/keychain-display.jpg'), alt: 'ASHLIFE rectangle keychain display' },
-      { type: 'image', src: asset('diy/keychain-closeup.jpg'), alt: 'Rectangle keychain close up' },
-      { type: 'image', src: asset('diy/keychain-size.png'), alt: 'Rectangle keychain size guide' },
+      { type: 'image', src: asset('diy/keychain-display.webp'), alt: 'ASHLIFE rectangle keychain display' },
+      { type: 'image', src: asset('diy/keychain-closeup.webp'), alt: 'Rectangle keychain close up' },
+      { type: 'image', src: asset('diy/keychain-size.webp'), alt: 'Rectangle keychain size guide' },
     ],
   },
   {
@@ -186,7 +186,7 @@ const PRODUCTS = [
       { type: 'image', src: asset('diy/ornament-couple.webp'), alt: 'Couple shaking ornament sample' },
       {
         type: 'image',
-        srcByLang: { en: asset('diy/ornament-details-en.svg'), zh: asset('diy/ornament-details.jpg') },
+        srcByLang: { en: asset('diy/ornament-details-en.svg'), zh: asset('diy/ornament-details.webp') },
         alt: 'Shaking ornament structure comparison',
       },
     ],
@@ -240,11 +240,11 @@ const PRODUCTS = [
     },
     media: [
       { type: 'frame-visual', alt: 'AI cartoon portrait frame mockup' },
-      { type: 'image', src: asset('diy/ai-before-1.jpg'), alt: 'Original portrait before AI cartoon generation' },
-      { type: 'image', src: asset('diy/ai-after-anime.jpg'), alt: 'Anime cartoon portrait sample' },
-      { type: 'image', src: asset('diy/ai-after-watercolor.jpg'), alt: 'Watercolor cartoon portrait sample' },
-      { type: 'image', src: asset('diy/ai-after-3d.jpg'), alt: '3D cartoon portrait sample' },
-      { type: 'image', src: asset('diy/ai-after-ghibli.jpg'), alt: 'Soft illustrated cartoon portrait sample' },
+      { type: 'image', src: asset('diy/ai-before-1.webp'), alt: 'Original portrait before AI cartoon generation' },
+      { type: 'image', src: asset('diy/ai-after-anime.webp'), alt: 'Anime cartoon portrait sample' },
+      { type: 'image', src: asset('diy/ai-after-watercolor.webp'), alt: 'Watercolor cartoon portrait sample' },
+      { type: 'image', src: asset('diy/ai-after-3d.webp'), alt: '3D cartoon portrait sample' },
+      { type: 'image', src: asset('diy/ai-after-ghibli.webp'), alt: 'Soft illustrated cartoon portrait sample' },
     ],
   },
 ];

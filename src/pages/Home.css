@@ -398,3 +398,98 @@
     min-height: 220px;
   }
 }
+
+/* ============================================
+   STORE LOCATION BANNER
+   ============================================ */
+.store-location-banner {
+  background: linear-gradient(135deg, #00695c 0%, #00897b 50%, #00acc1 100%);
+  color: white;
+  padding: var(--spacing-xxl) 0;
+  margin: var(--spacing-xl) 0;
+}
+
+.store-location-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.store-location-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+.store-location-copy {
+  flex: 1;
+  min-width: 220px;
+}
+
+.store-location-copy h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.store-location-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+}
+
+.store-location-desc {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.store-location-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.store-location-actions .btn-primary {
+  background: white;
+  color: #00695c;
+  border-color: white;
+}
+
+.store-location-actions .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.store-location-actions .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: white;
+  background: transparent;
+}
+
+.store-location-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+}
+
+@media (max-width: 640px) {
+  .store-location-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-md);
+  }
+
+  .store-location-actions {
+    justify-content: center;
+    width: 100%;
+  }
+}
+

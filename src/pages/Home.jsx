@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Cable,
   Home as HomeIcon,
+  MapPin,
   MessageCircle,
   PackageCheck,
   Sparkles,
@@ -18,16 +19,16 @@ import './Home.css';
 const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
 const SHOPEE_HIGHLIGHTS = [
-  { title: 'Hook & Loop Cable Tie Roll', tag: 'Cable Management', image: asset('/brand/shopee/cable-tie.jpg') },
-  { title: 'Self-Adhesive Hook & Loop Tape', tag: 'DIY Fastening', image: asset('/brand/shopee/hook-loop-tape.jpg') },
-  { title: 'Silicone Garlic Peeler Set', tag: 'Kitchen Shortcut', image: asset('/brand/shopee/kitchen-tool.jpg') },
-  { title: 'Webcam Privacy Cover', tag: 'Work Essentials', image: asset('/brand/shopee/webcam-cover.jpg') },
+  { title: 'Hook & Loop Cable Tie Roll', tag: 'Cable Management', image: asset('/brand/shopee/cable-tie.webp') },
+  { title: 'Self-Adhesive Hook & Loop Tape', tag: 'DIY Fastening', image: asset('/brand/shopee/hook-loop-tape.webp') },
+  { title: 'Silicone Garlic Peeler Set', tag: 'Kitchen Shortcut', image: asset('/brand/shopee/kitchen-tool.webp') },
+  { title: 'Webcam Privacy Cover', tag: 'Work Essentials', image: asset('/brand/shopee/webcam-cover.webp') },
 ];
 
 const CREATIVE_HIGHLIGHTS = [
-  asset('/brand/shop-product-2-optimized.jpg'),
-  asset('/brand/craft-feature-1-optimized.jpg'),
-  asset('/brand/craft-feature-2-optimized.jpg'),
+  asset('/brand/shop-product-2-optimized.webp'),
+  asset('/brand/craft-feature-1-optimized.webp'),
+  asset('/brand/craft-feature-2-optimized.webp'),
 ];
 
 const copy = {
@@ -94,7 +95,7 @@ const Home = () => {
 
   return (
     <div className="page animate-fade-in home-page">
-      <section className="hero-shop" style={{ '--hero-image': `url(${asset('/brand/ashlife-hero-wide-v2.jpg')})` }}>
+      <section className="hero-shop" style={{ '--hero-image': `url(${asset('/brand/ashlife-hero-wide-v2.webp')})` }}>
         <div className="container hero-shop-content">
           <div className="hero-text-stack">
             <p className="eyebrow">{t('hero_eyebrow')}</p>
@@ -121,7 +122,35 @@ const Home = () => {
         </div>
         <p>{text.linesIntro}</p>
       </section>
-      <br></br>
+
+      {/* Store Location Banner */}
+      <section className="store-location-banner">
+        <div className="container store-location-inner">
+          <div className="store-location-icon">
+            <MapPin size={32} />
+          </div>
+          <div className="store-location-copy">
+            <h2>{t('store_location_title')}</h2>
+            <p className="store-location-subtitle">{t('store_location_subtitle')}</p>
+            <p className="store-location-desc">{t('store_location_desc')}</p>
+          </div>
+          <div className="store-location-actions">
+            <a
+              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hello ASHLIFE, I would like to arrange a store pickup. Can you share the store address?')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+            >
+              <MessageCircle size={18} />
+              {t('store_location_btn')}
+            </a>
+            <Link to="/shop" className="btn btn-secondary">
+              {t('hero_btn')}
+            </Link>
+          </div>
+        </div>
+      </section>
+      <br />
       <section className="container storefront-grid">
         <article className="storefront-panel essentials-panel">
           <div className="panel-icon"><Store size={22} /></div>
@@ -182,8 +211,8 @@ const Home = () => {
             </a>
           </div>
           <div className="archive-gallery">
-            <img className="poster-image" src={asset('/brand/shop-poster-optimized.jpg')} alt="ASHLIFE creative shop promotion" loading="lazy" />
-            <img src={asset('/brand/shop-product-2-optimized.jpg')} alt="Creative mini figures and cute shop items" loading="lazy" />
+            <img className="poster-image" src={asset('/brand/shop-poster-optimized.webp')} alt="ASHLIFE creative shop promotion" loading="lazy" />
+            <img src={asset('/brand/shop-product-2-optimized.webp')} alt="Creative mini figures and cute shop items" loading="lazy" />
           </div>
         </div>
       </section>
