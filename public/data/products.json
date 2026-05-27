@@ -167,5 +167,61 @@
     "category_zh": "家居小物",
     "price": 12.50,
     "image": "https://res.cloudinary.com/demo/image/upload/f_auto,q_auto/cld-sample-3.jpg"
+  },
+  {
+    "id": "hook-loop-cable-tie-roll",
+    "name": "Hook & Loop Cable Tie Roll",
+    "name_zh": "魔术贴电线扎带卷",
+    "description": "Reusable hook-and-loop cable tie roll for organizing charging cables, desk wires and home electronics.",
+    "description_zh": "可重复使用的魔术贴电线扎带卷，适合收纳充电线、桌面电线和家用电器线路。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 9.90,
+    "image": "/brand/shopee/cable-tie.webp",
+    "images": [
+      "/brand/shopee/cable-tie.webp"
+    ]
+  },
+  {
+    "id": "self-adhesive-hook-loop-tape",
+    "name": "Self-Adhesive Hook & Loop Tape",
+    "name_zh": "自粘魔术贴胶带",
+    "description": "Self-adhesive hook-and-loop tape for quick fastening, cable routing, craft fixes and lightweight organization.",
+    "description_zh": "自粘魔术贴胶带，适合快速固定、电线走线、手作修补和轻量收纳。",
+    "category": "Home Gadgets",
+    "category_zh": "家居小物",
+    "price": 8.90,
+    "image": "/brand/shopee/hook-loop-tape.webp",
+    "images": [
+      "/brand/shopee/hook-loop-tape.webp"
+    ]
+  },
+  {
+    "id": "silicone-garlic-peeler-set",
+    "name": "Silicone Garlic Peeler Set",
+    "name_zh": "硅胶蒜皮剥皮器套装",
+    "description": "Soft silicone garlic peeler set that helps remove garlic skin quickly while keeping hands clean.",
+    "description_zh": "柔软硅胶蒜皮剥皮器套装，帮助快速去蒜皮，同时保持双手干净。",
+    "category": "Cleaning Tools",
+    "category_zh": "清洁工具",
+    "price": 7.90,
+    "image": "/brand/shopee/kitchen-tool.webp",
+    "images": [
+      "/brand/shopee/kitchen-tool.webp"
+    ]
+  },
+  {
+    "id": "webcam-privacy-cover",
+    "name": "Webcam Privacy Cover",
+    "name_zh": "摄像头隐私保护盖",
+    "description": "Slim webcam privacy cover for laptops, tablets and phones, designed for simple slide-open camera control.",
+    "description_zh": "超薄摄像头隐私保护盖，适用于电脑、平板和手机，可滑动开关摄像头。",
+    "category": "Lifestyle Items",
+    "category_zh": "生活用品",
+    "price": 5.90,
+    "image": "/brand/shopee/webcam-cover.webp",
+    "images": [
+      "/brand/shopee/webcam-cover.webp"
+    ]
   }
 ]

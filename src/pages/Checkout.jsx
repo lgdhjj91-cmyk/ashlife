@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useOrders } from '../context/OrderContext';
 import { CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon } from 'lucide-react';
+import { resolveAssetUrl } from '../utils/assets';
 import './Checkout.css';
 
 const Checkout = () => {
@@ -265,7 +266,7 @@ const Checkout = () => {
               {cartItems.map((item) => (
                 <div key={item.id} className="review-item">
                   <div className="review-item-image">
-                    <img src={item.image} alt={item.name} />
+                    <img src={resolveAssetUrl(item.image)} alt={item.name} />
                   </div>
                   <div className="review-item-info">
                     <span className="review-item-name">

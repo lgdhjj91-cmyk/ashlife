@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
+import { resolveAssetUrl } from '../utils/assets';
 import './ProductCard.css';
 
 // Helper: calculate final price and discount label
@@ -41,7 +42,7 @@ const ProductCard = ({ product }) => {
   return (
     <Link to={`/product/${product.id}`} className="card product-card">
       <div className="product-image-wrapper">
-        <img src={product.image} alt={displayName} className="product-image" loading="lazy" />
+        <img src={resolveAssetUrl(product.image)} alt={displayName} className="product-image" loading="lazy" />
         {hasDiscount && badge && (
           <span className="discount-badge">{badge}</span>
         )}

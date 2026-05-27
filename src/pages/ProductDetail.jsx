@@ -4,6 +4,7 @@ import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck } from
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
+import { resolveAssetUrl } from '../utils/assets';
 import './ProductDetail.css';
 
 // Helper: calculate final price and discount info
@@ -78,7 +79,7 @@ const ProductDetail = () => {
       <div className="detail-layout">
         <div className="detail-image-section">
           <div className="main-image-wrapper">
-            <img src={mainImage} alt={displayName} loading="lazy" />
+            <img src={resolveAssetUrl(mainImage)} alt={displayName} loading="lazy" />
           </div>
           {product.images && product.images.length > 1 && (
             <div className="thumbnail-gallery">
@@ -88,7 +89,7 @@ const ProductDetail = () => {
                   className={`thumbnail ${mainImage === imgUrl ? 'active' : ''}`}
                   onClick={() => setSelectedImage(imgUrl)}
                 >
-                  <img src={imgUrl} alt={`${displayName} view ${index + 1}`} loading="lazy" />
+                  <img src={resolveAssetUrl(imgUrl)} alt={`${displayName} view ${index + 1}`} loading="lazy" />
                 </div>
               ))}
             </div>

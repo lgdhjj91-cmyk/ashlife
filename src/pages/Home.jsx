@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Cable,
+  ExternalLink,
   Home as HomeIcon,
   MapPin,
   MessageCircle,
@@ -10,6 +12,8 @@ import {
   Sparkles,
   Store,
   Utensils,
+  X,
+  ZoomIn,
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useProducts } from '../context/ProductContext';
@@ -19,16 +23,56 @@ import './Home.css';
 const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
 const SHOPEE_HIGHLIGHTS = [
-  { title: 'Hook & Loop Cable Tie Roll', tag: 'Cable Management', image: asset('/brand/shopee/cable-tie.webp') },
-  { title: 'Self-Adhesive Hook & Loop Tape', tag: 'DIY Fastening', image: asset('/brand/shopee/hook-loop-tape.webp') },
-  { title: 'Silicone Garlic Peeler Set', tag: 'Kitchen Shortcut', image: asset('/brand/shopee/kitchen-tool.webp') },
-  { title: 'Webcam Privacy Cover', tag: 'Work Essentials', image: asset('/brand/shopee/webcam-cover.webp') },
+  {
+    title: 'Hook & Loop Cable Tie Roll',
+    tag: 'Cable Management',
+    image: asset('/brand/shopee/cable-tie.webp'),
+    to: '/product/hook-loop-cable-tie-roll',
+  },
+  {
+    title: 'Self-Adhesive Hook & Loop Tape',
+    tag: 'DIY Fastening',
+    image: asset('/brand/shopee/hook-loop-tape.webp'),
+    to: '/product/self-adhesive-hook-loop-tape',
+  },
+  {
+    title: 'Silicone Garlic Peeler Set',
+    tag: 'Kitchen Shortcut',
+    image: asset('/brand/shopee/kitchen-tool.webp'),
+    to: '/product/silicone-garlic-peeler-set',
+  },
+  {
+    title: 'Webcam Privacy Cover',
+    tag: 'Work Essentials',
+    image: asset('/brand/shopee/webcam-cover.webp'),
+    to: '/product/webcam-privacy-cover',
+  },
 ];
 
 const CREATIVE_HIGHLIGHTS = [
-  asset('/brand/shop-product-2-optimized.webp'),
-  asset('/brand/craft-feature-1-optimized.webp'),
-  asset('/brand/craft-feature-2-optimized.webp'),
+  {
+    src: asset('/brand/shop-product-2-optimized.webp'),
+    alt: 'ASHLIFE creative shop display with cute gifts and nano bricks',
+  },
+  {
+    src: asset('/brand/craft-feature-1-optimized.webp'),
+    alt: 'Super cute creative collection poster',
+  },
+  {
+    src: asset('/brand/craft-feature-2-optimized.webp'),
+    alt: 'DIY craft supply poster',
+  },
+];
+
+const ARCHIVE_GALLERY = [
+  {
+    src: asset('/brand/shop-poster-optimized.webp'),
+    alt: 'ASHLIFE kawaii superstore opening sale poster',
+  },
+  {
+    src: asset('/brand/shop-product-2-optimized.webp'),
+    alt: 'Creative mini figures, stationery and nano brick items',
+  },
 ];
 
 const copy = {
@@ -84,6 +128,7 @@ const copy = {
 
 const Home = () => {
   const navigate = useNavigate();
+  const [lightboxImage, setLightboxImage] = useState(null);
   const { products } = useProducts();
   const { t, language } = useLanguage();
   const text = copy[language] || copy.en;
@@ -169,9 +214,29 @@ const Home = () => {
           <span className="status-pill muted">{text.shopStatus}</span>
           <h3>{text.shopTitle}</h3>
           <p>{text.shopText}</p>
+          <div className="creative-actions">
+            <Link to="/shop?category=DIY%20Crafts" className="creative-category-link">
+              DIY Crafts
+              <ExternalLink size={16} />
+            </Link>
+            <span className="image-expand-note">
+              <ZoomIn size={15} />
+              Tap photos to enlarge
+            </span>
+          </div>
           <div className="creative-thumb-row">
-            {CREATIVE_HIGHLIGHTS.map((src) => (
-              <img key={src} src={src} alt="" loading="lazy" />
+            {CREATIVE_HIGHLIGHTS.map((image) => (
+              <button
+                className="image-zoom-button creative-thumb"
+                key={image.src}
+                type="button"
+                onClick={() => setLightboxImage(image)}
+                aria-label={`Open larger image: ${image.alt}`}
+                title="Open larger image"
+              >
+                <img src={image.src} alt={image.alt} loading="lazy" />
+                <ZoomIn size={18} />
+              </button>
             ))}
           </div>
         </article>
@@ -188,13 +253,13 @@ const Home = () => {
         </div>
         <div className="highlight-product-grid">
           {SHOPEE_HIGHLIGHTS.map((item) => (
-            <article className="highlight-product" key={item.title}>
+            <Link className="highlight-product" key={item.title} to={item.to} aria-label={`View ${item.title}`}>
               <img src={item.image} alt={item.title} loading="lazy" />
               <div>
                 <span>{item.tag}</span>
                 <h3>{item.title}</h3>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </section>
@@ -211,8 +276,19 @@ const Home = () => {
             </a>
           </div>
           <div className="archive-gallery">
-            <img className="poster-image" src={asset('/brand/shop-poster-optimized.webp')} alt="ASHLIFE creative shop promotion" loading="lazy" />
-            <img src={asset('/brand/shop-product-2-optimized.webp')} alt="Creative mini figures and cute shop items" loading="lazy" />
+            {ARCHIVE_GALLERY.map((image) => (
+              <button
+                className="image-zoom-button archive-image-card"
+                key={image.src}
+                type="button"
+                onClick={() => setLightboxImage(image)}
+                aria-label={`Open larger image: ${image.alt}`}
+                title="Open larger image"
+              >
+                <img src={image.src} alt={image.alt} loading="lazy" />
+                <ZoomIn size={20} />
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -251,6 +327,16 @@ const Home = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {lightboxImage && createPortal(
+        <div className="image-lightbox" role="dialog" aria-modal="true" aria-label={lightboxImage.alt} onClick={() => setLightboxImage(null)}>
+          <button className="lightbox-close" type="button" onClick={() => setLightboxImage(null)} aria-label="Close image preview">
+            <X size={24} />
+          </button>
+          <img src={lightboxImage.src} alt={lightboxImage.alt} onClick={(event) => event.stopPropagation()} />
+        </div>,
+        document.body
       )}
     </div>
   );

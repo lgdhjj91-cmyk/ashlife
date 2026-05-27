@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
+import { resolveAssetUrl } from '../utils/assets';
 import './Cart.css';
 
 const Cart = () => {
@@ -59,7 +60,7 @@ const Cart = () => {
           {cartItems.map(item => (
             <div key={item.id} className="cart-item">
               <div className="cart-item-image">
-                <img src={item.image} alt={item.name} loading="lazy" />
+                <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" />
               </div>
 
               <div className="cart-item-details">

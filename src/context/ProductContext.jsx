@@ -13,13 +13,25 @@ export const ProductProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [dbConnected, setDbConnected] = useState(true);
 
-  const loadLocalProducts = useCallback(async () => {
+  const fetchLocalProducts = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.BASE_URL}data/products.json`);
       if (!response.ok) {
         throw new Error(`Local catalogue returned ${response.status}`);
       }
-      const fallbackProducts = await response.json();
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to load local products:', error);
+      return [];
+    }
+  }, []);
+
+  const loadLocalProducts = useCallback(async () => {
+    try {
+      const fallbackProducts = await fetchLocalProducts();
+      if (!fallbackProducts.length) {
+        return false;
+      }
       setProducts(fallbackProducts);
       localStorage.setItem('ashlife_products', JSON.stringify(fallbackProducts));
       return true;
@@ -27,7 +39,7 @@ export const ProductProvider = ({ children }) => {
       console.error('Failed to load local products:', error);
       return false;
     }
-  }, []);
+  }, [fetchLocalProducts]);
 
   // Subscribe to Firebase Realtime Database
   useEffect(() => {
@@ -35,7 +47,7 @@ export const ProductProvider = ({ children }) => {
 
     const unsubscribe = onValue(
       productsRef,
-      (snapshot) => {
+      async (snapshot) => {
         const data = snapshot.val();
         if (data) {
           // Convert Firebase object { key1: {...}, key2: {...} } to array
@@ -43,9 +55,15 @@ export const ProductProvider = ({ children }) => {
             ...value,
             id: key, // Use the Firebase key as the product id
           }));
-          setProducts(productsArray);
+          const localProducts = await fetchLocalProducts();
+          const remoteIds = new Set(productsArray.map((product) => product.id));
+          const mergedProducts = [
+            ...productsArray,
+            ...localProducts.filter((product) => !remoteIds.has(product.id)),
+          ];
+          setProducts(mergedProducts);
           // Cache to localStorage for offline fallback
-          localStorage.setItem('ashlife_products', JSON.stringify(productsArray));
+          localStorage.setItem('ashlife_products', JSON.stringify(mergedProducts));
           setDbConnected(true);
           setLoading(false);
         } else {
@@ -73,7 +91,7 @@ export const ProductProvider = ({ children }) => {
 
     // Cleanup listener on unmount
     return () => unsubscribe();
-  }, [loadLocalProducts]);
+  }, [fetchLocalProducts, loadLocalProducts]);
 
   const addProduct = useCallback(async (newProduct) => {
     try {
