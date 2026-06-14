@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
+import { buildCartProduct, getProductImages, getVariantLabel, normalizeVariants } from '../utils/productVariants';
 import './ProductDetail.css';
 
 // Helper: calculate final price and discount info
@@ -36,10 +37,13 @@ const ProductDetail = () => {
   const { t, language } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState('');
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
-  const productImages = product?.images?.length ? product.images : product?.image ? [product.image] : [];
-  const mainImage = productImages.includes(selectedImage) ? selectedImage : product?.image;
+  const variants = useMemo(() => normalizeVariants(product), [product]);
+  const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) || variants[0] || null;
+  const productImages = getProductImages(product, selectedVariant);
+  const mainImage = productImages.includes(selectedImage) ? selectedImage : productImages[0] || product?.image;
 
   if (!product) {
     return (
@@ -58,7 +62,7 @@ const ProductDetail = () => {
   const { hasDiscount, finalPrice, badge, savingsText } = getDiscountInfo(product);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    addToCart(buildCartProduct(product, selectedVariant, finalPrice), quantity);
   };
 
   const handleQuantityChange = (type) => {
@@ -81,9 +85,9 @@ const ProductDetail = () => {
           <div className="main-image-wrapper">
             <img src={resolveAssetUrl(mainImage)} alt={displayName} loading="lazy" />
           </div>
-          {product.images && product.images.length > 1 && (
+          {productImages.length > 1 && (
             <div className="thumbnail-gallery">
-              {product.images.map((imgUrl, index) => (
+              {productImages.map((imgUrl, index) => (
                 <div
                   key={index}
                   className={`thumbnail ${mainImage === imgUrl ? 'active' : ''}`}
@@ -119,6 +123,33 @@ const ProductDetail = () => {
             <h3>{t('description')}</h3>
             <p>{displayDesc}</p>
           </div>
+
+          {variants.length > 0 && (
+            <div className="variant-selector-block">
+              <h3>Variation</h3>
+              <div className="variant-options">
+                {variants.map((variant) => {
+                  const variantLabel = getVariantLabel(variant, language) || `Option ${variants.indexOf(variant) + 1}`;
+                  return (
+                    <button
+                      type="button"
+                      key={variant.id}
+                      className={`variant-option ${selectedVariant?.id === variant.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedImage('');
+                        setSelectedVariantId(variant.id);
+                      }}
+                    >
+                      {variant.image && (
+                        <img src={resolveAssetUrl(variant.image)} alt={variantLabel} loading="lazy" />
+                      )}
+                      <span>{variantLabel}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="purchase-actions">
             <div className="quantity-selector">

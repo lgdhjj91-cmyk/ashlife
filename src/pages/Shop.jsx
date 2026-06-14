@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Cable, Home, Paintbrush, Search, Sparkles } from 'lucide-react';
 import ProductList from '../components/ProductList';
@@ -21,9 +21,10 @@ const CATEGORY_MAP = [
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
+  const urlSearchQuery = searchParams.get('search') || '';
 
   const activeCategory = initialCategory;
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const { products, loading } = useProducts();
   const { t, language } = useLanguage();
   const rangeCards = [
@@ -60,12 +61,24 @@ const Shop = () => {
     return result;
   }, [activeCategory, searchQuery, products]);
 
+  useEffect(() => {
+    setSearchQuery(urlSearchQuery);
+  }, [urlSearchQuery]);
+
   const handleCategoryChange = (e) => {
     const category = e.target.value;
-    if (category === 'All') {
+    const nextParams = {};
+    if (category !== 'All') {
+      nextParams.category = category;
+    }
+    if (searchQuery.trim()) {
+      nextParams.search = searchQuery.trim();
+    }
+
+    if (Object.keys(nextParams).length === 0) {
       setSearchParams({});
     } else {
-      setSearchParams({ category });
+      setSearchParams(nextParams);
     }
   };
 
@@ -86,7 +99,18 @@ const Shop = () => {
               placeholder={t('search_placeholder')}
               className="input-base"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchQuery(value);
+                const nextParams = {};
+                if (activeCategory !== 'All') {
+                  nextParams.category = activeCategory;
+                }
+                if (value.trim()) {
+                  nextParams.search = value.trim();
+                }
+                setSearchParams(nextParams);
+              }}
             />
           </div>
 

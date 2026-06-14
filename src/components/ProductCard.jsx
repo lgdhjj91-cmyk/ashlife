@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ListChecks, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
+import { buildCartProduct, normalizeVariants } from '../utils/productVariants';
 import './ProductCard.css';
 
 // Helper: calculate final price and discount label
@@ -28,11 +29,17 @@ const getDiscountInfo = (product) => {
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const { language } = useLanguage();
+  const variants = normalizeVariants(product);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
-    addToCart(product);
+    if (variants.length > 0) {
+      navigate(`/product/${product.id}`);
+      return;
+    }
+    addToCart(buildCartProduct(product, null, finalPrice));
   };
 
   const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
@@ -45,6 +52,9 @@ const ProductCard = ({ product }) => {
         <img src={resolveAssetUrl(product.image)} alt={displayName} className="product-image" loading="lazy" />
         {hasDiscount && badge && (
           <span className="discount-badge">{badge}</span>
+        )}
+        {variants.length > 0 && (
+          <span className="variant-badge">{variants.length} options</span>
         )}
       </div>
       <div className="product-info">
@@ -64,9 +74,9 @@ const ProductCard = ({ product }) => {
           <button
             className="add-to-cart-btn"
             onClick={handleAddToCart}
-            aria-label="Add to cart"
+            aria-label={variants.length > 0 ? 'Choose variation' : 'Add to cart'}
           >
-            <ShoppingBag size={18} />
+            {variants.length > 0 ? <ListChecks size={18} /> : <ShoppingBag size={18} />}
           </button>
         </div>
       </div>

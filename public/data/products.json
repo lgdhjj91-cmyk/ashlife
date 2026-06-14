@@ -222,6 +222,37 @@
     "image": "/brand/shopee/webcam-cover.webp",
     "images": [
       "/brand/shopee/webcam-cover.webp"
+    ],
+    "variants": [
+      {
+        "id": "black",
+        "name": "Black",
+        "name_zh": "Black",
+        "image": "/brand/shopee/webcam-cover.webp",
+        "images": [
+          "/brand/shopee/webcam-cover.webp"
+        ]
+      },
+      {
+        "id": "white",
+        "name": "White",
+        "name_zh": "White",
+        "image": "https://placehold.co/800x800/f8fafc/334155?text=White+Cover",
+        "images": [
+          "https://placehold.co/800x800/f8fafc/334155?text=White+Cover",
+          "https://placehold.co/800x800/e2e8f0/334155?text=White+Side"
+        ]
+      },
+      {
+        "id": "pink",
+        "name": "Pink",
+        "name_zh": "Pink",
+        "image": "https://placehold.co/800x800/fce7f3/be185d?text=Pink+Cover",
+        "images": [
+          "https://placehold.co/800x800/fce7f3/be185d?text=Pink+Cover",
+          "https://placehold.co/800x800/fbcfe8/be185d?text=Pink+Side"
+        ]
+      }
     ]
   }
 ]

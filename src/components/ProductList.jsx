@@ -4,7 +4,7 @@ import './ProductList.css'; // Optional CSS if we need specific styling
 
 const ProductList = ({ products }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 12;
+  const productsPerPage = 16;
 
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -36,7 +36,7 @@ const ProductList = ({ products }) => {
 
   return (
     <div className="product-list-container">
-      <div className="grid-mobile-1 grid-sm-2 grid-md-3">
+      <div className="product-grid compact-product-grid">
         {currentProducts.map(product => (
           <ProductCard key={product.id} product={product} />
         ))}

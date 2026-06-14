@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { getCartItemKey } from '../utils/productVariants';
 
 const CartContext = createContext();
 
@@ -16,24 +17,25 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1) => {
     setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
+      const productKey = getCartItemKey(product);
+      const existing = prev.find(item => getCartItemKey(item) === productKey);
       if (existing) {
         return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          getCartItemKey(item) === productKey ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      return [...prev, { ...product, cartKey: productKey, quantity }];
     });
   };
 
-  const removeFromCart = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+  const removeFromCart = (cartKey) => {
+    setCartItems(prev => prev.filter(item => getCartItemKey(item) !== cartKey));
   };
 
-  const updateQuantity = (id, quantity) => {
-    if (quantity < 1) return removeFromCart(id);
+  const updateQuantity = (cartKey, quantity) => {
+    if (quantity < 1) return removeFromCart(cartKey);
     setCartItems(prev => prev.map(item => 
-      item.id === id ? { ...item, quantity } : item
+      getCartItemKey(item) === cartKey ? { ...item, quantity } : item
     ));
   };
 

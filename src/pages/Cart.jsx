@@ -4,6 +4,7 @@ import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
+import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Cart.css';
 
 const Cart = () => {
@@ -20,7 +21,8 @@ const Cart = () => {
 
     cartItems.forEach(item => {
       const itemName = language === 'zh' && item.name_zh ? item.name_zh : item.name;
-      message += `${itemName} x ${item.quantity}\n`;
+      const variantName = getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName);
+      message += `${itemName}${variantName ? ` (${variantName})` : ''} x ${item.quantity}\n`;
     });
 
     message += `\n${t('wa_total')}: RM ${cartTotal.toFixed(2)}\n\n`;
@@ -58,7 +60,7 @@ const Cart = () => {
       <div className="cart-layout">
         <div className="cart-items-section">
           {cartItems.map(item => (
-            <div key={item.id} className="cart-item">
+            <div key={getCartItemKey(item)} className="cart-item">
               <div className="cart-item-image">
                 <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" />
               </div>
@@ -67,13 +69,18 @@ const Cart = () => {
                 <Link to={`/product/${item.id}`} className="cart-item-name">
                   {language === 'zh' && item.name_zh ? item.name_zh : item.name}
                 </Link>
+                {(item.variantName || item.variantName_zh || item.selectedVariant) && (
+                  <div className="cart-item-variant">
+                    Variation: {getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName)}
+                  </div>
+                )}
                 <div className="cart-item-price">RM {item.price.toFixed(2)}</div>
 
                 <div className="cart-item-actions">
                   <div className="quantity-selector small">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(getCartItemKey(item), item.quantity - 1)}
                       className="qty-btn"
                     >
                       <Minus size={14} />
@@ -81,7 +88,7 @@ const Cart = () => {
                     <span className="qty-value">{item.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(getCartItemKey(item), item.quantity + 1)}
                       className="qty-btn"
                     >
                       <Plus size={14} />
@@ -90,7 +97,7 @@ const Cart = () => {
 
                   <button
                     className="remove-btn"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(getCartItemKey(item))}
                     aria-label="Remove item"
                   >
                     <Trash2 size={18} />

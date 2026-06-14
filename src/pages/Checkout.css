@@ -256,6 +256,13 @@
   color: var(--text-primary);
 }
 
+.review-item-variant {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  overflow-wrap: anywhere;
+}
+
 .review-item-qty {
   font-size: 0.8rem;
   color: var(--text-secondary);

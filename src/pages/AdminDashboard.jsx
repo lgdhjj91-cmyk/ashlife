@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
+import { resolveAssetUrl } from '../utils/assets';
+import { normalizeVariants } from '../utils/productVariants';
 import {
   LogOut,
   Plus,
@@ -42,6 +44,14 @@ const STATUS_META = {
   completed: { label: 'Completed', emoji: '✅', cls: 'status-completed' },
 };
 
+const createEmptyVariant = () => ({
+  id: '',
+  name: '',
+  name_zh: '',
+  image: '',
+  images: '',
+});
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { products, addProduct, updateProduct, deleteProduct, dbConnected } = useProducts();
@@ -70,6 +80,7 @@ const AdminDashboard = () => {
     category_zh: '',
     image: '',
     images: '',
+    variants: [],
   });
 
   // ---- Order State ----
@@ -115,6 +126,7 @@ const AdminDashboard = () => {
 
   // Sync payment settings form with context
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setSettingsForm({
       delivery_fee: paymentSettings.delivery_fee?.toString() || '8',
       delivery_note_en: paymentSettings.delivery_note_en || '',
@@ -122,6 +134,7 @@ const AdminDashboard = () => {
     });
     setMaePreview(paymentSettings.mae_qr_url || '');
     setTngPreview(paymentSettings.tng_qr_url || '');
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [paymentSettings]);
 
   const showToast = (type, message) => setToast({ type, message });
@@ -152,6 +165,7 @@ const AdminDashboard = () => {
       category_zh: '',
       image: '',
       images: '',
+      variants: [],
     });
     setIsEditing(false);
     setCurrentProductId(null);
@@ -170,10 +184,40 @@ const AdminDashboard = () => {
       category_zh: product.category_zh || '',
       image: product.image || '',
       images: product.images ? product.images.join(', ') : '',
+      variants: normalizeVariants(product).map((variant) => ({
+        id: variant.id || '',
+        name: variant.name || '',
+        name_zh: variant.name_zh || '',
+        image: variant.image || '',
+        images: variant.images ? variant.images.join(', ') : '',
+      })),
     });
     setIsEditing(true);
     setCurrentProductId(product.id);
     document.querySelector('.admin-form-panel')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleVariantChange = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, [field]: value } : variant
+      ),
+    }));
+  };
+
+  const handleAddVariant = () => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: [...prev.variants, createEmptyVariant()],
+    }));
+  };
+
+  const handleRemoveVariant = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((_, variantIndex) => variantIndex !== index),
+    }));
   };
 
   const handleDeleteClick = async (id) => {
@@ -199,6 +243,30 @@ const AdminDashboard = () => {
       .split(',')
       .map((url) => url.trim())
       .filter((url) => url);
+    const variants = formData.variants
+      .map((variant, index) => {
+        const variantImages = variant.images
+          .split(',')
+          .map((url) => url.trim())
+          .filter((url) => url);
+        const image = variant.image.trim() || variantImages[0] || '';
+        const name = variant.name.trim();
+        const nameZh = variant.name_zh.trim();
+        const idSource = variant.id || name || nameZh || `variant-${index + 1}`;
+        const id = idSource
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || `variant-${index + 1}`;
+
+        return {
+          id,
+          name,
+          name_zh: nameZh,
+          image,
+          images: variantImages.length > 0 ? variantImages : image ? [image] : [],
+        };
+      })
+      .filter((variant) => variant.name || variant.name_zh || variant.image || variant.images.length);
 
     const productPayload = {
       name: formData.name,
@@ -212,6 +280,7 @@ const AdminDashboard = () => {
       category_zh: formData.category_zh || categoryZhMap[formData.category] || '',
       image: formData.image,
       images: imagesArray.length > 0 ? imagesArray : [formData.image],
+      variants,
     };
 
     const result = isEditing
@@ -366,6 +435,7 @@ const AdminDashboard = () => {
                     <th>Image</th>
                     <th>Name</th>
                     <th>Price</th>
+                    <th>Variations</th>
                     <th>Discount</th>
                     <th>Category</th>
                     <th>Actions</th>
@@ -384,6 +454,15 @@ const AdminDashboard = () => {
                         )}
                       </td>
                       <td>RM {product.price.toFixed(2)}</td>
+                      <td>
+                        {normalizeVariants(product).length > 0 ? (
+                          <span className="variant-count-pill">
+                            {normalizeVariants(product).length} option{normalizeVariants(product).length > 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          <span className="text-secondary">None</span>
+                        )}
+                      </td>
                       <td>
                         {product.discountType && product.discountType !== 'none' && product.discountValue ? (
                           <span className="discount-pill">
@@ -414,7 +493,7 @@ const AdminDashboard = () => {
                   ))}
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="text-center py-4">
+                      <td colSpan="7" className="text-center py-4">
                         No products found. Add one!
                       </td>
                     </tr>
@@ -499,6 +578,92 @@ const AdminDashboard = () => {
                 <label>Additional Images URLs</label>
                 <textarea name="images" value={formData.images} onChange={handleInputChange} placeholder="Comma-separated image URLs" />
                 <span className="form-hint">For the image gallery. Separate with commas.</span>
+              </div>
+
+              <div className="form-group variants-section">
+                <div className="variants-section-header">
+                  <div>
+                    <label>Product Variations</label>
+                    <span className="form-hint">Use this for same product, same price, different color/type. Each variation can have its own images.</span>
+                  </div>
+                  <button type="button" className="btn btn-secondary btn-icon" onClick={handleAddVariant}>
+                    <Plus size={16} /> Add Variation
+                  </button>
+                </div>
+
+                {formData.variants.length === 0 ? (
+                  <div className="variant-empty-state">No variations added. Product will behave like a single-option item.</div>
+                ) : (
+                  <div className="variant-editor-list">
+                    {formData.variants.map((variant, index) => (
+                      <div className="variant-editor-card" key={index}>
+                        <div className="variant-editor-header">
+                          <strong>Variation {index + 1}</strong>
+                          <button
+                            type="button"
+                            className="action-btn delete"
+                            onClick={() => handleRemoveVariant(index)}
+                            aria-label="Remove variation"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        <div className="variant-field-grid">
+                          <div className="form-group">
+                            <label>Name (EN)</label>
+                            <input
+                              type="text"
+                              value={variant.name}
+                              onChange={(e) => handleVariantChange(index, 'name', e.target.value)}
+                              placeholder="e.g. Pink, Blue, Type A"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Name (中文)</label>
+                            <input
+                              type="text"
+                              value={variant.name_zh}
+                              onChange={(e) => handleVariantChange(index, 'name_zh', e.target.value)}
+                              placeholder="Optional"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Main Variation Image URL</label>
+                          <input
+                            type="url"
+                            value={variant.image}
+                            onChange={(e) => handleVariantChange(index, 'image', e.target.value)}
+                            placeholder="Shown when this variation is selected"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Variation Gallery URLs</label>
+                          <textarea
+                            value={variant.images}
+                            onChange={(e) => handleVariantChange(index, 'images', e.target.value)}
+                            placeholder="Comma-separated URLs for this variation"
+                          />
+                        </div>
+
+                        {(variant.image || variant.images) && (
+                          <div className="variant-preview-row">
+                            {[variant.image, ...variant.images.split(',')]
+                              .map((url) => url.trim())
+                              .filter(Boolean)
+                              .slice(0, 4)
+                              .map((url, previewIndex) => (
+                                <img key={`${url}-${previewIndex}`} src={url} alt={`Variation ${index + 1} preview`} />
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="admin-actions mt-4">
@@ -590,8 +755,15 @@ const AdminDashboard = () => {
                         <p className="order-detail-label">Items</p>
                         {(order.items || []).map((item, i) => (
                           <div key={i} className="order-item-row">
-                            <img src={item.image} alt={item.name} className="order-item-thumb" />
-                            <span className="order-item-name">{item.name}</span>
+                            <img src={resolveAssetUrl(item.image)} alt={item.name} className="order-item-thumb" />
+                            <span className="order-item-name">
+                              {item.name}
+                              {(item.variantName || item.variantName_zh) && (
+                                <span className="order-item-variant">
+                                  Variation: {item.variantName || item.variantName_zh}
+                                </span>
+                              )}
+                            </span>
                             <span className="order-item-qty">x{item.quantity}</span>
                             <span className="order-item-price">RM {(item.price * item.quantity).toFixed(2)}</span>
                           </div>

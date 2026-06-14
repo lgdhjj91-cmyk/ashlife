@@ -79,6 +79,13 @@
   color: var(--primary-color);
 }
 
+.cart-item-variant {
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .cart-item-price {
   color: var(--text-secondary);
   font-size: 0.875rem;

@@ -4,6 +4,46 @@
   gap: 2rem;
 }
 
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.compact-product-grid .product-info {
+  padding: 0.85rem;
+}
+
+.compact-product-grid .product-name {
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.compact-product-grid .product-category {
+  font-size: 0.68rem;
+}
+
+.compact-product-grid .product-price {
+  font-size: 1rem;
+}
+
+.compact-product-grid .add-to-cart-btn {
+  width: 34px;
+  height: 34px;
+}
+
+@media (min-width: 720px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .pagination {
   display: flex;
   justify-content: center;

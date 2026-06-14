@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useOrders } from '../context/OrderContext';
 import { CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon } from 'lucide-react';
 import { resolveAssetUrl } from '../utils/assets';
+import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Checkout.css';
 
 const Checkout = () => {
@@ -16,6 +17,7 @@ const Checkout = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState(null);
+  const [submittedOrder, setSubmittedOrder] = useState({ items: [], total: 0 });
 
   // Form State
   const [customerInfo, setCustomerInfo] = useState({
@@ -79,22 +81,30 @@ const Checkout = () => {
 
     setLoading(true);
 
+    const orderItems = cartItems.map((item) => ({
+      id: item.id,
+      productId: item.productId || item.id,
+      cartKey: getCartItemKey(item),
+      name: item.name,
+      name_zh: item.name_zh || '',
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image,
+      variantId: item.variantId || '',
+      variantName: item.variantName || '',
+      variantName_zh: item.variantName_zh || '',
+    }));
+    const orderTotal = calculateTotal();
+
     const orderData = {
       customerName: customerInfo.name,
       customerPhone: customerInfo.phone,
       deliveryMethod: customerInfo.deliveryMethod,
       address: customerInfo.deliveryMethod === 'delivery' ? customerInfo.address : '',
-      items: cartItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        name_zh: item.name_zh || '',
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image,
-      })),
+      items: orderItems,
       subtotal: cartTotal,
       deliveryFee: customerInfo.deliveryMethod === 'delivery' ? (paymentSettings.delivery_fee || 8) : 0,
-      total: calculateTotal(),
+      total: orderTotal,
       paymentMethod: paymentInfo.method,
     };
 
@@ -103,6 +113,7 @@ const Checkout = () => {
 
     if (result.success) {
       setCreatedOrderId(result.orderId);
+      setSubmittedOrder({ items: orderItems, total: orderTotal });
       clearCart();
       setStep(4);
       window.scrollTo(0, 0);
@@ -124,12 +135,14 @@ const Checkout = () => {
     }
 
     message += `*Order Items:*\n`;
-    cartItems.forEach(item => {
+    const receiptItems = submittedOrder.items.length ? submittedOrder.items : cartItems;
+    receiptItems.forEach(item => {
       const itemName = language === 'zh' && item.name_zh ? item.name_zh : item.name;
-      message += `- ${itemName} x ${item.quantity}\n`;
+      const variantName = language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName;
+      message += `- ${itemName}${variantName ? ` (${variantName})` : ''} x ${item.quantity}\n`;
     });
 
-    message += `\n*Total:* RM ${calculateTotal().toFixed(2)}\n`;
+    message += `\n*Total:* RM ${(submittedOrder.total || calculateTotal()).toFixed(2)}\n`;
     message += `*Payment:* ${paymentInfo.method.toUpperCase()} (Screenshot uploaded via website)\n\n`;
     message += `Please confirm my order. Thank you!`;
 
@@ -264,7 +277,7 @@ const Checkout = () => {
             
             <div className="review-order-list">
               {cartItems.map((item) => (
-                <div key={item.id} className="review-item">
+                <div key={getCartItemKey(item)} className="review-item">
                   <div className="review-item-image">
                     <img src={resolveAssetUrl(item.image)} alt={item.name} />
                   </div>
@@ -272,6 +285,11 @@ const Checkout = () => {
                     <span className="review-item-name">
                       {language === 'zh' && item.name_zh ? item.name_zh : item.name}
                     </span>
+                    {(item.variantName || item.variantName_zh || item.selectedVariant) && (
+                      <span className="review-item-variant">
+                        Variation: {getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName)}
+                      </span>
+                    )}
                     <span className="review-item-qty">Qty: {item.quantity}</span>
                   </div>
                   <div className="review-item-price">

@@ -1,0 +1,96 @@
+const splitImages = (images) => {
+  if (Array.isArray(images)) {
+    return images.map((url) => String(url || '').trim()).filter(Boolean);
+  }
+
+  if (typeof images === 'string') {
+    return images
+      .split(',')
+      .map((url) => url.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const toVariantId = (variant, index) => {
+  if (variant.id) return String(variant.id);
+  const source = variant.name || variant.name_zh || `variant-${index + 1}`;
+  const slug = String(source)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || `variant-${index + 1}`;
+};
+
+export const normalizeVariants = (product) => {
+  if (!product?.variants) return [];
+
+  const rawVariants = Array.isArray(product.variants)
+    ? product.variants
+    : Object.values(product.variants);
+
+  return rawVariants
+    .map((variant, index) => {
+      const images = splitImages(variant.images);
+      const image = String(variant.image || images[0] || '').trim();
+
+      return {
+        id: toVariantId(variant, index),
+        name: String(variant.name || '').trim(),
+        name_zh: String(variant.name_zh || '').trim(),
+        image,
+        images: images.length ? images : image ? [image] : [],
+      };
+    })
+    .filter((variant) => variant.name || variant.name_zh || variant.image || variant.images.length);
+};
+
+export const getProductImages = (product, variant = null) => {
+  const variantImages = variant ? splitImages(variant.images) : [];
+  const preferredImages = variant
+    ? [variant.image, ...variantImages]
+    : splitImages(product?.images);
+
+  const images = preferredImages
+    .map((url) => String(url || '').trim())
+    .filter(Boolean);
+
+  if (!images.length && product?.image) {
+    images.push(product.image);
+  }
+
+  return [...new Set(images)];
+};
+
+export const getVariantLabel = (variant, language = 'en') => {
+  if (!variant) return '';
+  return language === 'zh' && variant.name_zh ? variant.name_zh : variant.name || variant.name_zh;
+};
+
+export const getCartItemKey = (item) => item.cartKey || `${item.id}::${item.variantId || 'base'}`;
+
+export const buildCartProduct = (product, variant, finalPrice = product.price) => {
+  const variantImages = getProductImages(product, variant);
+  const variantId = variant?.id || 'base';
+
+  return {
+    ...product,
+    price: finalPrice,
+    productId: product.id,
+    cartKey: `${product.id}::${variantId}`,
+    variantId: variant?.id || '',
+    variantName: variant?.name || '',
+    variantName_zh: variant?.name_zh || '',
+    image: variantImages[0] || product.image,
+    selectedVariant: variant
+      ? {
+          id: variant.id,
+          name: variant.name,
+          name_zh: variant.name_zh,
+          image: variant.image,
+          images: variant.images,
+        }
+      : null,
+  };
+};

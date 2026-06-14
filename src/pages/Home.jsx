@@ -11,6 +11,7 @@ import {
   PackageCheck,
   Sparkles,
   Store,
+  ShoppingCart,
   Utensils,
   X,
   ZoomIn,
@@ -196,6 +197,31 @@ const Home = () => {
         </div>
       </section>
       <br />
+
+      <section className="container trust-order-band">
+        
+        <div className="trust-order-copy">
+          
+          <span className="status-pill">{t('confirm_order')}</span>
+          <h2>{t('trust_title')}</h2>
+          <p>{t('trust_intro')}</p>
+        </div>
+        <div className="trust-order-steps">
+          <div className="trust-step">
+            <ShoppingCart size={22} />
+            <p>{t('trust_point_one')}</p>
+          </div>
+          <div className="trust-step">
+            <MessageCircle size={22} />
+            <p>{t('trust_point_two')}</p>
+          </div>
+          <div className="trust-step">
+            <PackageCheck size={22} />
+            <p>{t('trust_point_three')}</p>
+          </div>
+        </div>
+      </section>
+<br></br>
       <section className="container storefront-grid">
         <article className="storefront-panel essentials-panel">
           <div className="panel-icon"><Store size={22} /></div>

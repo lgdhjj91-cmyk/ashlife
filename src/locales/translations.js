@@ -6,6 +6,14 @@ const translations = {
     nav_diy: 'DIY Custom',
     nav_admin: 'Sign In',
     lang_toggle: '中文',
+    global_search_placeholder: 'Search products, colors, categories...',
+    global_search_label: 'Search products',
+    global_search_button: 'Search',
+    global_search_no_results: 'Search shop for',
+    cart_preview_title: 'Recently added',
+    cart_preview_empty: 'Your cart is empty.',
+    cart_preview_more: '+{count} more item(s) in cart',
+    view_shopping_cart: 'View My Shopping Cart',
 
     hero_eyebrow: 'Smart essentials for home, work and DIY',
     hero_title: 'Stick, sort and simplify everyday life.',
@@ -126,6 +134,12 @@ const translations = {
     store_location_subtitle: 'Self-pickup available — save on delivery!',
     store_location_desc: 'Contact us on WhatsApp for store directions and pickup arrangements.',
     store_location_btn: 'Get Directions (WhatsApp)',
+    trust_title: 'Prefer not to pay online yet?',
+    trust_intro:
+      'Add items to cart and choose WhatsApp order. We can confirm stock, color, delivery, pickup and payment details before you commit.',
+    trust_point_one: 'Order details are sent to WhatsApp automatically.',
+    trust_point_two: 'Ask questions first, then decide bank transfer, QR payment or pay after pickup when arranged.',
+    trust_point_three: 'Good for customers who want to confirm we are real before paying.',
   },
 
   zh: {
@@ -135,6 +149,14 @@ const translations = {
     nav_diy: 'DIY 定制',
     nav_admin: '登录',
     lang_toggle: 'EN',
+    global_search_placeholder: '搜索商品、颜色、分类...',
+    global_search_label: '搜索商品',
+    global_search_button: '搜索',
+    global_search_no_results: '到商品页搜索',
+    cart_preview_title: '购物车商品',
+    cart_preview_empty: '购物车还是空的。',
+    cart_preview_more: '购物车还有 {count} 件商品',
+    view_shopping_cart: '查看我的购物车',
 
     hero_eyebrow: '家居、办公与 DIY 实用小物',
     hero_title: '把生活贴好、收好、变简单。',
@@ -252,9 +274,15 @@ const translations = {
     checkout_send_wa: '发送订单详情至 WhatsApp',
     checkout_back_home: '返回首页',
     store_location_title: '欢迎来到 Seri Kembangan 门店',
-    store_location_subtitle: '提供上门自取服务 —— 节省运费！',
+    store_location_subtitle: '提供上门自取服务 - 节省运费！',
     store_location_desc: '请通过 WhatsApp 联系我们获取门店路线和自取安排。',
     store_location_btn: '获取路线 (WhatsApp)',
+    trust_title: '还不放心直接在线付款？',
+    trust_intro:
+      '可以先把商品加入购物车，再选择 WhatsApp 下单。我们会先和你确认库存、颜色、运送、自取和付款细节。',
+    trust_point_one: '订单内容会自动带到 WhatsApp，不需要重新打字。',
+    trust_point_two: '可以先询问清楚，再决定银行转账、QR 付款，或安排自取后付款。',
+    trust_point_three: '适合想先确认店家真实可靠，再付款的顾客。',
   },
 };
 

@@ -100,6 +100,20 @@
   z-index: 2;
 }
 
+.variant-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  z-index: 2;
+}
+
 /* Price block for discount */
 .product-price-block {
   display: flex;

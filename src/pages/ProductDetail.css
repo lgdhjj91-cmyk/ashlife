@@ -94,6 +94,57 @@
   line-height: 1.8;
 }
 
+.variant-selector-block {
+  margin-bottom: var(--spacing-xl);
+}
+
+.variant-selector-block h3 {
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.variant-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: 44px;
+  max-width: 100%;
+  padding: 6px 12px 6px 6px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: white;
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.variant-option:hover,
+.variant-option.active {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  color: white;
+}
+
+.variant-option img {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--border-radius-sm);
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.variant-option span {
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
 .purchase-actions {
   display: flex;
   flex-direction: column;
