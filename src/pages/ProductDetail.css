@@ -330,3 +330,16 @@
   padding: 4px 10px;
   border-radius: 6px;
 }
+
+.variant-error-message {
+  color: #d9383a;
+  background-color: #fdf2f2;
+  border: 1px solid #fbd5d5;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: inline-block;
+  margin-top: var(--spacing-sm);
+  animation: fadeIn 0.2s ease-out;
+}

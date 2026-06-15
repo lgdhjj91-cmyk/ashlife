@@ -38,10 +38,11 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedVariantId, setSelectedVariantId] = useState('');
+  const [showError, setShowError] = useState(false);
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
   const variants = useMemo(() => normalizeVariants(product), [product]);
-  const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) || variants[0] || null;
+  const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) || null;
   const productImages = getProductImages(product, selectedVariant);
   const mainImage = productImages.includes(selectedImage) ? selectedImage : productImages[0] || product?.image;
 
@@ -62,6 +63,10 @@ const ProductDetail = () => {
   const { hasDiscount, finalPrice, badge, savingsText } = getDiscountInfo(product);
 
   const handleAddToCart = () => {
+    if (variants.length > 0 && !selectedVariant) {
+      setShowError(true);
+      return;
+    }
     addToCart(buildCartProduct(product, selectedVariant, finalPrice), quantity);
   };
 
@@ -138,6 +143,7 @@ const ProductDetail = () => {
                       onClick={() => {
                         setSelectedImage('');
                         setSelectedVariantId(variant.id);
+                        setShowError(false);
                       }}
                     >
                       {variant.image && (
@@ -148,6 +154,11 @@ const ProductDetail = () => {
                   );
                 })}
               </div>
+              {showError && (
+                <div className="variant-error-message mt-2">
+                  {t('please_select_variation')}
+                </div>
+              )}
             </div>
           )}
 

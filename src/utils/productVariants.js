@@ -48,17 +48,22 @@ export const normalizeVariants = (product) => {
 
 export const getProductImages = (product, variant = null) => {
   const variantImages = variant ? splitImages(variant.images) : [];
+  const variantMainImage = variant?.image ? [variant.image] : [];
+
+  const mainImages = [];
+  if (product?.image) {
+    mainImages.push(product.image);
+  }
+  const additionalImages = splitImages(product?.images);
+  mainImages.push(...additionalImages);
+
   const preferredImages = variant
-    ? [variant.image, ...variantImages]
-    : splitImages(product?.images);
+    ? [...variantMainImage, ...variantImages, ...mainImages]
+    : mainImages;
 
   const images = preferredImages
     .map((url) => String(url || '').trim())
     .filter(Boolean);
-
-  if (!images.length && product?.image) {
-    images.push(product.image);
-  }
 
   return [...new Set(images)];
 };
