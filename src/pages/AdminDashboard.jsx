@@ -240,13 +240,13 @@ const AdminDashboard = () => {
     const priceNum = parseFloat(formData.price) || 0;
     const discountValueNum = parseFloat(formData.discountValue) || 0;
     const imagesArray = formData.images
-      .split(',')
+      .split(/[\n,;]+/)
       .map((url) => url.trim())
       .filter((url) => url);
     const variants = formData.variants
       .map((variant, index) => {
         const variantImages = variant.images
-          .split(',')
+          .split(/[\n,;]+/)
           .map((url) => url.trim())
           .filter((url) => url);
         const image = variant.image.trim() || variantImages[0] || '';
@@ -575,9 +575,9 @@ const AdminDashboard = () => {
                 )}
               </div>
               <div className="form-group">
-                <label>Additional Images URLs</label>
-                <textarea name="images" value={formData.images} onChange={handleInputChange} placeholder="Comma-separated image URLs" />
-                <span className="form-hint">For the image gallery. Separate with commas.</span>
+                <label>Additional Images URLs (comma or newline separated)</label>
+                <textarea name="images" value={formData.images} onChange={handleInputChange} placeholder="Enter each image URL on a new line or separated by commas" />
+                <span className="form-hint">For the image gallery. Separate with commas or newlines (enter).</span>
               </div>
 
               <div className="form-group variants-section">
@@ -641,17 +641,17 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="form-group">
-                          <label>Variation Gallery URLs</label>
+                          <label>Variation Gallery URLs (comma or newline separated)</label>
                           <textarea
                             value={variant.images}
                             onChange={(e) => handleVariantChange(index, 'images', e.target.value)}
-                            placeholder="Comma-separated URLs for this variation"
+                            placeholder="Enter each image URL on a new line or separated by commas"
                           />
                         </div>
 
                         {(variant.image || variant.images) && (
                           <div className="variant-preview-row">
-                            {[variant.image, ...variant.images.split(',')]
+                            {[variant.image, ...variant.images.split(/[\n,;]+/)]
                               .map((url) => url.trim())
                               .filter(Boolean)
                               .slice(0, 4)

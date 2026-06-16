@@ -5,7 +5,7 @@ const splitImages = (images) => {
 
   if (typeof images === 'string') {
     return images
-      .split(',')
+      .split(/[\n,;]+/)
       .map((url) => url.trim())
       .filter(Boolean);
   }
