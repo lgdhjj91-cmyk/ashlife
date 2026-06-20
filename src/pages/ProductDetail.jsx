@@ -5,29 +5,8 @@ import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
-import { buildCartProduct, getProductImages, getVariantLabel, normalizeVariants } from '../utils/productVariants';
+import { buildCartProduct, getDiscountInfo, getProductImages, getProductPrice, getProductPriceRange, getVariantLabel, normalizeVariants, usesIndividualVariantPrices } from '../utils/productVariants';
 import './ProductDetail.css';
-
-// Helper: calculate final price and discount info
-const getDiscountInfo = (product) => {
-  const { price, discountType, discountValue } = product;
-  if (!discountType || discountType === 'none' || !discountValue) {
-    return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
-  }
-  if (discountType === 'percentage') {
-    const pct = Math.min(Math.max(parseFloat(discountValue) || 0, 0), 100);
-    const finalPrice = Math.max(0, price - price * pct / 100);
-    const savings = (price - finalPrice).toFixed(2);
-    return { hasDiscount: pct > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${savings}` };
-  }
-  if (discountType === 'amount') {
-    const amt = Math.max(parseFloat(discountValue) || 0, 0);
-    const finalPrice = Math.max(0, price - amt);
-    const pct = price > 0 ? Math.round((amt / price) * 100) : 0;
-    return { hasDiscount: amt > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${amt.toFixed(2)}` };
-  }
-  return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
-};
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -60,7 +39,9 @@ const ProductDetail = () => {
   const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
   const displayDesc = language === 'zh' && product.description_zh ? product.description_zh : product.description;
   const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
-  const { hasDiscount, finalPrice, badge, savingsText } = getDiscountInfo(product);
+  const awaitingPricedVariant = usesIndividualVariantPrices(product) && variants.length > 0 && !selectedVariant;
+  const activePrice = awaitingPricedVariant ? getProductPriceRange(product).min : getProductPrice(product, selectedVariant);
+  const { hasDiscount, finalPrice, badge, savings } = getDiscountInfo(product, activePrice);
 
   const handleAddToCart = () => {
     if (variants.length > 0 && !selectedVariant) {
@@ -114,13 +95,15 @@ const ProductDetail = () => {
               <>
                 {badge && <span className="detail-discount-badge">{badge}</span>}
                 <div className="detail-price-row">
-                  <span className="product-price-large sale-price-large">RM {finalPrice.toFixed(2)}</span>
-                  <span className="product-price-large-original">RM {product.price.toFixed(2)}</span>
+                  <span className="product-price-large sale-price-large">{awaitingPricedVariant ? 'From ' : ''}RM {finalPrice.toFixed(2)}</span>
+                  <span className="product-price-large-original">RM {activePrice.toFixed(2)}</span>
                 </div>
-                {savingsText && <p className="savings-text">{savingsText}</p>}
+                {savings > 0 && <p className="savings-text">You save RM {savings.toFixed(2)}</p>}
               </>
             ) : (
-              <div className="product-price-large">RM {product.price.toFixed(2)}</div>
+              <div className="product-price-large">
+                {awaitingPricedVariant ? 'From ' : ''}RM {activePrice.toFixed(2)}
+              </div>
             )}
           </div>
 
@@ -150,6 +133,9 @@ const ProductDetail = () => {
                         <img src={resolveAssetUrl(variant.image)} alt={variantLabel} loading="lazy" />
                       )}
                       <span>{variantLabel}</span>
+                      {usesIndividualVariantPrices(product) && (
+                        <small>RM {getDiscountInfo(product, getProductPrice(product, variant)).finalPrice.toFixed(2)}</small>
+                      )}
                     </button>
                   );
                 })}
@@ -184,7 +170,7 @@ const ProductDetail = () => {
 
             <button className="btn btn-primary w-full add-btn-large" onClick={handleAddToCart}>
               <ShoppingBag size={20} />
-              {t('add_to_cart')} - RM {(finalPrice * quantity).toFixed(2)}
+              {t('add_to_cart')}{awaitingPricedVariant ? '' : ` - RM ${(finalPrice * quantity).toFixed(2)}`}
             </button>
           </div>
 

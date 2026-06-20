@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
 import { resolveAssetUrl } from '../utils/assets';
-import { normalizeVariants } from '../utils/productVariants';
+import { getProductPriceRange, normalizeVariants } from '../utils/productVariants';
 import {
   LogOut,
   Plus,
@@ -22,6 +22,8 @@ import {
   Clock,
   Truck,
   Store,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import './Admin.css';
 
@@ -50,6 +52,7 @@ const createEmptyVariant = () => ({
   name_zh: '',
   image: '',
   images: '',
+  price: '',
 });
 
 const AdminDashboard = () => {
@@ -67,6 +70,7 @@ const AdminDashboard = () => {
 
   // ---- Product State ----
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditorExpanded, setIsEditorExpanded] = useState(false);
   const [currentProductId, setCurrentProductId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -74,6 +78,7 @@ const AdminDashboard = () => {
     description: '',
     description_zh: '',
     price: '',
+    variantPricing: 'shared',
     discountType: 'none',
     discountValue: '',
     category: 'Stationery',
@@ -159,6 +164,7 @@ const AdminDashboard = () => {
       description: '',
       description_zh: '',
       price: '',
+      variantPricing: 'shared',
       discountType: 'none',
       discountValue: '',
       category: 'Stationery',
@@ -178,6 +184,7 @@ const AdminDashboard = () => {
       description: product.description || '',
       description_zh: product.description_zh || '',
       price: product.price || '',
+      variantPricing: product.variantPricing || 'shared',
       discountType: product.discountType || 'none',
       discountValue: product.discountValue || '',
       category: product.category || 'Stationery',
@@ -188,6 +195,7 @@ const AdminDashboard = () => {
         id: variant.id || '',
         name: variant.name || '',
         name_zh: variant.name_zh || '',
+        price: variant.price ?? '',
         image: variant.image || '',
         images: variant.images ? variant.images.join(', ') : '',
       })),
@@ -262,6 +270,7 @@ const AdminDashboard = () => {
           id,
           name,
           name_zh: nameZh,
+          price: formData.variantPricing === 'individual' ? Math.max(0, parseFloat(variant.price) || 0) : null,
           image,
           images: variantImages.length > 0 ? variantImages : image ? [image] : [],
         };
@@ -274,6 +283,7 @@ const AdminDashboard = () => {
       description: formData.description,
       description_zh: formData.description_zh || '',
       price: priceNum,
+      variantPricing: formData.variantPricing,
       discountType: formData.discountType || 'none',
       discountValue: formData.discountType !== 'none' ? discountValueNum : 0,
       category: formData.category,
@@ -425,7 +435,7 @@ const AdminDashboard = () => {
 
       {/* ========== PRODUCTS TAB ========== */}
       {activeTab === 'products' && (
-        <div className="admin-layout">
+        <div className={`admin-layout ${isEditorExpanded ? 'editor-expanded' : ''}`}>
           <div className="admin-panel admin-list-panel">
             <h3>Manage Products ({products.length})</h3>
             <div className="table-responsive">
@@ -453,7 +463,12 @@ const AdminDashboard = () => {
                           <div className="text-secondary">{product.name_zh}</div>
                         )}
                       </td>
-                      <td>RM {product.price.toFixed(2)}</td>
+                      <td>{(() => {
+                        const range = getProductPriceRange(product);
+                        return range.min === range.max
+                          ? `RM ${range.min.toFixed(2)}`
+                          : `RM ${range.min.toFixed(2)} – ${range.max.toFixed(2)}`;
+                      })()}</td>
                       <td>
                         {normalizeVariants(product).length > 0 ? (
                           <span className="variant-count-pill">
@@ -504,7 +519,24 @@ const AdminDashboard = () => {
           </div>
 
           <div className="admin-panel admin-form-panel">
-            <h3>{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
+            <div className="admin-form-panel-header">
+              <div>
+                <h3>{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
+                <span className="form-hint">
+                  {isEditing ? 'Update the selected item without losing any product details.' : 'Create a product with pricing, images, and variations.'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="editor-focus-btn"
+                onClick={() => setIsEditorExpanded((expanded) => !expanded)}
+                aria-label={isEditorExpanded ? 'Show product list and editor' : 'Expand product editor'}
+                title={isEditorExpanded ? 'Show product list' : 'Focus on editor'}
+              >
+                {isEditorExpanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+                <span>{isEditorExpanded ? 'Show list' : 'Focus mode'}</span>
+              </button>
+            </div>
             <form className="admin-form" onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Product Name (EN)</label>
@@ -517,6 +549,7 @@ const AdminDashboard = () => {
               <div className="form-group">
                 <label>Price (RM)</label>
                 <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} />
+                <span className="form-hint">This is the shared price and fallback price for the product.</span>
               </div>
 
               <div className="form-group discount-section">
@@ -584,12 +617,30 @@ const AdminDashboard = () => {
                 <div className="variants-section-header">
                   <div>
                     <label>Product Variations</label>
-                    <span className="form-hint">Use this for same product, same price, different color/type. Each variation can have its own images.</span>
+                    <span className="form-hint">Variations can share the product price or each have their own price and images.</span>
                   </div>
                   <button type="button" className="btn btn-secondary btn-icon" onClick={handleAddVariant}>
                     <Plus size={16} /> Add Variation
                   </button>
                 </div>
+
+                {formData.variants.length > 0 && (
+                  <div className="variant-pricing-mode">
+                    <span>Variation pricing</span>
+                    <div className="discount-type-row">
+                      {[
+                        ['shared', 'Same price for all'],
+                        ['individual', 'Different price each'],
+                      ].map(([value, label]) => (
+                        <label key={value} className={`discount-radio ${formData.variantPricing === value ? 'active' : ''}`}>
+                          <input type="radio" name="variantPricing" value={value} checked={formData.variantPricing === value} onChange={handleInputChange} />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <span className="form-hint">The discount above applies to every variation.</span>
+                  </div>
+                )}
 
                 {formData.variants.length === 0 ? (
                   <div className="variant-empty-state">No variations added. Product will behave like a single-option item.</div>
@@ -628,6 +679,20 @@ const AdminDashboard = () => {
                               placeholder="Optional"
                             />
                           </div>
+                          {formData.variantPricing === 'individual' && (
+                            <div className="form-group">
+                              <label>Price (RM)</label>
+                              <input
+                                required
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={variant.price}
+                                onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
+                                placeholder="e.g. 12.90"
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className="form-group">

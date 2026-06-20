@@ -48,6 +48,8 @@
 /* Admin Dashboard Specific */
 .admin-dashboard {
   padding-bottom: var(--spacing-xxl);
+  width: min(100%, 1540px);
+  max-width: 1540px;
 }
 
 .admin-header {
@@ -81,11 +83,44 @@
   display: grid;
   gap: var(--spacing-xl);
   grid-template-columns: 1fr;
+  align-items: start;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1120px) {
   .admin-layout {
-    grid-template-columns: 1fr 350px;
+    grid-template-columns: minmax(560px, 1.2fr) minmax(500px, 0.9fr);
+  }
+
+  .admin-form-panel {
+    position: sticky;
+    top: 76px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .editor-focus-btn {
+    display: inline-flex;
+  }
+
+  .admin-layout.editor-expanded {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-layout.editor-expanded .admin-list-panel {
+    display: none;
+  }
+
+  .admin-layout.editor-expanded .admin-form-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .admin-layout.editor-expanded .admin-form {
+    width: 100%;
+    max-width: 980px;
+    margin-inline: auto;
   }
 }
 
@@ -94,6 +129,7 @@
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 .admin-panel h3 {
@@ -112,6 +148,11 @@
   padding: var(--spacing-sm);
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+}
+
+.product-list-table td:nth-child(2),
+.product-list-table td:nth-child(6) {
+  overflow-wrap: anywhere;
 }
 
 .product-list-table img {
@@ -151,12 +192,50 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.admin-form-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-form-panel-header h3 {
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+}
+
+.editor-focus-btn {
+  flex-shrink: 0;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-pill);
+  background: var(--surface-color);
+  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.editor-focus-btn:hover {
+  border-color: var(--primary-color);
+  background: #e8f5f3;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .form-group label {
@@ -168,6 +247,10 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: var(--spacing-sm);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
@@ -281,6 +364,7 @@
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
   background: #fafafa;
+  min-width: 0;
 }
 
 .variants-section-header {
@@ -289,6 +373,11 @@
   gap: var(--spacing-md);
   align-items: flex-start;
   margin-bottom: var(--spacing-sm);
+}
+
+.variants-section-header .form-hint {
+  display: block;
+  max-width: 34rem;
 }
 
 .variant-empty-state {
@@ -306,11 +395,28 @@
   gap: var(--spacing-sm);
 }
 
+.variant-pricing-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: white;
+}
+
+.variant-pricing-mode > span:first-child {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
 .variant-editor-card {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   background: white;
   padding: var(--spacing-md);
+  min-width: 0;
 }
 
 .variant-editor-header {
@@ -325,6 +431,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-sm);
+  min-width: 0;
 }
 
 .variant-preview-row {
@@ -345,12 +452,16 @@
 
 @media (min-width: 640px) {
   .variant-field-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
   .variants-section-header {
+    flex-direction: column;
+  }
+
+  .admin-form-panel-header {
     flex-direction: column;
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
 import './Admin.css';
 
@@ -8,6 +8,10 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const navigate = useNavigate();
+
+  if (sessionStorage.getItem('isAdmin') === 'true') {
+    return <Navigate to="/admin-dashboard" replace />;
+  }
 
   const handleLogin = (e) => {
     e.preventDefault();
