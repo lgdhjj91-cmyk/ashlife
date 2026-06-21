@@ -53,6 +53,7 @@ const createEmptyVariant = () => ({
   image: '',
   images: '',
   price: '',
+  stock: '',
 });
 
 const AdminDashboard = () => {
@@ -78,6 +79,7 @@ const AdminDashboard = () => {
     description: '',
     description_zh: '',
     price: '',
+    stock: '',
     variantPricing: 'shared',
     discountType: 'none',
     discountValue: '',
@@ -164,6 +166,7 @@ const AdminDashboard = () => {
       description: '',
       description_zh: '',
       price: '',
+      stock: '',
       variantPricing: 'shared',
       discountType: 'none',
       discountValue: '',
@@ -184,6 +187,7 @@ const AdminDashboard = () => {
       description: product.description || '',
       description_zh: product.description_zh || '',
       price: product.price || '',
+      stock: product.stock ?? '',
       variantPricing: product.variantPricing || 'shared',
       discountType: product.discountType || 'none',
       discountValue: product.discountValue || '',
@@ -196,6 +200,7 @@ const AdminDashboard = () => {
         name: variant.name || '',
         name_zh: variant.name_zh || '',
         price: variant.price ?? '',
+        stock: variant.stock ?? '',
         image: variant.image || '',
         images: variant.images ? variant.images.join(', ') : '',
       })),
@@ -271,6 +276,7 @@ const AdminDashboard = () => {
           name,
           name_zh: nameZh,
           price: formData.variantPricing === 'individual' ? Math.max(0, parseFloat(variant.price) || 0) : null,
+          stock: Math.max(0, parseInt(variant.stock) || 0),
           image,
           images: variantImages.length > 0 ? variantImages : image ? [image] : [],
         };
@@ -283,6 +289,7 @@ const AdminDashboard = () => {
       description: formData.description,
       description_zh: formData.description_zh || '',
       price: priceNum,
+      stock: variants.length > 0 ? null : Math.max(0, parseInt(formData.stock) || 0),
       variantPricing: formData.variantPricing,
       discountType: formData.discountType || 'none',
       discountValue: formData.discountType !== 'none' ? discountValueNum : 0,
@@ -445,6 +452,7 @@ const AdminDashboard = () => {
                     <th>Image</th>
                     <th>Name</th>
                     <th>Price</th>
+                    <th>Stock</th>
                     <th>Variations</th>
                     <th>Discount</th>
                     <th>Category</th>
@@ -468,6 +476,15 @@ const AdminDashboard = () => {
                         return range.min === range.max
                           ? `RM ${range.min.toFixed(2)}`
                           : `RM ${range.min.toFixed(2)} – ${range.max.toFixed(2)}`;
+                      })()}</td>
+                      <td>{(() => {
+                        const variants = normalizeVariants(product);
+                        if (variants.length > 0) {
+                          const total = variants.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+                          return <span className={total <= 0 ? 'stock-pill out' : total <= 10 ? 'stock-pill low' : 'stock-pill ok'}>{total} units</span>;
+                        }
+                        const stock = product.stock ?? 0;
+                        return <span className={stock <= 0 ? 'stock-pill out' : stock <= 10 ? 'stock-pill low' : 'stock-pill ok'}>{stock} units</span>;
                       })()}</td>
                       <td>
                         {normalizeVariants(product).length > 0 ? (
@@ -551,6 +568,14 @@ const AdminDashboard = () => {
                 <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} />
                 <span className="form-hint">This is the shared price and fallback price for the product.</span>
               </div>
+
+              {formData.variants.length === 0 && (
+                <div className="form-group">
+                  <label>Stock (units)</label>
+                  <input type="number" min="0" step="1" name="stock" value={formData.stock} onChange={handleInputChange} placeholder="0" />
+                  <span className="form-hint">Number of units available. Leave 0 if out of stock.</span>
+                </div>
+              )}
 
               <div className="form-group discount-section">
                 <label>Discount</label>
@@ -693,6 +718,18 @@ const AdminDashboard = () => {
                               />
                             </div>
                           )}
+
+                          <div className="form-group">
+                            <label>Stock (units)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={variant.stock}
+                              onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
+                              placeholder="0"
+                            />
+                          </div>
                         </div>
 
                         <div className="form-group">

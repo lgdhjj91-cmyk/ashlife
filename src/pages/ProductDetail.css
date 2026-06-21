@@ -350,3 +350,54 @@
   margin-top: var(--spacing-sm);
   animation: fadeIn 0.2s ease-out;
 }
+
+/* ---- Stock Status Styles ---- */
+.stock-status-block {
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.stock-status-label {
+  color: var(--text-secondary);
+}
+
+.stock-status-value {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.stock-status-value.in-stock {
+  color: #2e7d32;
+  background: #e8f5e9;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.85rem;
+}
+
+.stock-status-value.low-stock {
+  color: #e65100;
+  background: #fff3e0;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.85rem;
+}
+
+.stock-status-value.out-of-stock {
+  color: #c62828;
+  background: #ffebee;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.85rem;
+}
+
+.stock-status-value.select-variant {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.875rem;
+}

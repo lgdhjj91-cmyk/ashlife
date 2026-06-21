@@ -8,10 +8,15 @@ import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Cart.css';
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, getAvailableStock } = useCart();
   const { t, language } = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+
+  const isCartValid = cartItems.every(item => {
+    const availableStock = getAvailableStock(item.productId || item.id, item.variantId);
+    return availableStock > 0 && item.quantity <= availableStock;
+  });
 
   const generateWhatsAppMessage = () => {
     let message = `${t('wa_greeting')}\n\n`;
@@ -59,56 +64,60 @@ const Cart = () => {
 
       <div className="cart-layout">
         <div className="cart-items-section">
-          {cartItems.map(item => (
-            <div key={getCartItemKey(item)} className="cart-item">
-              <div className="cart-item-image">
-                <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" />
-              </div>
+          {cartItems.map(item => {
+            const availableStock = getAvailableStock(item.productId || item.id, item.variantId);
+            return (
+              <div key={getCartItemKey(item)} className="cart-item">
+                <div className="cart-item-image">
+                  <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" />
+                </div>
 
-              <div className="cart-item-details">
-                <Link to={`/product/${item.id}`} className="cart-item-name">
-                  {language === 'zh' && item.name_zh ? item.name_zh : item.name}
-                </Link>
-                {(item.variantName || item.variantName_zh || item.selectedVariant) && (
-                  <div className="cart-item-variant">
-                    Variation: {getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName)}
-                  </div>
-                )}
-                <div className="cart-item-price">RM {item.price.toFixed(2)}</div>
+                <div className="cart-item-details">
+                  <Link to={`/product/${item.id}`} className="cart-item-name">
+                    {language === 'zh' && item.name_zh ? item.name_zh : item.name}
+                  </Link>
+                  {(item.variantName || item.variantName_zh || item.selectedVariant) && (
+                    <div className="cart-item-variant">
+                      Variation: {getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName)}
+                    </div>
+                  )}
+                  <div className="cart-item-price">RM {item.price.toFixed(2)}</div>
 
-                <div className="cart-item-actions">
-                  <div className="quantity-selector small">
+                  <div className="cart-item-actions">
+                    <div className="quantity-selector small">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(getCartItemKey(item), item.quantity - 1)}
+                        className="qty-btn"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="qty-value">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(getCartItemKey(item), item.quantity + 1)}
+                        className="qty-btn"
+                        disabled={item.quantity >= availableStock}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
                     <button
-                      type="button"
-                      onClick={() => updateQuantity(getCartItemKey(item), item.quantity - 1)}
-                      className="qty-btn"
+                      className="remove-btn"
+                      onClick={() => removeFromCart(getCartItemKey(item))}
+                      aria-label="Remove item"
                     >
-                      <Minus size={14} />
-                    </button>
-                    <span className="qty-value">{item.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(getCartItemKey(item), item.quantity + 1)}
-                      className="qty-btn"
-                    >
-                      <Plus size={14} />
+                      <Trash2 size={18} />
                     </button>
                   </div>
-
-                  <button
-                    className="remove-btn"
-                    onClick={() => removeFromCart(getCartItemKey(item))}
-                    aria-label="Remove item"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                </div>
+                <div className="cart-item-subtotal">
+                  RM {(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
-              <div className="cart-item-subtotal">
-                RM {(item.price * item.quantity).toFixed(2)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           <button className="clear-cart-btn" onClick={clearCart}>
             {t('clear_cart')}
@@ -134,8 +143,24 @@ const Cart = () => {
             </div>
 
             <div className="checkout-options-box">
+              {!isCartValid && (
+                <div className="cart-stock-warning">
+                  {language === 'zh'
+                    ? '您的购物车中有商品已售罄或超出库存。请在结账前进行调整。'
+                    : 'Some items in your cart are out of stock or exceed available quantity. Please adjust before checking out.'}
+                </div>
+              )}
+
               <div className="checkout-option">
-                <Link to="/checkout" className="btn btn-primary w-full pay-online-btn">
+                <Link
+                  to={isCartValid ? "/checkout" : "#"}
+                  className={`btn btn-primary w-full pay-online-btn ${!isCartValid ? 'disabled' : ''}`}
+                  onClick={(e) => {
+                    if (!isCartValid) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   💳 {t('pay_online')}
                 </Link>
                 <p className="checkout-note">
@@ -161,6 +186,7 @@ const Cart = () => {
                     onChange={e => setName(e.target.value)}
                     placeholder={t('name_placeholder')}
                     aria-label={t('your_name')}
+                    disabled={!isCartValid}
                   />
                 </div>
 
@@ -174,10 +200,11 @@ const Cart = () => {
                     onChange={e => setPhone(e.target.value)}
                     placeholder={t('phone_placeholder')}
                     aria-label={t('phone_number')}
+                    disabled={!isCartValid}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-full confirm-order-btn">
+                <button type="submit" className="btn btn-primary w-full confirm-order-btn" disabled={!isCartValid}>
                   💬 {t('confirm_order')}
                 </button>
 

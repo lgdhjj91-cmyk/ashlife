@@ -276,3 +276,24 @@
     display: block;
   }
 }
+
+.cart-stock-warning {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border: 1px solid #ffcdd2;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  line-height: 1.4;
+}
+
+.pay-online-btn.disabled {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+  pointer-events: none;
+}

@@ -44,6 +44,9 @@ export const normalizeVariants = (product) => {
           : Math.max(0, Number(variant.price)),
         image,
         images: images.length ? images : image ? [image] : [],
+        stock: variant.stock === '' || variant.stock == null || Number.isNaN(Number(variant.stock))
+          ? 0
+          : Math.max(0, parseInt(variant.stock) || 0),
       };
     })
     .filter((variant) => variant.name || variant.name_zh || variant.image || variant.images.length);

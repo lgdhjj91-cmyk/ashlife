@@ -141,6 +141,13 @@ const translations = {
     trust_point_one: 'Order details are sent to WhatsApp automatically.',
     trust_point_two: 'Ask questions first, then decide bank transfer, QR payment or pay after pickup when arranged.',
     trust_point_three: 'Good for customers who want to confirm we are real before paying.',
+    stock: 'Stock',
+    units: 'units',
+    out_of_stock: 'Out of Stock',
+    select_variation_for_stock: 'Select variation to see stock',
+    only_left: 'Only ',
+    left: ' left!',
+    available: 'available',
   },
 
   zh: {
@@ -285,6 +292,13 @@ const translations = {
     trust_point_one: '订单内容会自动带到 WhatsApp，不需要重新打字。',
     trust_point_two: '可以先询问清楚，再决定银行转账、QR 付款，或安排自取后付款。',
     trust_point_three: '适合想先确认店家真实可靠，再付款的顾客。',
+    stock: '库存',
+    units: '件',
+    out_of_stock: '暂时无货',
+    select_variation_for_stock: '选择规格以查看库存',
+    only_left: '仅剩 ',
+    left: ' 件！',
+    available: '现货',
   },
 };
 
