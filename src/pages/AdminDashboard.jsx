@@ -758,7 +758,7 @@ const AdminDashboard = () => {
                 aria-label={isEditorExpanded ? 'Show product list and editor' : 'Expand product editor'}
                 title={isEditorExpanded ? 'Show product list' : 'Focus on editor'}
               >
-                {isEditorExpanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+                {/* {isEditorExpanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />} */}
                 <span>{isEditorExpanded ? 'Show list' : 'Focus mode'}</span>
               </button>
             </div>
