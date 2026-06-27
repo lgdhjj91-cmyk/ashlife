@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   BadgeCheck,
   Car,
@@ -9,12 +9,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteContent } from '../context/SiteContentContext';
 import './DIY.css';
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '60123456789';
 const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
-const PRODUCTS = [
+const DIY_PRODUCTS = [
   {
     id: 'badge',
     icon: BadgeCheck,
@@ -435,10 +436,19 @@ function DIYProductTab({ product, language }) {
 }
 
 const DIY = () => {
-  const [activeTab, setActiveTab] = useState(PRODUCTS[0].id);
+  const [activeTab, setActiveTab] = useState(DIY_PRODUCTS[0].id);
   const { language } = useLanguage();
+  const { siteContent } = useSiteContent();
   const l = language === 'zh' ? 'zh' : 'en';
-  const activeProduct = PRODUCTS.find((product) => product.id === activeTab) ?? PRODUCTS[0];
+  const products = useMemo(
+    () =>
+      DIY_PRODUCTS.map((product) => ({
+        ...product,
+        media: siteContent.diyMedia?.[product.id]?.length ? siteContent.diyMedia[product.id] : product.media,
+      })),
+    [siteContent.diyMedia]
+  );
+  const activeProduct = products.find((product) => product.id === activeTab) ?? products[0];
 
   return (
     <div className="page container animate-fade-in diy-page">
@@ -473,7 +483,7 @@ const DIY = () => {
       </div>
 
       <div className="diy-tabs-nav" role="tablist" aria-label="DIY product categories">
-        {PRODUCTS.map((product) => {
+        {products.map((product) => {
           const Icon = product.icon;
           return (
             <button
@@ -492,7 +502,7 @@ const DIY = () => {
         })}
       </div>
 
-      {PRODUCTS.map((product) => (
+      {products.map((product) => (
         <div
           id={`diy-panel-${product.id}`}
           role="tabpanel"

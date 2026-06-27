@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
+import { useSiteContent } from '../context/SiteContentContext';
 import { resolveAssetUrl } from '../utils/assets';
 import { normalizeVariants } from '../utils/productVariants';
 import {
@@ -22,18 +23,9 @@ import {
   Clock,
   Truck,
   Store,
+  Sparkles,
 } from 'lucide-react';
 import './Admin.css';
-
-const categories = [
-  'Stationery',
-  'DIY Crafts',
-  'Cute Accessories',
-  'Home Gadgets',
-  'Cleaning Tools',
-  'Lifestyle Items',
-  'Festival Items',
-];
 
 const STATUS_OPTIONS = ['pending_verification', 'confirmed', 'rejected', 'completed'];
 
@@ -52,14 +44,134 @@ const createEmptyVariant = () => ({
   images: '',
 });
 
+const createEmptyCategory = () => ({
+  id: `category-${Date.now()}`,
+  en: '',
+  zh: '',
+  description_en: '',
+  description_zh: '',
+  showInRange: false,
+  icon: 'sparkles',
+});
+
+const createEmptyMedia = (type = 'image') => ({
+  type,
+  src: '',
+  poster: '',
+  alt: '',
+});
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+function MediaListEditor({ title, description, items, onChange, allowVideo = false }) {
+  const updateItem = (index, field, value) => {
+    onChange(items.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item)));
+  };
+
+  const handleFile = async (index, field, file) => {
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    updateItem(index, field, dataUrl);
+  };
+
+  return (
+    <div className="admin-content-block">
+      <div className="admin-content-heading">
+        <div>
+          <h4>{title}</h4>
+          {description && <p>{description}</p>}
+        </div>
+        <button type="button" className="btn btn-secondary btn-icon" onClick={() => onChange([...items, createEmptyMedia()])}>
+          <Plus size={16} /> Add Image
+        </button>
+      </div>
+
+      {items.length === 0 && <div className="variant-empty-state">No custom media set. Existing site media will be used.</div>}
+
+      <div className="content-media-list">
+        {items.map((item, index) => (
+          <div className="content-media-row" key={`${title}-${index}`}>
+            <div className="content-media-preview">
+              {item.src ? (
+                item.type === 'video' ? (
+                  <video src={item.src} poster={item.poster} controls muted />
+                ) : (
+                  <img src={item.src} alt={item.alt || title} />
+                )
+              ) : (
+                <span>No media</span>
+              )}
+            </div>
+
+            <div className="content-media-fields">
+              {allowVideo && (
+                <div className="form-group">
+                  <label>Type</label>
+                  <select value={item.type || 'image'} onChange={(e) => updateItem(index, 'type', e.target.value)}>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+              )}
+              <div className="form-group">
+                <label>{item.type === 'video' ? 'Video URL or uploaded file' : 'Image URL or uploaded file'}</label>
+                <input value={item.src || ''} onChange={(e) => updateItem(index, 'src', e.target.value)} />
+                <input
+                  type="file"
+                  accept={allowVideo ? 'image/*,video/*' : 'image/*'}
+                  onChange={(e) => handleFile(index, 'src', e.target.files?.[0])}
+                />
+              </div>
+              {item.type === 'video' && (
+                <div className="form-group">
+                  <label>Video Poster Image URL or uploaded file</label>
+                  <input value={item.poster || ''} onChange={(e) => updateItem(index, 'poster', e.target.value)} />
+                  <input type="file" accept="image/*" onChange={(e) => handleFile(index, 'poster', e.target.files?.[0])} />
+                </div>
+              )}
+              <div className="form-group">
+                <label>Alt Text</label>
+                <input value={item.alt || ''} onChange={(e) => updateItem(index, 'alt', e.target.value)} />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="action-btn delete"
+              aria-label="Remove media"
+              onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const DIY_ADMIN_PRODUCTS = [
+  { id: 'badge', tab: { en: 'Custom Badge' } },
+  { id: 'keychain', tab: { en: 'Rectangle Keychain' } },
+  { id: 'ornament', tab: { en: 'Shaking Ornament' } },
+  { id: 'frame', tab: { en: 'AI Cartoon Portrait' } },
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { products, addProduct, updateProduct, deleteProduct, dbConnected } = useProducts();
   const { orders, loadingOrders, paymentSettings, updateOrderStatus, uploadQRCode, updatePaymentSettings } =
     useOrders();
+  const { siteContent, updateSiteContent } = useSiteContent();
 
   // ---- Tab State ----
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'orders' | 'settings'
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'orders' | 'content' | 'settings'
 
   // ---- Shared ----
   const [saving, setSaving] = useState(false);
@@ -100,6 +212,9 @@ const AdminDashboard = () => {
   const [tngPreview, setTngPreview] = useState('');
   const maeInputRef = useRef();
   const tngInputRef = useRef();
+  const [contentForm, setContentForm] = useState(siteContent);
+  const categoryOptions = contentForm.categories?.length ? contentForm.categories : siteContent.categories || [];
+  const dynamicCategoryZhMap = Object.fromEntries(categoryOptions.map((category) => [category.en, category.zh || '']));
 
   const categoryZhMap = {
     Stationery: '文具',
@@ -126,7 +241,6 @@ const AdminDashboard = () => {
 
   // Sync payment settings form with context
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
     setSettingsForm({
       delivery_fee: paymentSettings.delivery_fee?.toString() || '8',
       delivery_note_en: paymentSettings.delivery_note_en || '',
@@ -134,8 +248,11 @@ const AdminDashboard = () => {
     });
     setMaePreview(paymentSettings.mae_qr_url || '');
     setTngPreview(paymentSettings.tng_qr_url || '');
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [paymentSettings]);
+
+  useEffect(() => {
+    setContentForm(siteContent);
+  }, [siteContent]);
 
   const showToast = (type, message) => setToast({ type, message });
 
@@ -277,7 +394,7 @@ const AdminDashboard = () => {
       discountType: formData.discountType || 'none',
       discountValue: formData.discountType !== 'none' ? discountValueNum : 0,
       category: formData.category,
-      category_zh: formData.category_zh || categoryZhMap[formData.category] || '',
+      category_zh: formData.category_zh || dynamicCategoryZhMap[formData.category] || categoryZhMap[formData.category] || '',
       image: formData.image,
       images: imagesArray.length > 0 ? imagesArray : [formData.image],
       variants,
@@ -361,6 +478,95 @@ const AdminDashboard = () => {
   };
 
   // ============================================
+  // SITE CONTENT HANDLERS
+  // ============================================
+  const updateContentField = (field, value) => {
+    setContentForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateCategory = (index, field, value) => {
+    updateContentField(
+      'categories',
+      categoryOptions.map((category, categoryIndex) =>
+        categoryIndex === index ? { ...category, [field]: value } : category
+      )
+    );
+  };
+
+  const addCategory = () => {
+    updateContentField('categories', [...categoryOptions, createEmptyCategory()]);
+  };
+
+  const removeCategory = (index) => {
+    updateContentField(
+      'categories',
+      categoryOptions.filter((_, categoryIndex) => categoryIndex !== index)
+    );
+  };
+
+  const toggleFocusProduct = (productId) => {
+    const selected = contentForm.homeFocusProductIds || [];
+    updateContentField(
+      'homeFocusProductIds',
+      selected.includes(productId) ? selected.filter((id) => id !== productId) : [...selected, productId]
+    );
+  };
+
+  const updateDiyMedia = (productId, items) => {
+    setContentForm((prev) => ({
+      ...prev,
+      diyMedia: {
+        ...(prev.diyMedia || {}),
+        [productId]: items,
+      },
+    }));
+  };
+
+  const clearDiyMedia = (productId) => {
+    setContentForm((prev) => {
+      const nextMedia = { ...(prev.diyMedia || {}) };
+      delete nextMedia[productId];
+      return { ...prev, diyMedia: nextMedia };
+    });
+  };
+
+  const handleSaveSiteContent = async () => {
+    setSaving(true);
+    const cleanedContent = {
+      ...contentForm,
+      categories: (contentForm.categories || [])
+        .map((category) => ({
+          ...category,
+          id:
+            category.id ||
+            category.en
+              ?.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '') ||
+            `category-${Date.now()}`,
+          en: category.en?.trim() || '',
+          zh: category.zh?.trim() || '',
+        }))
+        .filter((category) => category.en),
+      creativeRootsImages: (contentForm.creativeRootsImages || []).filter((item) => item.src),
+      archiveImages: (contentForm.archiveImages || []).filter((item) => item.src),
+      diyMedia: Object.fromEntries(
+        Object.entries(contentForm.diyMedia || {}).map(([productId, items]) => [
+          productId,
+          items.filter((item) => item.type === 'frame-visual' || item.src),
+        ])
+      ),
+    };
+    const result = await updateSiteContent(cleanedContent);
+    setSaving(false);
+    if (result.success) {
+      showToast('success', 'Site content saved!');
+    } else {
+      showToast('error', `Failed: ${result.error}`);
+    }
+  };
+
+  // ============================================
   // RENDER
   // ============================================
   return (
@@ -414,6 +620,12 @@ const AdminDashboard = () => {
           <ShoppingBag size={18} />
           Orders
           {pendingCount > 0 && <span className="tab-badge">{pendingCount}</span>}
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'content' ? 'active' : ''}`}
+          onClick={() => setActiveTab('content')}
+        >
+          <Sparkles size={18} /> Site Content
         </button>
         <button
           className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
@@ -553,7 +765,7 @@ const AdminDashboard = () => {
               <div className="form-group">
                 <label>Category</label>
                 <select name="category" value={formData.category} onChange={handleInputChange}>
-                  {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                  {categoryOptions.map((cat) => <option key={cat.en} value={cat.en}>{cat.en}</option>)}
                 </select>
               </div>
               <div className="form-group">
@@ -818,6 +1030,170 @@ const AdminDashboard = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========== SITE CONTENT TAB ========== */}
+      {activeTab === 'content' && (
+        <div className="settings-panel site-content-panel">
+          <div className="admin-panel">
+            <div className="admin-content-heading">
+              <div>
+                <h3>Site Content</h3>
+                <p className="settings-desc">
+                  Customize homepage products, galleries, product range categories and DIY media without editing code.
+                </p>
+              </div>
+              <button type="button" className="btn btn-primary" onClick={handleSaveSiteContent} disabled={saving}>
+                {saving ? 'Saving...' : <><CheckCircle size={18} /> Save Site Content</>}
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-panel">
+            <div className="admin-content-heading">
+              <div>
+                <h3>Product Categories</h3>
+                <p className="settings-desc">
+                  The English name is used for product filtering. Tick "Product Range" to show a category card on the shop page.
+                </p>
+              </div>
+              <button type="button" className="btn btn-secondary btn-icon" onClick={addCategory}>
+                <Plus size={16} /> Add Category
+              </button>
+            </div>
+
+            <div className="category-editor-list">
+              {categoryOptions.map((category, index) => (
+                <div className="category-editor-row" key={category.id || index}>
+                  <div className="variant-field-grid">
+                    <div className="form-group">
+                      <label>Name (EN)</label>
+                      <input value={category.en || ''} onChange={(e) => updateCategory(index, 'en', e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Name (中文)</label>
+                      <input value={category.zh || ''} onChange={(e) => updateCategory(index, 'zh', e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Description (EN)</label>
+                      <input
+                        value={category.description_en || ''}
+                        onChange={(e) => updateCategory(index, 'description_en', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Description (中文)</label>
+                      <input
+                        value={category.description_zh || ''}
+                        onChange={(e) => updateCategory(index, 'description_zh', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Icon</label>
+                      <select value={category.icon || 'sparkles'} onChange={(e) => updateCategory(index, 'icon', e.target.value)}>
+                        <option value="sparkles">Sparkles</option>
+                        <option value="cable">Cable</option>
+                        <option value="home">Home</option>
+                        <option value="paintbrush">Paintbrush</option>
+                      </select>
+                    </div>
+                    <label className="admin-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(category.showInRange)}
+                        onChange={(e) => updateCategory(index, 'showInRange', e.target.checked)}
+                      />
+                      Product Range
+                    </label>
+                  </div>
+                  <button type="button" className="action-btn delete" onClick={() => removeCategory(index)} aria-label="Remove category">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="admin-panel">
+            <h3>Current Focus Products</h3>
+            <p className="settings-desc">Choose which products appear in the homepage Current focus products section.</p>
+            <div className="focus-product-grid">
+              {products.map((product) => (
+                <label className="focus-product-option" key={product.id}>
+                  <input
+                    type="checkbox"
+                    checked={(contentForm.homeFocusProductIds || []).includes(product.id)}
+                    onChange={() => toggleFocusProduct(product.id)}
+                  />
+                  <img src={resolveAssetUrl(product.image)} alt={product.name} />
+                  <span>
+                    {product.name}
+                    <small>{product.category}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="admin-panel">
+            <MediaListEditor
+              title="Creative Shop Roots Images"
+              description="These are the three images under Creative shop roots."
+              items={contentForm.creativeRootsImages || []}
+              onChange={(items) => updateContentField('creativeRootsImages', items)}
+            />
+          </div>
+
+          <div className="admin-panel">
+            <MediaListEditor
+              title="Cute And Creative Corner Images"
+              description="These are the large archive images in the Cute and creative corner section."
+              items={contentForm.archiveImages || []}
+              onChange={(items) => updateContentField('archiveImages', items)}
+            />
+          </div>
+
+          <div className="admin-panel">
+            <h3>DIY Custom Media</h3>
+            <p className="settings-desc">
+              Override images or videos for each DIY tab. Leave a tab empty to keep using the existing built-in media.
+            </p>
+            <div className="diy-admin-media-list">
+              {DIY_ADMIN_PRODUCTS.map((product) => {
+                const customItems = contentForm.diyMedia?.[product.id] || [];
+                return (
+                  <div className="admin-content-block" key={product.id}>
+                    <div className="admin-content-heading">
+                      <div>
+                        <h4>{product.tab.en}</h4>
+                        <p>{customItems.length ? 'Custom media is active for this DIY tab.' : 'Using existing built-in media.'}</p>
+                      </div>
+                      <div className="qr-upload-actions">
+                        {customItems.length > 0 && (
+                          <button type="button" className="btn btn-outline" onClick={() => clearDiyMedia(product.id)}>
+                            Clear Override
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <MediaListEditor
+                      title={`${product.tab.en} Media`}
+                      items={customItems}
+                      onChange={(items) => updateDiyMedia(product.id, items)}
+                      allowVideo
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="admin-panel">
+            <button type="button" className="btn btn-primary" onClick={handleSaveSiteContent} disabled={saving}>
+              {saving ? 'Saving...' : <><CheckCircle size={18} /> Save Site Content</>}
+            </button>
+          </div>
         </div>
       )}
 

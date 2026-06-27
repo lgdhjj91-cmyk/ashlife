@@ -19,6 +19,8 @@ import {
 import ProductCard from '../components/ProductCard';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteContent } from '../context/SiteContentContext';
+import { resolveAssetUrl } from '../utils/assets';
 import './Home.css';
 
 const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
@@ -89,6 +91,8 @@ const copy = {
     shopTitle: 'Creative shop roots',
     shopText:
       'Stationery, dolls, nano blocks, stickers and DIY resin pieces are no longer the main active shop, but they still tell customers what ASHLIFE feels like.',
+    creativeCategory: 'DIY Crafts',
+    enlargeNote: 'Tap photos to enlarge',
     activeTitle: 'Current focus products',
     activeIntro: 'A quick look at the kinds of items customers can expect from the active ASHLIFE Shopee range.',
     archiveTitle: 'Cute and creative corner',
@@ -132,8 +136,38 @@ const Home = () => {
   const [lightboxImage, setLightboxImage] = useState(null);
   const { products } = useProducts();
   const { t, language } = useLanguage();
+  const { siteContent } = useSiteContent();
   const text = copy[language] || copy.en;
   const featuredProducts = products.slice(0, 4);
+  const categories = siteContent.categories || [];
+  const categoryLabel = (category) => {
+    const match = categories.find((item) => item.en === category);
+    return language === 'zh' ? match?.zh || category : match?.en || category;
+  };
+  const focusProducts = (() => {
+    const selectedIds = siteContent.homeFocusProductIds || [];
+    const selectedProducts = selectedIds
+      .map((id) => products.find((product) => product.id === id))
+      .filter(Boolean);
+
+    if (selectedProducts.length > 0) {
+      return selectedProducts.map((product) => ({
+        title: language === 'zh' ? product.name_zh || product.name : product.name,
+        tag: categoryLabel(product.category),
+        image: resolveAssetUrl(product.image),
+        to: `/product/${product.id}`,
+      }));
+    }
+
+    return SHOPEE_HIGHLIGHTS;
+  })();
+  const creativeImages = (siteContent.creativeRootsImages?.length
+    ? siteContent.creativeRootsImages
+    : CREATIVE_HIGHLIGHTS
+  ).map((image) => ({ ...image, src: resolveAssetUrl(image.src) }));
+  const archiveImages = (siteContent.archiveImages?.length ? siteContent.archiveImages : ARCHIVE_GALLERY).map(
+    (image) => ({ ...image, src: resolveAssetUrl(image.src) })
+  );
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     'Hello ASHLIFE, I would like to ask about product availability.'
@@ -242,16 +276,16 @@ const Home = () => {
           <p>{text.shopText}</p>
           <div className="creative-actions">
             <Link to="/shop?category=DIY%20Crafts" className="creative-category-link">
-              DIY Crafts
+              {text.creativeCategory || (language === 'zh' ? 'DIY 手作' : 'DIY Crafts')}
               <ExternalLink size={16} />
             </Link>
             <span className="image-expand-note">
               <ZoomIn size={15} />
-              Tap photos to enlarge
+              {text.enlargeNote || (language === 'zh' ? '点击照片放大' : 'Tap photos to enlarge')}
             </span>
           </div>
           <div className="creative-thumb-row">
-            {CREATIVE_HIGHLIGHTS.map((image) => (
+            {creativeImages.map((image) => (
               <button
                 className="image-zoom-button creative-thumb"
                 key={image.src}
@@ -278,7 +312,7 @@ const Home = () => {
           <Link to="/shop" className="view-all">{text.shopNow}</Link>
         </div>
         <div className="highlight-product-grid">
-          {SHOPEE_HIGHLIGHTS.map((item) => (
+          {focusProducts.map((item) => (
             <Link className="highlight-product" key={item.title} to={item.to} aria-label={`View ${item.title}`}>
               <img src={item.image} alt={item.title} loading="lazy" />
               <div>
@@ -302,7 +336,7 @@ const Home = () => {
             </a>
           </div>
           <div className="archive-gallery">
-            {ARCHIVE_GALLERY.map((image) => (
+            {archiveImages.map((image) => (
               <button
                 className="image-zoom-button archive-image-card"
                 key={image.src}
