@@ -1,33 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
-import { buildCartProduct, getProductImages, getVariantLabel, normalizeVariants } from '../utils/productVariants';
+import { buildCartProduct, getDiscountInfo, getProductImages, getProductPrice, getProductPriceRange, getVariantLabel, normalizeVariants, usesIndividualVariantPrices } from '../utils/productVariants';
 import './ProductDetail.css';
-
-// Helper: calculate final price and discount info
-const getDiscountInfo = (product) => {
-  const { price, discountType, discountValue } = product;
-  if (!discountType || discountType === 'none' || !discountValue) {
-    return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
-  }
-  if (discountType === 'percentage') {
-    const pct = Math.min(Math.max(parseFloat(discountValue) || 0, 0), 100);
-    const finalPrice = Math.max(0, price - price * pct / 100);
-    const savings = (price - finalPrice).toFixed(2);
-    return { hasDiscount: pct > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${savings}` };
-  }
-  if (discountType === 'amount') {
-    const amt = Math.max(parseFloat(discountValue) || 0, 0);
-    const finalPrice = Math.max(0, price - amt);
-    const pct = price > 0 ? Math.round((amt / price) * 100) : 0;
-    return { hasDiscount: amt > 0, finalPrice, badge: `${pct}% OFF`, savingsText: `You save RM ${amt.toFixed(2)}` };
-  }
-  return { hasDiscount: false, finalPrice: price, badge: null, savingsText: null };
-};
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -60,23 +39,58 @@ const ProductDetail = () => {
   const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
   const displayDesc = language === 'zh' && product.description_zh ? product.description_zh : product.description;
   const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
-  const { hasDiscount, finalPrice, badge, savingsText } = getDiscountInfo(product);
+  const awaitingPricedVariant = usesIndividualVariantPrices(product) && variants.length > 0 && !selectedVariant;
+  const activePrice = awaitingPricedVariant ? getProductPriceRange(product).min : getProductPrice(product, selectedVariant);
+  const { hasDiscount, finalPrice, badge, savings } = getDiscountInfo(product, activePrice);
+
+  const isOutOfStock = variants.length > 0
+    ? (selectedVariant ? (selectedVariant.stock ?? 0) <= 0 : false)
+    : (product.stock ?? 0) <= 0;
 
   const handleAddToCart = () => {
     if (variants.length > 0 && !selectedVariant) {
       setShowError(true);
       return;
     }
+    if (isOutOfStock) return;
     addToCart(buildCartProduct(product, selectedVariant, finalPrice), quantity);
   };
 
   const handleQuantityChange = (type) => {
+    const limit = selectedVariant
+      ? (selectedVariant.stock ?? 0)
+      : (product?.stock ?? 0);
+
     if (type === 'dec' && quantity > 1) {
       setQuantity(q => q - 1);
     } else if (type === 'inc') {
-      setQuantity(q => q + 1);
+      if (selectedVariant || variants.length === 0) {
+        if (quantity < limit) {
+          setQuantity(q => q + 1);
+        }
+      } else {
+        setQuantity(q => q + 1);
+      }
     }
   };
+
+  useEffect(() => {
+    if (selectedVariant) {
+      const stock = selectedVariant.stock ?? 0;
+      if (stock > 0) {
+        setQuantity(q => Math.min(q, stock));
+      } else {
+        setQuantity(1);
+      }
+    } else if (variants.length === 0 && product) {
+      const stock = product.stock ?? 0;
+      if (stock > 0) {
+        setQuantity(q => Math.min(q, stock));
+      } else {
+        setQuantity(1);
+      }
+    }
+  }, [selectedVariantId, product, selectedVariant, variants.length]);
 
   return (
     <div className="page container animate-fade-in product-detail-page">
@@ -114,13 +128,52 @@ const ProductDetail = () => {
               <>
                 {badge && <span className="detail-discount-badge">{badge}</span>}
                 <div className="detail-price-row">
-                  <span className="product-price-large sale-price-large">RM {finalPrice.toFixed(2)}</span>
-                  <span className="product-price-large-original">RM {product.price.toFixed(2)}</span>
+                  <span className="product-price-large sale-price-large">{awaitingPricedVariant ? 'From ' : ''}RM {finalPrice.toFixed(2)}</span>
+                  <span className="product-price-large-original">RM {activePrice.toFixed(2)}</span>
                 </div>
-                {savingsText && <p className="savings-text">{savingsText}</p>}
+                {savings > 0 && <p className="savings-text">You save RM {savings.toFixed(2)}</p>}
               </>
             ) : (
-              <div className="product-price-large">RM {product.price.toFixed(2)}</div>
+              <div className="product-price-large">
+                {awaitingPricedVariant ? 'From ' : ''}RM {activePrice.toFixed(2)}
+              </div>
+            )}
+          </div>
+
+          <div className="stock-status-block">
+            <span className="stock-status-label">{t('stock')}:</span>
+            {variants.length > 0 ? (
+              selectedVariant ? (
+                selectedVariant.stock > 0 ? (
+                  selectedVariant.stock <= 5 ? (
+                    <span className="stock-status-value low-stock">
+                      {t('only_left')}{selectedVariant.stock}{t('left')}
+                    </span>
+                  ) : (
+                    <span className="stock-status-value in-stock">
+                      {selectedVariant.stock} {t('units')} {t('available')}
+                    </span>
+                  )
+                ) : (
+                  <span className="stock-status-value out-of-stock">{t('out_of_stock')}</span>
+                )
+              ) : (
+                <span className="stock-status-value select-variant">{t('select_variation_for_stock')}</span>
+              )
+            ) : (
+              (product.stock ?? 0) > 0 ? (
+                (product.stock ?? 0) <= 5 ? (
+                  <span className="stock-status-value low-stock">
+                    {t('only_left')}{product.stock}{t('left')}
+                  </span>
+                ) : (
+                  <span className="stock-status-value in-stock">
+                    {product.stock} {t('units')} {t('available')}
+                  </span>
+                )
+              ) : (
+                <span className="stock-status-value out-of-stock">{t('out_of_stock')}</span>
+              )
             )}
           </div>
 
@@ -150,6 +203,9 @@ const ProductDetail = () => {
                         <img src={resolveAssetUrl(variant.image)} alt={variantLabel} loading="lazy" />
                       )}
                       <span>{variantLabel}</span>
+                      {usesIndividualVariantPrices(product) && (
+                        <small>RM {getDiscountInfo(product, getProductPrice(product, variant)).finalPrice.toFixed(2)}</small>
+                      )}
                     </button>
                   );
                 })}
@@ -168,7 +224,7 @@ const ProductDetail = () => {
                 type="button"
                 className="qty-btn"
                 onClick={() => handleQuantityChange('dec')}
-                disabled={quantity <= 1}
+                disabled={quantity <= 1 || isOutOfStock}
               >
                 <Minus size={16} />
               </button>
@@ -177,14 +233,24 @@ const ProductDetail = () => {
                 type="button"
                 className="qty-btn"
                 onClick={() => handleQuantityChange('inc')}
+                disabled={isOutOfStock}
               >
                 <Plus size={16} />
               </button>
             </div>
 
-            <button className="btn btn-primary w-full add-btn-large" onClick={handleAddToCart}>
+            <button 
+              className="btn btn-primary w-full add-btn-large" 
+              onClick={handleAddToCart}
+              disabled={isOutOfStock || (variants.length > 0 && !selectedVariant)}
+            >
               <ShoppingBag size={20} />
-              {t('add_to_cart')} - RM {(finalPrice * quantity).toFixed(2)}
+              {isOutOfStock 
+                ? t('out_of_stock') 
+                : (variants.length > 0 && !selectedVariant)
+                  ? t('please_select_variation')
+                  : `${t('add_to_cart')}${awaitingPricedVariant ? '' : ` - RM ${(finalPrice * quantity).toFixed(2)}`}`
+              }
             </button>
           </div>
 

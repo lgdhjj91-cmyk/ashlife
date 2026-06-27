@@ -24,21 +24,21 @@ const Header = () => {
   const trimmedSearch = searchQuery.trim();
   const searchSuggestions = trimmedSearch
     ? products
-        .filter((product) => {
-          const haystack = [
-            product.name,
-            product.name_zh,
-            product.description,
-            product.description_zh,
-            product.category,
-            product.category_zh,
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-          return haystack.includes(trimmedSearch.toLowerCase());
-        })
-        .slice(0, 5)
+      .filter((product) => {
+        const haystack = [
+          product.name,
+          product.name_zh,
+          product.description,
+          product.description_zh,
+          product.category,
+          product.category_zh,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(trimmedSearch.toLowerCase());
+      })
+      .slice(0, 5)
     : [];
 
   const handleSearchSubmit = (event) => {

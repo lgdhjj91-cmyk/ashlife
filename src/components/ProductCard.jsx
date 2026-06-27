@@ -4,28 +4,8 @@ import { ListChecks, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
-import { buildCartProduct, normalizeVariants } from '../utils/productVariants';
+import { buildCartProduct, getDiscountInfo, getProductPriceRange, normalizeVariants } from '../utils/productVariants';
 import './ProductCard.css';
-
-// Helper: calculate final price and discount label
-const getDiscountInfo = (product) => {
-  const { price, discountType, discountValue } = product;
-  if (!discountType || discountType === 'none' || !discountValue) {
-    return { hasDiscount: false, finalPrice: price, badge: null };
-  }
-  if (discountType === 'percentage') {
-    const pct = Math.min(Math.max(parseFloat(discountValue) || 0, 0), 100);
-    const finalPrice = Math.max(0, price - price * pct / 100);
-    return { hasDiscount: pct > 0, finalPrice, badge: `${pct}% OFF` };
-  }
-  if (discountType === 'amount') {
-    const amt = Math.max(parseFloat(discountValue) || 0, 0);
-    const finalPrice = Math.max(0, price - amt);
-    const pct = price > 0 ? Math.round((amt / price) * 100) : 0;
-    return { hasDiscount: amt > 0, finalPrice, badge: `${pct}% OFF` };
-  }
-  return { hasDiscount: false, finalPrice: price, badge: null };
-};
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -44,7 +24,9 @@ const ProductCard = ({ product }) => {
 
   const displayName = language === 'zh' && product.name_zh ? product.name_zh : product.name;
   const displayCategory = language === 'zh' && product.category_zh ? product.category_zh : product.category;
-  const { hasDiscount, finalPrice, badge } = getDiscountInfo(product);
+  const priceRange = getProductPriceRange(product);
+  const hasPriceRange = priceRange.min !== priceRange.max;
+  const { hasDiscount, finalPrice, badge } = getDiscountInfo(product, priceRange.min);
 
   return (
     <Link to={`/product/${product.id}`} className="card product-card">
@@ -64,11 +46,11 @@ const ProductCard = ({ product }) => {
           <div className="product-price-block">
             {hasDiscount ? (
               <>
-                <span className="product-price sale-price">RM {finalPrice.toFixed(2)}</span>
-                <span className="product-price-original">RM {product.price.toFixed(2)}</span>
+                <span className="product-price sale-price">{hasPriceRange ? 'From ' : ''}RM {finalPrice.toFixed(2)}</span>
+                <span className="product-price-original">RM {priceRange.min.toFixed(2)}</span>
               </>
             ) : (
-              <span className="product-price">RM {product.price.toFixed(2)}</span>
+              <span className="product-price">{hasPriceRange ? 'From ' : ''}RM {priceRange.min.toFixed(2)}</span>
             )}
           </div>
           <button

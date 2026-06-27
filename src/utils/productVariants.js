@@ -39,8 +39,14 @@ export const normalizeVariants = (product) => {
         id: toVariantId(variant, index),
         name: String(variant.name || '').trim(),
         name_zh: String(variant.name_zh || '').trim(),
+        price: variant.price === '' || variant.price == null || Number.isNaN(Number(variant.price))
+          ? null
+          : Math.max(0, Number(variant.price)),
         image,
         images: images.length ? images : image ? [image] : [],
+        stock: variant.stock === '' || variant.stock == null || Number.isNaN(Number(variant.stock))
+          ? 0
+          : Math.max(0, parseInt(variant.stock) || 0),
       };
     })
     .filter((variant) => variant.name || variant.name_zh || variant.image || variant.images.length);
@@ -73,6 +79,60 @@ export const getVariantLabel = (variant, language = 'en') => {
   return language === 'zh' && variant.name_zh ? variant.name_zh : variant.name || variant.name_zh;
 };
 
+export const usesIndividualVariantPrices = (product) => product?.variantPricing === 'individual';
+
+export const getProductPrice = (product, variant = null) => {
+  const basePrice = Math.max(0, Number(product?.price) || 0);
+  if (usesIndividualVariantPrices(product) && variant?.price != null) {
+    return Math.max(0, Number(variant.price) || 0);
+  }
+  return basePrice;
+};
+
+export const getProductPriceRange = (product) => {
+  const variants = normalizeVariants(product);
+  const prices = usesIndividualVariantPrices(product) && variants.length > 0
+    ? variants.map((variant) => getProductPrice(product, variant))
+    : [getProductPrice(product)];
+
+  return { min: Math.min(...prices), max: Math.max(...prices) };
+};
+
+export const getDiscountInfo = (product, price = getProductPrice(product)) => {
+  const discountType = product?.discountType;
+  const discountValue = Number(product?.discountValue) || 0;
+
+  if (!discountType || discountType === 'none' || discountValue <= 0) {
+    return { hasDiscount: false, originalPrice: price, finalPrice: price, badge: null, savings: 0 };
+  }
+
+  if (discountType === 'percentage') {
+    const percentage = Math.min(Math.max(discountValue, 0), 100);
+    const finalPrice = Math.max(0, price - (price * percentage / 100));
+    return {
+      hasDiscount: percentage > 0,
+      originalPrice: price,
+      finalPrice,
+      badge: `${percentage}% OFF`,
+      savings: price - finalPrice,
+    };
+  }
+
+  if (discountType === 'amount') {
+    const finalPrice = Math.max(0, price - discountValue);
+    const percentage = price > 0 ? Math.round(((price - finalPrice) / price) * 100) : 0;
+    return {
+      hasDiscount: discountValue > 0,
+      originalPrice: price,
+      finalPrice,
+      badge: `${percentage}% OFF`,
+      savings: price - finalPrice,
+    };
+  }
+
+  return { hasDiscount: false, originalPrice: price, finalPrice: price, badge: null, savings: 0 };
+};
+
 export const getCartItemKey = (item) => item.cartKey || `${item.id}::${item.variantId || 'base'}`;
 
 export const buildCartProduct = (product, variant, finalPrice = product.price) => {
@@ -93,6 +153,7 @@ export const buildCartProduct = (product, variant, finalPrice = product.price) =
           id: variant.id,
           name: variant.name,
           name_zh: variant.name_zh,
+          price: variant.price,
           image: variant.image,
           images: variant.images,
         }

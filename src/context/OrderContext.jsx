@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { database } from '../firebase';
-import { ref, onValue, set, get } from 'firebase/database';
+import { ref, onValue, set, get, update } from 'firebase/database';
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
@@ -107,23 +107,111 @@ export const OrderProvider = ({ children }) => {
   const createOrder = useCallback(
     async (orderData, screenshotFile) => {
       try {
+        const orderItems = orderData.items || [];
+        
+        // 1. Fetch latest product details from DB for all items in the order
+        const productSnapshots = {};
+        for (const item of orderItems) {
+          if (!productSnapshots[item.productId]) {
+            const productRef = ref(database, `products/${item.productId}`);
+            const snap = await get(productRef);
+            if (!snap.exists()) {
+              throw new Error(`Product not found: ${item.name}`);
+            }
+            productSnapshots[item.productId] = snap.val();
+          }
+        }
+        
+        // 2. Validate stock sufficiency
+        const insufficientItems = [];
+        for (const item of orderItems) {
+          const productVal = productSnapshots[item.productId];
+          if (item.variantId) {
+            const variants = productVal.variants || [];
+            const variantList = Array.isArray(variants) ? variants : Object.values(variants);
+            const variantObj = variantList.find(v => {
+              const vId = v.id || (v.name || v.name_zh || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+              return vId === item.variantId;
+            });
+            const stock = variantObj ? (Number(variantObj.stock) || 0) : 0;
+            if (stock < item.quantity) {
+              insufficientItems.push({
+                name: item.name,
+                variantName: item.variantName || item.variantName_zh,
+                available: stock
+              });
+            }
+          } else {
+            const stock = Number(productVal.stock) || 0;
+            if (stock < item.quantity) {
+              insufficientItems.push({
+                name: item.name,
+                available: stock
+              });
+            }
+          }
+        }
+        
+        if (insufficientItems.length > 0) {
+          const details = insufficientItems.map(i => 
+            `${i.name}${i.variantName ? ` (${i.variantName})` : ''}: only ${i.available} available`
+          ).join(', ');
+          return { 
+            success: false, 
+            error: `Some items do not have enough stock: ${details}` 
+          };
+        }
+        
+        // 3. Deduct stock and save products
+        const updates = {};
+        for (const item of orderItems) {
+          const productVal = productSnapshots[item.productId];
+          if (item.variantId) {
+            const variants = productVal.variants || [];
+            // We need to preserve the exact structure (array vs object) when updating.
+            if (Array.isArray(variants)) {
+              productVal.variants = variants.map(v => {
+                const vId = v.id || (v.name || v.name_zh || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                if (vId === item.variantId) {
+                  return { ...v, stock: Math.max(0, (Number(v.stock) || 0) - item.quantity) };
+                }
+                return v;
+              });
+            } else {
+              Object.keys(variants).forEach(key => {
+                const v = variants[key];
+                const vId = v.id || (v.name || v.name_zh || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                if (vId === item.variantId) {
+                  variants[key] = { ...v, stock: Math.max(0, (Number(v.stock) || 0) - item.quantity) };
+                }
+              });
+            }
+          } else {
+            productVal.stock = Math.max(0, (Number(productVal.stock) || 0) - item.quantity);
+          }
+          updates[`products/${item.productId}`] = productVal;
+        }
+        
         const orderId = await generateOrderId();
-
+        
         // Convert payment screenshot to base64 if provided
         let screenshotBase64 = '';
         if (screenshotFile) {
           screenshotBase64 = await compressImageToBase64(screenshotFile);
         }
-
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, {
+        
+        updates[`orders/${orderId}`] = {
           ...orderData,
           orderId,
           paymentScreenshot: screenshotBase64,
           status: 'pending_verification',
           createdAt: new Date().toISOString(),
-        });
-
+        };
+        
+        // Apply all database updates atomically!
+        const dbRef = ref(database);
+        await update(dbRef, updates);
+        
         return { success: true, orderId };
       } catch (error) {
         console.error('Failed to create order:', error);
