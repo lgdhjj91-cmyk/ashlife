@@ -215,6 +215,8 @@ const AdminDashboard = () => {
   const [tngPreview, setTngPreview] = useState('');
   const maeInputRef = useRef();
   const tngInputRef = useRef();
+  const productTableScrollRef = useRef(null);
+  const productTableDragRef = useRef({ active: false, startX: 0, scrollLeft: 0 });
   const [contentForm, setContentForm] = useState(siteContent);
   const categoryOptions = contentForm.categories?.length ? contentForm.categories : siteContent.categories || [];
   const dynamicCategoryZhMap = Object.fromEntries(categoryOptions.map((category) => [category.en, category.zh || '']));
@@ -358,6 +360,33 @@ const AdminDashboard = () => {
         showToast('error', `Failed to delete: ${result.error}`);
       }
     }
+  };
+
+  const stopProductTableDrag = () => {
+    productTableDragRef.current.active = false;
+    productTableScrollRef.current?.classList.remove('dragging');
+  };
+
+  const handleProductTableMouseDown = (event) => {
+    if (event.button !== 0 || event.target.closest('button, a, input, select, textarea')) return;
+    const tableScroller = productTableScrollRef.current;
+    if (!tableScroller || tableScroller.scrollWidth <= tableScroller.clientWidth) return;
+
+    productTableDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: tableScroller.scrollLeft,
+    };
+    tableScroller.classList.add('dragging');
+  };
+
+  const handleProductTableMouseMove = (event) => {
+    const dragState = productTableDragRef.current;
+    const tableScroller = productTableScrollRef.current;
+    if (!dragState.active || !tableScroller) return;
+
+    event.preventDefault();
+    tableScroller.scrollLeft = dragState.scrollLeft - (event.clientX - dragState.startX);
   };
 
   const handleSubmit = async (e) => {
@@ -652,8 +681,20 @@ const AdminDashboard = () => {
       {activeTab === 'products' && (
         <div className={`admin-layout ${isEditorExpanded ? 'editor-expanded' : ''}`}>
           <div className="admin-panel admin-list-panel">
-            <h3>Manage Products ({products.length})</h3>
-            <div className="table-responsive">
+            <div className="product-list-heading">
+              <div>
+                <h3>Manage Products ({products.length})</h3>
+                <p>Double-click any product row to edit. You can also drag the table left/right.</p>
+              </div>
+            </div>
+            <div
+              className="table-responsive product-table-scroll"
+              ref={productTableScrollRef}
+              onMouseDown={handleProductTableMouseDown}
+              onMouseMove={handleProductTableMouseMove}
+              onMouseUp={stopProductTableDrag}
+              onMouseLeave={stopProductTableDrag}
+            >
               <table className="product-list-table">
                 <thead>
                   <tr>
@@ -669,7 +710,16 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {products.map((product) => (
-                    <tr key={product.id}>
+                    <tr
+                      key={product.id}
+                      className={currentProductId === product.id ? 'active-row' : ''}
+                      tabIndex={0}
+                      title="Double-click to edit this product"
+                      onDoubleClick={() => handleEditClick(product)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') handleEditClick(product);
+                      }}
+                    >
                       <td>
                         <img src={product.image} alt={product.name} />
                       </td>
@@ -716,13 +766,19 @@ const AdminDashboard = () => {
                       </td>
                       <td>{product.category}</td>
                       <td>
-                        <div className="action-buttons">
-                          <button className="action-btn edit" onClick={() => handleEditClick(product)}>
+                        <div className="action-buttons" onDoubleClick={(event) => event.stopPropagation()}>
+                          <button
+                            className="action-btn edit"
+                            title="Edit product"
+                            onClick={() => handleEditClick(product)}
+                          >
                             <Edit2 size={16} />
                           </button>
                           <button
                             className="action-btn delete"
+                            title="Delete product"
                             onClick={() => handleDeleteClick(product.id)}
+                            onDoubleClick={(event) => event.stopPropagation()}
                             disabled={saving}
                           >
                             <Trash2 size={16} />
@@ -733,7 +789,7 @@ const AdminDashboard = () => {
                   ))}
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan="7" className="text-center py-4">
+                      <td colSpan="8" className="text-center py-4">
                         No products found. Add one!
                       </td>
                     </tr>

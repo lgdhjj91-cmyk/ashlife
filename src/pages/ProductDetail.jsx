@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -46,6 +46,14 @@ const ProductDetail = () => {
   const isOutOfStock = variants.length > 0
     ? (selectedVariant ? (selectedVariant.stock ?? 0) <= 0 : false)
     : (product.stock ?? 0) <= 0;
+  const quantityLimit = selectedVariant
+    ? (selectedVariant.stock ?? 0)
+    : variants.length === 0
+      ? (product.stock ?? 0)
+      : Infinity;
+  const selectedQuantity = Number.isFinite(quantityLimit) && quantityLimit > 0
+    ? Math.min(quantity, quantityLimit)
+    : quantity;
 
   const handleAddToCart = () => {
     if (variants.length > 0 && !selectedVariant) {
@@ -53,7 +61,7 @@ const ProductDetail = () => {
       return;
     }
     if (isOutOfStock) return;
-    addToCart(buildCartProduct(product, selectedVariant, finalPrice), quantity);
+    addToCart(buildCartProduct(product, selectedVariant, finalPrice), selectedQuantity);
   };
 
   const handleQuantityChange = (type) => {
@@ -73,24 +81,6 @@ const ProductDetail = () => {
       }
     }
   };
-
-  useEffect(() => {
-    if (selectedVariant) {
-      const stock = selectedVariant.stock ?? 0;
-      if (stock > 0) {
-        setQuantity(q => Math.min(q, stock));
-      } else {
-        setQuantity(1);
-      }
-    } else if (variants.length === 0 && product) {
-      const stock = product.stock ?? 0;
-      if (stock > 0) {
-        setQuantity(q => Math.min(q, stock));
-      } else {
-        setQuantity(1);
-      }
-    }
-  }, [selectedVariantId, product, selectedVariant, variants.length]);
 
   return (
     <div className="page container animate-fade-in product-detail-page">
@@ -228,7 +218,7 @@ const ProductDetail = () => {
               >
                 <Minus size={16} />
               </button>
-              <span className="qty-value">{quantity}</span>
+              <span className="qty-value">{selectedQuantity}</span>
               <button
                 type="button"
                 className="qty-btn"
@@ -249,7 +239,7 @@ const ProductDetail = () => {
                 ? t('out_of_stock') 
                 : (variants.length > 0 && !selectedVariant)
                   ? t('please_select_variation')
-                  : `${t('add_to_cart')}${awaitingPricedVariant ? '' : ` - RM ${(finalPrice * quantity).toFixed(2)}`}`
+                  : `${t('add_to_cart')}${awaitingPricedVariant ? '' : ` - RM ${(finalPrice * selectedQuantity).toFixed(2)}`}`
               }
             </button>
           </div>
