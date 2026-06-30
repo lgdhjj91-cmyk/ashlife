@@ -221,6 +221,35 @@
   gap: var(--spacing-md);
 }
 
+.checkout-choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: var(--background-color);
+}
+
+.checkout-choice-primary {
+  background: linear-gradient(180deg, #f7fffd 0%, #eef9f7 100%);
+  border-color: rgba(22, 122, 114, 0.22);
+}
+
+.checkout-choice-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.checkout-choice-heading svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
+}
+
 .checkout-divider {
   display: flex;
   align-items: center;

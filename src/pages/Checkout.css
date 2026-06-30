@@ -397,6 +397,34 @@
   font-size: 0.875rem;
 }
 
+.qr-missing-panel {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  border: 1px solid #ffe082;
+  border-radius: var(--border-radius-lg);
+  background: #fff8e1;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.qr-missing-panel svg {
+  color: #d98c00;
+}
+
+.qr-missing-panel strong {
+  font-size: 0.98rem;
+}
+
+.qr-missing-panel span {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
 .qr-amount {
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -413,6 +441,11 @@
 /* Screenshot Upload */
 .receipt-upload-section {
   margin-bottom: var(--spacing-lg);
+}
+
+.receipt-upload-section.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .receipt-upload-section > label {
@@ -632,7 +665,15 @@
   }
 
   .checkout-stepper .step-label {
-    font-size: 0.6rem;
+    display: none;
+    max-width: 92px;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .checkout-stepper .step.active .step-label {
+    display: block;
   }
 
   .order-id-value {

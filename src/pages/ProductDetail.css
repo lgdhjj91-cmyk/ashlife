@@ -100,7 +100,69 @@
 
 .variant-selector-block h3 {
   font-size: 1.25rem;
+  margin-bottom: 0;
+}
+
+.variant-heading-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
+}
+
+.variant-heading-row span {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.variant-tools {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.variant-search {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: 42px;
+  padding: 0 var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: var(--surface-color);
+}
+
+.variant-search svg {
+  color: var(--text-secondary);
+  flex: 0 0 auto;
+}
+
+.variant-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+}
+
+.variant-show-all,
+.variant-show-less {
+  color: var(--primary-color);
+  font-size: 0.86rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.variant-show-less {
+  margin-top: var(--spacing-sm);
 }
 
 .variant-options {
@@ -150,6 +212,12 @@
   color: var(--primary-color);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.variant-empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: var(--spacing-sm);
 }
 
 .purchase-actions {
@@ -257,6 +325,21 @@
 
   .purchase-actions .quantity-selector {
     flex-shrink: 0;
+  }
+
+  .many-variants .variant-tools {
+    padding-right: 5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .variant-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .variant-show-all {
+    align-self: flex-start;
   }
 }
 

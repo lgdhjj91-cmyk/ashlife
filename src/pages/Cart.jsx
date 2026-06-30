@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingBag, CreditCard, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { resolveAssetUrl } from '../utils/assets';
@@ -151,7 +151,11 @@ const Cart = () => {
                 </div>
               )}
 
-              <div className="checkout-option">
+              <div className="checkout-choice-card checkout-choice-primary">
+                <div className="checkout-choice-heading">
+                  <CreditCard size={20} />
+                  <span>Pay now</span>
+                </div>
                 <Link
                   to={isCartValid ? "/checkout" : "#"}
                   className={`btn btn-primary w-full pay-online-btn ${!isCartValid ? 'disabled' : ''}`}
@@ -161,7 +165,7 @@ const Cart = () => {
                     }
                   }}
                 >
-                  💳 {t('pay_online')}
+                  <CreditCard size={18} /> {t('pay_online')}
                 </Link>
                 <p className="checkout-note">
                   {language === 'zh' ? '使用 MAE/TNG 二维码在线安全付款' : 'Pay securely online using MAE/TNG QR code'}
@@ -172,9 +176,13 @@ const Cart = () => {
                 <span>{language === 'zh' ? '或' : 'OR'}</span>
               </div>
 
-              <form onSubmit={handleCheckout} className="checkout-form">
+              <form onSubmit={handleCheckout} className="checkout-form checkout-choice-card">
+                <div className="checkout-choice-heading">
+                  <MessageCircle size={20} />
+                  <span>{language === 'zh' ? '通过 WhatsApp 下单' : 'Reserve via WhatsApp'}</span>
+                </div>
                 <p className="checkout-form-title">
-                  {language === 'zh' ? '通过 WhatsApp 下单' : 'Order via WhatsApp'}
+                  {language === 'zh' ? '通过 WhatsApp 下单' : 'Confirm stock and payment details before paying.'}
                 </p>
                 <div className="form-group">
                   <input
@@ -205,7 +213,7 @@ const Cart = () => {
                 </div>
 
                 <button type="submit" className="btn btn-primary w-full confirm-order-btn" disabled={!isCartValid}>
-                  💬 {t('confirm_order')}
+                  <MessageCircle size={18} /> {t('confirm_order')}
                 </button>
 
                 <p className="checkout-note">

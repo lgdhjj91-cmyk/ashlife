@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -18,12 +18,29 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedVariantId, setSelectedVariantId] = useState('');
   const [showError, setShowError] = useState(false);
+  const [variantSearch, setVariantSearch] = useState('');
+  const [showAllVariants, setShowAllVariants] = useState(false);
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
   const variants = useMemo(() => normalizeVariants(product), [product]);
   const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) || null;
   const productImages = getProductImages(product, selectedVariant);
   const mainImage = productImages.includes(selectedImage) ? selectedImage : productImages[0] || product?.image;
+  const variantSearchTerm = variantSearch.trim().toLowerCase();
+  const hasManyVariants = variants.length > 10;
+  const matchingVariants = useMemo(() => {
+    if (!variantSearchTerm) return variants;
+    return variants.filter((variant) =>
+      [variant.name, variant.name_zh]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(variantSearchTerm)
+    );
+  }, [variantSearchTerm, variants]);
+  const visibleVariants = hasManyVariants && !variantSearchTerm && !showAllVariants
+    ? matchingVariants.slice(0, 12)
+    : matchingVariants;
 
   if (!product) {
     return (
@@ -173,10 +190,41 @@ const ProductDetail = () => {
           </div>
 
           {variants.length > 0 && (
-            <div className="variant-selector-block">
-              <h3>Variation</h3>
+            <div className={`variant-selector-block ${hasManyVariants ? 'many-variants' : ''}`}>
+              <div className="variant-heading-row">
+                <h3>Variation</h3>
+                {hasManyVariants && (
+                  <span>{variants.length} options</span>
+                )}
+              </div>
+              {hasManyVariants && (
+                <div className="variant-tools">
+                  <div className="variant-search">
+                    <Search size={16} />
+                    <input
+                      type="search"
+                      value={variantSearch}
+                      onChange={(event) => {
+                        setVariantSearch(event.target.value);
+                        setShowAllVariants(true);
+                      }}
+                      placeholder="Search variations"
+                      aria-label="Search product variations"
+                    />
+                  </div>
+                  {!variantSearchTerm && variants.length > visibleVariants.length && (
+                    <button
+                      type="button"
+                      className="variant-show-all"
+                      onClick={() => setShowAllVariants(true)}
+                    >
+                      Show all
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="variant-options">
-                {variants.map((variant) => {
+                {visibleVariants.map((variant) => {
                   const variantLabel = getVariantLabel(variant, language) || `Option ${variants.indexOf(variant) + 1}`;
                   return (
                     <button
@@ -200,6 +248,18 @@ const ProductDetail = () => {
                   );
                 })}
               </div>
+              {hasManyVariants && matchingVariants.length === 0 && (
+                <p className="variant-empty">No variation matches that search.</p>
+              )}
+              {hasManyVariants && !variantSearchTerm && showAllVariants && (
+                <button
+                  type="button"
+                  className="variant-show-less"
+                  onClick={() => setShowAllVariants(false)}
+                >
+                  Show fewer options
+                </button>
+              )}
               {showError && (
                 <div className="variant-error-message mt-2">
                   {t('please_select_variation')}

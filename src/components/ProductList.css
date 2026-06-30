@@ -16,7 +16,6 @@
 
 .compact-product-grid .product-name {
   font-size: 0.95rem;
-  margin-bottom: 0.4rem;
 }
 
 .compact-product-grid .product-category {
@@ -28,8 +27,15 @@
 }
 
 .compact-product-grid .add-to-cart-btn {
-  width: 34px;
   height: 34px;
+  min-width: 34px;
+  padding-inline: 0.65rem;
+}
+
+@media (max-width: 520px) {
+  .compact-product-grid .add-to-cart-btn span {
+    display: none;
+  }
 }
 
 @media (min-width: 720px) {

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useOrders } from '../context/OrderContext';
-import { CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon } from 'lucide-react';
+import { AlertCircle, CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon, MessageCircle } from 'lucide-react';
 import { resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Checkout.css';
@@ -32,6 +32,11 @@ const Checkout = () => {
     screenshotFile: null,
     screenshotPreview: null,
   });
+
+  const selectedQrUrl = paymentInfo.method === 'mae'
+    ? paymentSettings.mae_qr_url
+    : paymentSettings.tng_qr_url;
+  const hasSelectedQr = Boolean(selectedQrUrl);
 
   useEffect(() => {
     if (cartItems.length === 0 && step !== 4) {
@@ -74,6 +79,11 @@ const Checkout = () => {
   };
 
   const handleSubmitOrder = async () => {
+    if (!hasSelectedQr) {
+      alert('Online payment QR is not available right now. Please order via WhatsApp from the cart.');
+      return;
+    }
+
     if (!paymentInfo.screenshotFile) {
       alert('Please upload a payment screenshot.');
       return;
@@ -362,18 +372,27 @@ const Checkout = () => {
             <div className="qr-code-section">
               <p className="qr-instruction">{t('checkout_scan_qr')}</p>
               <div className="qr-image-container">
-                {paymentInfo.method === 'mae' && paymentSettings.mae_qr_url ? (
-                  <img src={paymentSettings.mae_qr_url} alt="MAE QR Code" className="qr-code" />
-                ) : paymentInfo.method === 'tng' && paymentSettings.tng_qr_url ? (
-                  <img src={paymentSettings.tng_qr_url} alt="TNG QR Code" className="qr-code" />
+                {hasSelectedQr ? (
+                  <img
+                    src={selectedQrUrl}
+                    alt={paymentInfo.method === 'mae' ? 'MAE QR Code' : 'TNG QR Code'}
+                    className="qr-code"
+                  />
                 ) : (
-                  <div className="qr-placeholder">QR Code not configured</div>
+                  <div className="qr-missing-panel">
+                    <AlertCircle size={28} />
+                    <strong>Online payment is not ready for this method.</strong>
+                    <span>Please return to cart and reserve through WhatsApp, or choose another payment method if available.</span>
+                    <Link to="/cart" className="btn btn-secondary">
+                      Back to cart
+                    </Link>
+                  </div>
                 )}
               </div>
               <p className="qr-amount">{t('checkout_amount_to_pay')} <span className="highlight-amount">RM {calculateTotal().toFixed(2)}</span></p>
             </div>
 
-            <div className="receipt-upload-section">
+            <div className={`receipt-upload-section ${!hasSelectedQr ? 'is-disabled' : ''}`}>
               <label>{t('checkout_upload_receipt')} *</label>
               <div className="upload-dropzone">
                 <input 
@@ -382,6 +401,7 @@ const Checkout = () => {
                   onChange={handleFileChange} 
                   id="receipt-upload" 
                   className="file-input-hidden"
+                  disabled={!hasSelectedQr}
                 />
                 <label htmlFor="receipt-upload" className="upload-label">
                   {paymentInfo.screenshotPreview ? (
@@ -406,7 +426,7 @@ const Checkout = () => {
               <button type="button" className="btn btn-secondary" onClick={handlePrevStep} disabled={loading}>
                 Go Back
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleSubmitOrder} disabled={loading || !paymentInfo.screenshotFile}>
+              <button type="button" className="btn btn-primary" onClick={handleSubmitOrder} disabled={loading || !paymentInfo.screenshotFile || !hasSelectedQr}>
                 {loading ? <Loader className="spin" size={18} /> : null}
                 {loading ? 'Processing...' : t('checkout_submit_order')}
               </button>
@@ -433,7 +453,7 @@ const Checkout = () => {
 
             <div className="success-actions">
               <button className="btn btn-primary w-full wa-btn" onClick={sendWhatsAppReceipt}>
-                💬 {t('checkout_send_wa')}
+                <MessageCircle size={18} /> {t('checkout_send_wa')}
               </button>
               <Link to="/" className="btn btn-secondary w-full">
                 {t('checkout_back_home')}

@@ -46,7 +46,7 @@
 
 .product-name {
   font-size: 1rem;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 0.35rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -54,10 +54,19 @@
   flex-grow: 1;
 }
 
+.product-card-meta {
+  min-height: 20px;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
 .product-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-sm);
   margin-top: auto;
 }
 
@@ -70,18 +79,29 @@
 .add-to-cart-btn {
   background-color: var(--primary-light);
   color: white;
-  width: 36px;
+  min-width: 36px;
   height: 36px;
-  border-radius: 50%;
+  padding: 0 0.7rem;
+  border-radius: var(--border-radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .add-to-cart-btn:hover {
   background-color: var(--primary-color);
   transform: scale(1.1);
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Discount Badge */

@@ -27,6 +27,11 @@ const ProductCard = ({ product }) => {
   const priceRange = getProductPriceRange(product);
   const hasPriceRange = priceRange.min !== priceRange.max;
   const { hasDiscount, finalPrice, badge } = getDiscountInfo(product, priceRange.min);
+  const availableStock = variants.length > 0
+    ? variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0)
+    : Number(product.stock) || 0;
+  const hasStock = availableStock > 0;
+  const actionLabel = variants.length > 0 ? 'View options' : 'Add';
 
   return (
     <Link to={`/product/${product.id}`} className="card product-card">
@@ -42,6 +47,13 @@ const ProductCard = ({ product }) => {
       <div className="product-info">
         <span className="product-category">{displayCategory}</span>
         <h3 className="product-name">{displayName}</h3>
+        <div className="product-card-meta">
+          {variants.length > 0 ? (
+            <span>{variants.length} options available</span>
+          ) : (
+            <span>{hasStock ? 'In stock' : 'Out of stock'}</span>
+          )}
+        </div>
         <div className="product-footer">
           <div className="product-price-block">
             {hasDiscount ? (
@@ -57,8 +69,10 @@ const ProductCard = ({ product }) => {
             className="add-to-cart-btn"
             onClick={handleAddToCart}
             aria-label={variants.length > 0 ? 'Choose variation' : 'Add to cart'}
+            disabled={!hasStock}
           >
             {variants.length > 0 ? <ListChecks size={18} /> : <ShoppingBag size={18} />}
+            <span>{actionLabel}</span>
           </button>
         </div>
       </div>
