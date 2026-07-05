@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useOrders } from '../context/OrderContext';
 import { AlertCircle, CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon, MessageCircle } from 'lucide-react';
-import { resolveAssetUrl } from '../utils/assets';
+import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Checkout.css';
 
@@ -146,14 +146,18 @@ const Checkout = () => {
 
     message += `*Order Items:*\n`;
     const receiptItems = submittedOrder.items.length ? submittedOrder.items : cartItems;
-    receiptItems.forEach(item => {
+    receiptItems.forEach((item, index) => {
       const itemName = language === 'zh' && item.name_zh ? item.name_zh : item.name;
       const variantName = language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName;
-      message += `- ${itemName}${variantName ? ` (${variantName})` : ''} x ${item.quantity}\n`;
+      message += `${index + 1}. ${itemName}${variantName ? ` (${variantName})` : ''}\n`;
+      message += `   Qty: ${item.quantity}\n`;
+      message += `   Price: RM ${Number(item.price || 0).toFixed(2)}\n`;
+      message += `   Subtotal: RM ${(item.price * item.quantity).toFixed(2)}\n`;
     });
 
     message += `\n*Total:* RM ${(submittedOrder.total || calculateTotal()).toFixed(2)}\n`;
-    message += `*Payment:* ${paymentInfo.method.toUpperCase()} (Screenshot uploaded via website)\n\n`;
+    message += `*Payment status:* Receipt uploaded, pending manual verification\n`;
+    message += `*Payment method:* ${paymentInfo.method.toUpperCase()}\n\n`;
     message += `Please confirm my order. Thank you!`;
 
     window.open(`https://wa.me/${shopWhatsApp}?text=${encodeURIComponent(message)}`, '_blank');
@@ -176,6 +180,20 @@ const Checkout = () => {
     </div>
   );
 
+  const checkoutNotes = language === 'zh'
+    ? [
+      '付款会由人工确认。',
+      '处理订单前，我们会先通过 WhatsApp 和你确认。',
+      '寄送运费会在出货前确认。',
+      'Seri Kembangan / Serdang 一带可安排自取。',
+    ]
+    : [
+      'Payment is verified manually.',
+      'We will confirm your order by WhatsApp before processing.',
+      'Delivery fee will be confirmed before shipment.',
+      'Self-pickup available in Seri Kembangan / Serdang area.',
+    ];
+
   return (
     <div className="page container animate-fade-in checkout-page">
       <button onClick={() => navigate('/cart')} className="btn-back">
@@ -183,6 +201,17 @@ const Checkout = () => {
       </button>
 
       {renderStepIndicator()}
+
+      {step < 4 && (
+        <div className="checkout-trust-notes">
+          {checkoutNotes.map((note) => (
+            <span key={note}>
+              <CheckCircle size={15} />
+              {note}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="checkout-content">
         {step === 1 && (
@@ -289,7 +318,7 @@ const Checkout = () => {
               {cartItems.map((item) => (
                 <div key={getCartItemKey(item)} className="review-item">
                   <div className="review-item-image">
-                    <img src={resolveAssetUrl(item.image)} alt={item.name} />
+                    <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" onError={handleImageFallback} />
                   </div>
                   <div className="review-item-info">
                     <span className="review-item-name">

@@ -1,0 +1,27 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "products": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "settings": {
+      "siteContent": {
+        ".read": true,
+        ".write": "auth != null && auth.token.admin === true"
+      },
+      "payment": {
+        ".read": true,
+        ".write": "auth != null && auth.token.admin === true"
+      }
+    },
+    "orders": {
+      ".read": "auth != null && auth.token.admin === true",
+      "$orderId": {
+        ".write": "(auth != null && auth.token.admin === true) || (!data.exists() && newData.child('status').val() === 'pending_verification')",
+        ".validate": "newData.hasChildren(['customerName', 'customerPhone', 'items', 'total', 'status', 'createdAt']) && newData.child('customerName').isString() && newData.child('customerPhone').isString() && newData.child('items').exists() && newData.child('total').isNumber()"
+      }
+    }
+  }
+}

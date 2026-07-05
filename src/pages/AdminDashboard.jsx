@@ -3,9 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
 import { useSiteContent } from '../context/SiteContentContext';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import { resolveAssetUrl } from '../utils/assets';
 import { getProductPriceRange, normalizeVariants } from '../utils/productVariants';
 import {
+  Baby,
+  BriefcaseBusiness,
+  Cable,
+  CookingPot,
+  Gift,
   LogOut,
   Plus,
   Edit2,
@@ -24,6 +30,12 @@ import {
   Truck,
   Store,
   Sparkles,
+  Tags,
+  Wrench,
+  Home,
+  PackageOpen,
+  Paintbrush,
+  PlugZap,
 } from 'lucide-react';
 import './Admin.css';
 
@@ -51,8 +63,23 @@ const createEmptyCategory = () => ({
   description_en: '',
   description_zh: '',
   showInRange: false,
-  icon: 'sparkles',
+  icon: 'tags',
 });
+
+const CATEGORY_ICON_OPTIONS = [
+  { value: 'tags', label: 'Tags', icon: Tags },
+  { value: 'home', label: 'Home', icon: Home },
+  { value: 'cable', label: 'Cable', icon: Cable },
+  { value: 'plug', label: 'Plug / Electronics', icon: PlugZap },
+  { value: 'cooking', label: 'Kitchen', icon: CookingPot },
+  { value: 'paintbrush', label: 'DIY / Craft', icon: Paintbrush },
+  { value: 'gift', label: 'Gift', icon: Gift },
+  { value: 'baby', label: 'Kids / Toys', icon: Baby },
+  { value: 'briefcase', label: 'Office', icon: BriefcaseBusiness },
+  { value: 'wrench', label: 'Tools', icon: Wrench },
+  { value: 'package', label: 'Package', icon: PackageOpen },
+  { value: 'sparkles', label: 'Sparkles', icon: Sparkles },
+];
 
 const createEmptyMedia = (type = 'image') => ({
   type,
@@ -169,6 +196,7 @@ const AdminDashboard = () => {
   const { orders, loadingOrders, paymentSettings, updateOrderStatus, uploadQRCode, updatePaymentSettings } =
     useOrders();
   const { siteContent, updateSiteContent } = useSiteContent();
+  const { adminUser, loadingAdmin, signOutAdmin } = useAdminAuth();
 
   // ---- Tab State ----
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'orders' | 'content' | 'settings'
@@ -232,10 +260,10 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
+    if (!loadingAdmin && !adminUser) {
       navigate('/admin');
     }
-  }, [navigate]);
+  }, [adminUser, loadingAdmin, navigate]);
 
   useEffect(() => {
     if (toast) {
@@ -261,8 +289,8 @@ const AdminDashboard = () => {
 
   const showToast = (type, message) => setToast({ type, message });
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('isAdmin');
+  const handleLogout = async () => {
+    await signOutAdmin();
     navigate('/admin');
   };
 
@@ -668,6 +696,12 @@ const AdminDashboard = () => {
           onClick={() => setActiveTab('content')}
         >
           <Sparkles size={18} /> Site Content
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          <Tags size={18} /> Categories
         </button>
         <button
           className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
@@ -1187,6 +1221,102 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* ========== CATEGORIES TAB ========== */}
+      {activeTab === 'categories' && (
+        <div className="settings-panel category-management-panel">
+          <div className="admin-panel">
+            <div className="admin-content-heading">
+              <div>
+                <h3>Product Categories</h3>
+                <p className="settings-desc">
+                  Add, edit or delete the categories used by products and storefront range cards. English names are used for filtering.
+                </p>
+              </div>
+              <div className="admin-actions">
+                <button type="button" className="btn btn-secondary btn-icon" onClick={addCategory}>
+                  <Plus size={16} /> Add Category
+                </button>
+                <button type="button" className="btn btn-primary" onClick={handleSaveSiteContent} disabled={saving}>
+                  {saving ? 'Saving...' : <><CheckCircle size={18} /> Save Categories</>}
+                </button>
+              </div>
+            </div>
+
+            <div className="category-icon-reference">
+              {CATEGORY_ICON_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <span key={option.value}>
+                    <Icon size={15} />
+                    {option.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="category-editor-list">
+            {categoryOptions.map((category, index) => {
+              const SelectedIcon = CATEGORY_ICON_OPTIONS.find((option) => option.value === category.icon)?.icon || Tags;
+              return (
+                <div className="admin-panel category-editor-row" key={category.id || index}>
+                  <div className="category-row-heading">
+                    <SelectedIcon size={22} />
+                    <div>
+                      <strong>{category.en || 'New category'}</strong>
+                      <span>{category.zh || 'Chinese name optional'}</span>
+                    </div>
+                  </div>
+                  <div className="variant-field-grid">
+                    <div className="form-group">
+                      <label>Name (EN)</label>
+                      <input value={category.en || ''} onChange={(e) => updateCategory(index, 'en', e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Name (中文)</label>
+                      <input value={category.zh || ''} onChange={(e) => updateCategory(index, 'zh', e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Description (EN)</label>
+                      <input
+                        value={category.description_en || ''}
+                        onChange={(e) => updateCategory(index, 'description_en', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Description (中文)</label>
+                      <input
+                        value={category.description_zh || ''}
+                        onChange={(e) => updateCategory(index, 'description_zh', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Icon</label>
+                      <select value={category.icon || 'tags'} onChange={(e) => updateCategory(index, 'icon', e.target.value)}>
+                        {CATEGORY_ICON_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <label className="admin-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(category.showInRange)}
+                        onChange={(e) => updateCategory(index, 'showInRange', e.target.checked)}
+                      />
+                      Show on shop category cards
+                    </label>
+                  </div>
+                  <button type="button" className="action-btn delete" onClick={() => removeCategory(index)} aria-label="Remove category">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ========== SITE CONTENT TAB ========== */}
       {activeTab === 'content' && (
         <div className="settings-panel site-content-panel">
@@ -1195,7 +1325,7 @@ const AdminDashboard = () => {
               <div>
                 <h3>Site Content</h3>
                 <p className="settings-desc">
-                  Customize homepage products, galleries, product range categories and DIY media without editing code.
+                  Customize homepage focus products, galleries and DIY media without editing code.
                 </p>
               </div>
               <button type="button" className="btn btn-primary" onClick={handleSaveSiteContent} disabled={saving}>
@@ -1246,10 +1376,9 @@ const AdminDashboard = () => {
                     <div className="form-group">
                       <label>Icon</label>
                       <select value={category.icon || 'sparkles'} onChange={(e) => updateCategory(index, 'icon', e.target.value)}>
-                        <option value="sparkles">Sparkles</option>
-                        <option value="cable">Cable</option>
-                        <option value="home">Home</option>
-                        <option value="paintbrush">Paintbrush</option>
+                        {CATEGORY_ICON_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </div>
                     <label className="admin-checkbox-row">

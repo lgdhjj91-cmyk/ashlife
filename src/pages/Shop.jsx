@@ -1,23 +1,62 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Cable, Home, Paintbrush, Search, Sparkles } from 'lucide-react';
+import {
+  Baby,
+  BriefcaseBusiness,
+  Cable,
+  CookingPot,
+  Gift,
+  Home,
+  PackageOpen,
+  Paintbrush,
+  PlugZap,
+  Search,
+  Sparkles,
+  Tags,
+  Wrench,
+} from 'lucide-react';
 import ProductList from '../components/ProductList';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteContent } from '../context/SiteContentContext';
+import { getProductPriceRange, normalizeVariants } from '../utils/productVariants';
 import './Shop.css';
 
 const iconMap = {
+  baby: Baby,
+  briefcase: BriefcaseBusiness,
   cable: Cable,
+  cooking: CookingPot,
+  gift: Gift,
   home: Home,
+  package: PackageOpen,
   paintbrush: Paintbrush,
+  plug: PlugZap,
   sparkles: Sparkles,
+  tags: Tags,
+  wrench: Wrench,
+};
+
+const hasReadyStock = (product) => {
+  const variants = normalizeVariants(product);
+  if (variants.length > 0) {
+    return variants.some((variant) => Number(variant.stock) > 0);
+  }
+  return Number(product.stock) > 0;
+};
+
+const productDateValue = (product) => {
+  const value = product.createdAt || product.updatedAt || product.dateAdded || '';
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 };
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
   const urlSearchQuery = searchParams.get('search') || '';
+  const stockFilter = searchParams.get('stock') || 'all';
+  const sortMode = searchParams.get('sort') || 'newest';
 
   const activeCategory = initialCategory;
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
@@ -43,30 +82,52 @@ const Shop = () => {
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    let result = products;
+    let result = [...products];
 
     if (activeCategory !== 'All') {
       result = result.filter((product) => product.category === activeCategory);
     }
 
+    if (stockFilter === 'ready') {
+      result = result.filter(hasReadyStock);
+    }
+
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
       result = result.filter((product) => {
-        const nameEn = product.name?.toLowerCase() || '';
-        const nameZh = product.name_zh?.toLowerCase() || '';
-        const descEn = product.description?.toLowerCase() || '';
-        const descZh = product.description_zh?.toLowerCase() || '';
-        return (
-          nameEn.includes(lowerQuery) ||
-          nameZh.includes(lowerQuery) ||
-          descEn.includes(lowerQuery) ||
-          descZh.includes(lowerQuery)
-        );
+        const variants = normalizeVariants(product)
+          .map((variant) => [variant.id, variant.name, variant.name_zh].filter(Boolean).join(' '))
+          .join(' ');
+        const haystack = [
+          product.id,
+          product.sku,
+          product.name,
+          product.name_zh,
+          product.description,
+          product.description_zh,
+          product.category,
+          product.category_zh,
+          variants,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(lowerQuery);
       });
     }
 
+    result.sort((a, b) => {
+      if (sortMode === 'price-asc') {
+        return getProductPriceRange(a).min - getProductPriceRange(b).min;
+      }
+      if (sortMode === 'price-desc') {
+        return getProductPriceRange(b).min - getProductPriceRange(a).min;
+      }
+      return productDateValue(b) - productDateValue(a);
+    });
+
     return result;
-  }, [activeCategory, searchQuery, products]);
+  }, [activeCategory, searchQuery, products, stockFilter, sortMode]);
 
   useEffect(() => {
     setSearchQuery(urlSearchQuery);
@@ -81,12 +142,35 @@ const Shop = () => {
     if (searchQuery.trim()) {
       nextParams.search = searchQuery.trim();
     }
+    if (stockFilter === 'ready') {
+      nextParams.stock = 'ready';
+    }
+    if (sortMode !== 'newest') {
+      nextParams.sort = sortMode;
+    }
 
     if (Object.keys(nextParams).length === 0) {
       setSearchParams({});
     } else {
       setSearchParams(nextParams);
     }
+  };
+
+  const updateParams = (nextValues) => {
+    const nextParams = {
+      ...(activeCategory !== 'All' ? { category: activeCategory } : {}),
+      ...(searchQuery.trim() ? { search: searchQuery.trim() } : {}),
+      ...(stockFilter === 'ready' ? { stock: 'ready' } : {}),
+      ...(sortMode !== 'newest' ? { sort: sortMode } : {}),
+      ...nextValues,
+    };
+
+    Object.keys(nextParams).forEach((key) => {
+      if (!nextParams[key] || nextParams[key] === 'All' || nextParams[key] === 'all' || nextParams[key] === 'newest') {
+        delete nextParams[key];
+      }
+    });
+    setSearchParams(nextParams);
   };
 
   return (
@@ -116,6 +200,12 @@ const Shop = () => {
                 if (value.trim()) {
                   nextParams.search = value.trim();
                 }
+                if (stockFilter === 'ready') {
+                  nextParams.stock = 'ready';
+                }
+                if (sortMode !== 'newest') {
+                  nextParams.sort = sortMode;
+                }
                 setSearchParams(nextParams);
               }}
             />
@@ -133,6 +223,28 @@ const Shop = () => {
                   {language === 'zh' ? category.zh || category.en : category.en}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <label className="ready-stock-filter">
+            <input
+              type="checkbox"
+              checked={stockFilter === 'ready'}
+              onChange={(event) => updateParams({ stock: event.target.checked ? 'ready' : 'all' })}
+            />
+            <span>{language === 'zh' ? '只看现货' : 'Ready stock'}</span>
+          </label>
+
+          <div className="category-dropdown sort-dropdown">
+            <select
+              value={sortMode}
+              onChange={(event) => updateParams({ sort: event.target.value })}
+              className="input-base category-select"
+              aria-label="Sort products"
+            >
+              <option value="newest">{language === 'zh' ? '最新' : 'Newest'}</option>
+              <option value="price-asc">{language === 'zh' ? '价格低到高' : 'Price low to high'}</option>
+              <option value="price-desc">{language === 'zh' ? '价格高到低' : 'Price high to low'}</option>
             </select>
           </div>
         </div>
@@ -174,7 +286,7 @@ const Shop = () => {
                   </button>
                 )}
               </div>
-              <ProductList key={`${activeCategory}-${searchQuery}`} products={filteredProducts} />
+              <ProductList key={`${activeCategory}-${searchQuery}-${stockFilter}-${sortMode}`} products={filteredProducts} />
             </>
           )}
         </main>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, Minus, Plus, ShoppingBag, CreditCard, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
-import { resolveAssetUrl } from '../utils/assets';
+import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import './Cart.css';
 
@@ -12,6 +12,7 @@ const Cart = () => {
   const { t, language } = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [deliveryOption, setDeliveryOption] = useState('pickup');
 
   const isCartValid = cartItems.every(item => {
     const availableStock = getAvailableStock(item.productId || item.id, item.variantId);
@@ -20,17 +21,24 @@ const Cart = () => {
 
   const generateWhatsAppMessage = () => {
     let message = `${t('wa_greeting')}\n\n`;
+    message += `*ASHLIFE Order Summary*\n`;
     message += `${t('wa_name')}: ${name}\n`;
-    message += `${t('wa_phone')}: ${phone}\n\n`;
+    message += `${t('wa_phone')}: ${phone}\n`;
+    message += `Delivery/Pickup: ${deliveryOption === 'delivery' ? 'Delivery - fee to confirm' : 'Self pickup - Seri Kembangan / Serdang'}\n`;
+    message += `Payment status: Not paid - please confirm payment method\n\n`;
     message += `${t('wa_order_list')}:\n`;
 
-    cartItems.forEach(item => {
+    cartItems.forEach((item, index) => {
       const itemName = language === 'zh' && item.name_zh ? item.name_zh : item.name;
       const variantName = getVariantLabel(item.selectedVariant, language) || (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName);
-      message += `${itemName}${variantName ? ` (${variantName})` : ''} x ${item.quantity}\n`;
+      message += `${index + 1}. ${itemName}${variantName ? ` (${variantName})` : ''}\n`;
+      message += `   Qty: ${item.quantity}\n`;
+      message += `   Price: RM ${Number(item.price || 0).toFixed(2)}\n`;
+      message += `   Subtotal: RM ${(item.price * item.quantity).toFixed(2)}\n`;
     });
 
     message += `\n${t('wa_total')}: RM ${cartTotal.toFixed(2)}\n\n`;
+    message += `Notes: Payment is verified manually. Delivery fee will be confirmed before shipment.\n\n`;
     message += t('wa_closing');
     return message;
   };
@@ -38,7 +46,7 @@ const Cart = () => {
   const handleCheckout = (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
-    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '60123456789';
+    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
     const message = encodeURIComponent(generateWhatsAppMessage());
     window.open(`https://wa.me/${shopWhatsApp}?text=${message}`, '_blank');
   };
@@ -69,7 +77,7 @@ const Cart = () => {
             return (
               <div key={getCartItemKey(item)} className="cart-item">
                 <div className="cart-item-image">
-                  <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" />
+                  <img src={resolveAssetUrl(item.image)} alt={item.name} loading="lazy" onError={handleImageFallback} />
                 </div>
 
                 <div className="cart-item-details">
@@ -184,6 +192,23 @@ const Cart = () => {
                 <p className="checkout-form-title">
                   {language === 'zh' ? '通过 WhatsApp 下单' : 'Confirm stock and payment details before paying.'}
                 </p>
+                <label className="cart-delivery-select">
+                  <span>{language === 'zh' ? '取货方式' : 'Delivery or pickup'}</span>
+                  <select
+                    className="input-base"
+                    value={deliveryOption}
+                    onChange={(event) => setDeliveryOption(event.target.value)}
+                    disabled={!isCartValid}
+                  >
+                    <option value="pickup">
+                      {language === 'zh' ? '自取 - Seri Kembangan / Serdang' : 'Self pickup - Seri Kembangan / Serdang'}
+                    </option>
+                    <option value="delivery">
+                      {language === 'zh' ? '配送 - 运费稍后确认' : 'Delivery - fee confirmed before shipment'}
+                    </option>
+                  </select>
+                </label>
+
                 <div className="form-group">
                   <input
                     type="text"

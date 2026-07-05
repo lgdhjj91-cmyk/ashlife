@@ -13,7 +13,7 @@ export const DEFAULT_SITE_CONTENT = {
       description_en: 'Hook-and-loop, cable care and desk tidy tools',
       description_zh: '魔术贴、电线收纳、桌面整理',
       showInRange: true,
-      icon: 'cable',
+      icon: 'plug',
     },
     {
       id: 'cleaning-tools',
@@ -22,7 +22,7 @@ export const DEFAULT_SITE_CONTENT = {
       description_en: 'Kitchen, cleaning and home helper items',
       description_zh: '厨房、清洁、家居小工具',
       showInRange: true,
-      icon: 'home',
+      icon: 'cooking',
     },
     {
       id: 'diy-crafts',
@@ -40,7 +40,7 @@ export const DEFAULT_SITE_CONTENT = {
       description_en: 'Memo pads, pens, study and office supplies',
       description_zh: '便签、笔类、学习与办公用品',
       showInRange: true,
-      icon: 'sparkles',
+      icon: 'briefcase',
     },
     {
       id: 'cute-accessories',
@@ -49,7 +49,7 @@ export const DEFAULT_SITE_CONTENT = {
       description_en: 'Cute accessories and small gifts',
       description_zh: '可爱配件与小礼品',
       showInRange: false,
-      icon: 'sparkles',
+      icon: 'gift',
     },
     {
       id: 'lifestyle-items',
@@ -67,7 +67,16 @@ export const DEFAULT_SITE_CONTENT = {
       description_en: 'Seasonal and festive items',
       description_zh: '节日与季节商品',
       showInRange: false,
-      icon: 'sparkles',
+      icon: 'gift',
+    },
+    {
+      id: 'toys',
+      en: 'Toys',
+      zh: '玩具',
+      description_en: 'Small toys, blind bags and playful items',
+      description_zh: '小玩具、盲袋和趣味小物',
+      showInRange: true,
+      icon: 'baby',
     },
   ],
   homeFocusProductIds: [

@@ -25,7 +25,7 @@ export const CartProvider = ({ children }) => {
       const variant = variants.find(v => v.id === variantId);
       return variant ? (variant.stock ?? 0) : 0;
     }
-    return masterProduct.stock ?? 0;
+    return masterProduct.stock == null ? Infinity : masterProduct.stock;
   };
 
   const addToCart = (product, quantity = 1) => {

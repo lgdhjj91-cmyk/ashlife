@@ -1,25 +1,44 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { User } from 'lucide-react';
+import { Loader, User } from 'lucide-react';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import './Admin.css';
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { adminUser, loadingAdmin, signInAdmin } = useAdminAuth();
   const navigate = useNavigate();
 
-  if (sessionStorage.getItem('isAdmin') === 'true') {
+  if (loadingAdmin) {
+    return (
+      <div className="page container animate-fade-in admin-login-page">
+        <div className="login-box">
+          <Loader className="spin" size={32} />
+          <p>Checking admin session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (adminUser) {
     return <Navigate to="/admin-dashboard" replace />;
   }
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === import.meta.env.VITE_ADMIN_USER && password === import.meta.env.VITE_ADMIN_PASS) {
-      sessionStorage.setItem('isAdmin', 'true');
+    setSubmitting(true);
+    setError('');
+    try {
+      await signInAdmin(email.trim(), password);
       navigate('/admin-dashboard');
-    } else {
-      setError(true);
+    } catch (loginError) {
+      console.error('Admin login failed:', loginError);
+      setError('Invalid admin email or password.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -32,14 +51,15 @@ const AdminLogin = () => {
         
         <form onSubmit={handleLogin} className="login-form">
           <input 
-            type="text" 
-            placeholder="Email or Username" 
-            value={username}
+            type="email" 
+            placeholder="Admin email" 
+            value={email}
             onChange={(e) => {
-              setUsername(e.target.value);
-              setError(false);
+              setEmail(e.target.value);
+              setError('');
             }}
             className={error ? 'input-error' : ''}
+            autoComplete="username"
           />
           <input 
             type="password" 
@@ -47,12 +67,15 @@ const AdminLogin = () => {
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
-              setError(false);
+              setError('');
             }}
             className={error ? 'input-error' : ''}
+            autoComplete="current-password"
           />
-          {error && <p className="error-text">Invalid credentials</p>}
-          <button type="submit" className="btn btn-primary w-full">Sign In</button>
+          {error && <p className="error-text">{error}</p>}
+          <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
+            {submitting ? 'Signing in...' : 'Sign In'}
+          </button>
         </form>
       </div>
     </div>

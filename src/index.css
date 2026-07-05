@@ -194,3 +194,9 @@ button {
 .text-xl { font-size: 1.25rem; }
 .text-primary { color: var(--primary-color); }
 .font-bold { font-weight: 700; }
+
+.image-fallback {
+  object-fit: contain !important;
+  padding: var(--spacing-md);
+  background: var(--surface-color);
+}

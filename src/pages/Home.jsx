@@ -4,7 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Cable,
+  CheckCircle2,
   ExternalLink,
+  Gift,
   Home as HomeIcon,
   MapPin,
   MessageCircle,
@@ -21,6 +23,7 @@ import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteContent } from '../context/SiteContentContext';
 import { resolveAssetUrl } from '../utils/assets';
+import { normalizeVariants } from '../utils/productVariants';
 import './Home.css';
 
 const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
@@ -78,6 +81,23 @@ const ARCHIVE_GALLERY = [
   },
 ];
 
+const popularCategoryLinks = [
+  { key: 'home', icon: HomeIcon, labelEn: 'Home Essentials', labelZh: '家居实用', to: '/shop?category=Home%20Gadgets' },
+  { key: 'cable', icon: Cable, labelEn: 'Cable Management', labelZh: '电线收纳', to: '/shop?search=cable' },
+  { key: 'kitchen', icon: Utensils, labelEn: 'Kitchen Helpers', labelZh: '厨房小帮手', to: '/shop?category=Cleaning%20Tools' },
+  { key: 'diy', icon: Sparkles, labelEn: 'DIY & Craft', labelZh: 'DIY 手作', to: '/shop?category=DIY%20Crafts' },
+  { key: 'toys', icon: Store, labelEn: 'Toys', labelZh: '玩具小物', to: '/shop?search=toy' },
+  { key: 'gifts', icon: Gift, labelEn: 'Gifts & Small Items', labelZh: '礼品小物', to: '/shop?category=Cute%20Accessories' },
+];
+
+const productHasStock = (product) => {
+  const variants = normalizeVariants(product);
+  if (variants.length > 0) {
+    return variants.some((variant) => Number(variant.stock) > 0);
+  }
+  return Number(product.stock) > 0;
+};
+
 const copy = {
   en: {
     shopeeStatus: 'Active on Shopee',
@@ -100,6 +120,23 @@ const copy = {
       'The older shop visuals stay on the site as a brand story and inspiration area, instead of being shown as a live inventory promise.',
     shopNow: 'Browse catalogue',
     chat: 'Ask availability',
+    shopNowCta: 'Shop Now',
+    whatsappCta: 'Order via WhatsApp',
+    shopeeCta: 'View Shopee',
+    trustBadges: [
+      'Ready Stock Malaysia',
+      'WhatsApp Confirmation',
+      'Self Pickup Available',
+      'Delivery Available',
+      'Shopee Store Available',
+    ],
+    categoryTitle: 'Popular Categories',
+    popularTitle: 'Best Sellers / Popular Now',
+    popularIntro: 'Useful ready-stock picks from the current catalogue. Availability is confirmed before processing.',
+    contactTitle: 'Contact and ordering options',
+    contactIntro: 'Ask about stock, pickup around Seri Kembangan / Serdang, delivery fee, or Shopee purchase options.',
+    areaNote: 'Business area: Malaysia / Seri Kembangan / Serdang',
+    operatingNote: 'Orders are confirmed manually by WhatsApp before processing.',
     featuredTitle: 'Browse the website catalogue',
     featuredIntro: 'These products come from the current site catalogue. Stock and ordering are confirmed through WhatsApp.',
     howTitle: 'How ASHLIFE helps',
@@ -122,6 +159,23 @@ const copy = {
     archiveIntro: '旧店素材会以品牌故事和灵感形式保留，不会让顾客误会全部都是实时库存。',
     shopNow: '浏览商品',
     chat: '询问库存',
+    shopNowCta: '立即选购',
+    whatsappCta: 'WhatsApp 下单',
+    shopeeCta: '查看 Shopee',
+    trustBadges: [
+      '马来西亚现货',
+      'WhatsApp 人工确认',
+      '可安排自取',
+      '可安排配送',
+      'Shopee 店铺',
+    ],
+    categoryTitle: '热门分类',
+    popularTitle: '热卖 / 近期热门',
+    popularIntro: '来自当前商品目录的实用现货选择，处理前会先确认库存。',
+    contactTitle: '联系与下单方式',
+    contactIntro: '可以询问库存、Seri Kembangan / Serdang 一带自取、运费或 Shopee 购买方式。',
+    areaNote: '服务区域：Malaysia / Seri Kembangan / Serdang',
+    operatingNote: '订单会先通过 WhatsApp 人工确认，再继续处理。',
     featuredTitle: '网站商品目录',
     featuredIntro: '这些商品来自当前网站目录，库存与下单会通过 WhatsApp 确认。',
     howTitle: 'ASHLIFE 可以怎样帮你',
@@ -138,7 +192,36 @@ const Home = () => {
   const { t, language } = useLanguage();
   const { siteContent } = useSiteContent();
   const text = copy[language] || copy.en;
+  const topMessage = language === 'zh'
+    ? {
+      title: '现货实用小物，适合家里、办公和日常使用',
+      subtitle: '家居、办公、电线收纳、厨房、DIY、文具和日常小物。先把商品加入购物车，再通过网站或 Shopee 下单。',
+      introTitle: '现在可购买的实用商品',
+      introBody: '浏览当前商品目录，把需要的商品加入购物车，再选择在线付款或把整理好的订单发送到 WhatsApp。喜欢 Shopee 结账的顾客也可以直接到 Shopee 店铺。',
+    }
+    : {
+      title: 'Ready-stock useful products for everyday home and work',
+      subtitle: 'Home, office, cable management, kitchen, DIY, stationery and small daily needs. Add products to cart, then order through the website or Shopee.',
+      introTitle: 'Useful items customers can buy now',
+      introBody: 'Browse the current catalogue, add the items you want to cart, then checkout online or send the prepared order summary through WhatsApp. Shopee is available for customers who prefer marketplace checkout.',
+    };
   const featuredProducts = products.slice(0, 4);
+  const popularProducts = (() => {
+    const flagged = products.filter((product) => product.bestSeller || product.popular || product.featured);
+    const fallback = [
+      ...(siteContent.homeFocusProductIds || [])
+        .map((id) => products.find((product) => product.id === id))
+        .filter(Boolean),
+      ...products.filter(productHasStock),
+      ...products,
+    ];
+    const seen = new Set();
+    return [...flagged, ...fallback].filter((product) => {
+      if (!product || seen.has(product.id)) return false;
+      seen.add(product.id);
+      return true;
+    }).slice(0, 8);
+  })();
   const categories = siteContent.categories || [];
   const categoryLabel = (category) => {
     const match = categories.find((item) => item.en === category);
@@ -172,6 +255,7 @@ const Home = () => {
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     'Hello ASHLIFE, I would like to ask about product availability.'
   )}`;
+  const shopeeUrl = import.meta.env.VITE_SHOPEE_URL || 'https://shopee.com.my/ashleylife';
 
   return (
     <div className="page animate-fade-in home-page">
@@ -179,28 +263,57 @@ const Home = () => {
         <div className="container hero-shop-content">
           <div className="hero-text-stack">
             <p className="eyebrow">{t('hero_eyebrow')}</p>
-            <h1>{t('hero_title')}</h1>
-            <p className="hero-copy">{t('hero_subtitle')}</p>
+            <h1>{topMessage.title}</h1>
+            <p className="hero-copy">{topMessage.subtitle}</p>
             <div className="hero-actions">
               <button className="btn btn-primary" onClick={() => navigate('/shop')}>
-                {t('hero_btn')}
+                {text.shopNowCta}
                 <ArrowRight size={18} />
               </button>
-              <a className="btn btn-secondary hero-whatsapp" href={whatsappHref} target="_blank" rel="noreferrer">
-                <MessageCircle size={18} />
-                {t('hero_secondary')}
+              <a className="btn btn-secondary hero-shopee" href={shopeeUrl} target="_blank" rel="noreferrer">
+                <Store size={18} />
+                {text.shopeeCta}
               </a>
             </div>
           </div>
         </div>
       </section>
 
+      <section className="container top-trust-badges" aria-label="ASHLIFE trust badges">
+        {text.trustBadges.map((badge) => (
+          <span className="top-trust-badge" key={badge}>
+            <CheckCircle2 size={16} />
+            {badge}
+          </span>
+        ))}
+      </section>
+
       <section className="container home-intro-band">
         <div>
           <span className="status-pill">{text.shopeeStatus}</span>
-          <h2>{text.linesTitle}</h2>
+          <h2>{topMessage.introTitle}</h2>
         </div>
-        <p>{text.linesIntro}</p>
+        <p>{topMessage.introBody}</p>
+      </section>
+
+      <section className="container popular-categories-section">
+        <div className="section-header compact">
+          <div>
+            <p className="section-kicker">ASHLIFE</p>
+            <h2>{text.categoryTitle}</h2>
+          </div>
+        </div>
+        <div className="popular-category-grid">
+          {popularCategoryLinks.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Link to={category.to} className="popular-category-card" key={category.key}>
+                <Icon size={22} />
+                <span>{language === 'zh' ? category.labelZh : category.labelEn}</span>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
       {/* Store Location Banner */}
@@ -371,6 +484,48 @@ const Home = () => {
         </div>
       </section>
       <br></br>
+      {popularProducts.length > 0 && (
+        <section className="container home-section">
+          <div className="section-header">
+            <div>
+              <p className="section-kicker">{text.shopeeStatus}</p>
+              <h2>{text.popularTitle}</h2>
+              <p>{text.popularIntro}</p>
+            </div>
+            <Link to="/shop" className="view-all">{text.shopNow}</Link>
+          </div>
+          <div className="grid-mobile-1 grid-sm-2 grid-md-4">
+            {popularProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="contact-trust-section">
+        <div className="container contact-trust-inner">
+          <div>
+            <p className="section-kicker">ASHLIFE</p>
+            <h2>{text.contactTitle}</h2>
+            <p>{text.contactIntro}</p>
+            <div className="contact-trust-notes">
+              <span><MapPin size={16} />{text.areaNote}</span>
+              <span><PackageCheck size={16} />{text.operatingNote}</span>
+            </div>
+          </div>
+          <div className="contact-trust-actions">
+            <a className="btn btn-primary" href={whatsappHref} target="_blank" rel="noreferrer">
+              <MessageCircle size={18} />
+              WhatsApp
+            </a>
+            <a className="btn btn-secondary" href={shopeeUrl} target="_blank" rel="noreferrer">
+              <Store size={18} />
+              Shopee
+            </a>
+          </div>
+        </div>
+      </section>
+
       {featuredProducts.length > 0 && (
         <section className="container home-section">
           <div className="section-header">

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:github": "vite build --base=/ashlife/",
+    "build:domain": "vite build --base=/",
     "lint": "eslint .",
     "preview": "vite preview"
   },

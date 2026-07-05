@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import { database } from '../firebase';
+import { auth } from '../firebase';
 import { ref, onValue, set, get, update } from 'firebase/database';
 const OrderContext = createContext();
 
@@ -16,31 +18,50 @@ export const OrderProvider = ({ children }) => {
   });
   const [loadingOrders, setLoadingOrders] = useState(true);
 
-  // Subscribe to orders (real-time)
+  // Subscribe to orders only after Firebase Auth confirms an admin session.
   useEffect(() => {
-    const ordersRef = ref(database, 'orders');
-    const unsubscribe = onValue(
-      ordersRef,
-      (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const ordersArray = Object.entries(data).map(([key, value]) => ({
-            ...value,
-            orderId: key,
-          }));
-          ordersArray.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          setOrders(ordersArray);
-        } else {
-          setOrders([]);
-        }
-        setLoadingOrders(false);
-      },
-      (error) => {
-        console.error('Orders subscription error:', error);
-        setLoadingOrders(false);
+    let unsubscribeOrders = null;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+        unsubscribeOrders = null;
       }
-    );
-    return () => unsubscribe();
+
+      if (!user) {
+        setOrders([]);
+        setLoadingOrders(false);
+        return;
+      }
+
+      setLoadingOrders(true);
+      const ordersRef = ref(database, 'orders');
+      unsubscribeOrders = onValue(
+        ordersRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const ordersArray = Object.entries(data).map(([key, value]) => ({
+              ...value,
+              orderId: key,
+            }));
+            ordersArray.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setOrders(ordersArray);
+          } else {
+            setOrders([]);
+          }
+          setLoadingOrders(false);
+        },
+        (error) => {
+          console.error('Orders subscription error:', error);
+          setLoadingOrders(false);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeOrders) unsubscribeOrders();
+    };
   }, []);
 
   // Subscribe to payment settings (real-time)
@@ -162,36 +183,9 @@ export const OrderProvider = ({ children }) => {
           };
         }
         
-        // 3. Deduct stock and save products
+        // 3. Create the order. Stock is adjusted manually after payment/order verification.
+        // This keeps public checkout from needing product write permission in Firebase rules.
         const updates = {};
-        for (const item of orderItems) {
-          const productVal = productSnapshots[item.productId];
-          if (item.variantId) {
-            const variants = productVal.variants || [];
-            // We need to preserve the exact structure (array vs object) when updating.
-            if (Array.isArray(variants)) {
-              productVal.variants = variants.map(v => {
-                const vId = v.id || (v.name || v.name_zh || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                if (vId === item.variantId) {
-                  return { ...v, stock: Math.max(0, (Number(v.stock) || 0) - item.quantity) };
-                }
-                return v;
-              });
-            } else {
-              Object.keys(variants).forEach(key => {
-                const v = variants[key];
-                const vId = v.id || (v.name || v.name_zh || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                if (vId === item.variantId) {
-                  variants[key] = { ...v, stock: Math.max(0, (Number(v.stock) || 0) - item.quantity) };
-                }
-              });
-            }
-          } else {
-            productVal.stock = Math.max(0, (Number(productVal.stock) || 0) - item.quantity);
-          }
-          updates[`products/${item.productId}`] = productVal;
-        }
-        
         const orderId = await generateOrderId();
         
         // Convert payment screenshot to base64 if provided
@@ -205,6 +199,7 @@ export const OrderProvider = ({ children }) => {
           orderId,
           paymentScreenshot: screenshotBase64,
           status: 'pending_verification',
+          stockAction: 'manual_after_verification',
           createdAt: new Date().toISOString(),
         };
         

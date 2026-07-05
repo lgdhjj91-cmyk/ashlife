@@ -125,7 +125,6 @@ const Header = () => {
           <Link to="/shop" onClick={closeMenu}>{t('nav_shop')}</Link>
           <Link to="/diy" onClick={closeMenu}>{t('nav_diy')}</Link>
           <Link to="/about" onClick={closeMenu}>{t('nav_about')}</Link>
-          <Link to="/admin" onClick={closeMenu}>{t('nav_admin')}</Link>
         </nav>
 
         <div className="header-actions">

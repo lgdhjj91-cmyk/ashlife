@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import ProductCard from './ProductCard';
+import { useLanguage } from '../context/LanguageContext';
 import './ProductList.css'; // Optional CSS if we need specific styling
 
 const ProductList = ({ products }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const { language } = useLanguage();
   const productsPerPage = 16;
 
   // Pagination logic
@@ -29,7 +31,11 @@ const ProductList = ({ products }) => {
   if (products.length === 0) {
     return (
       <div className="empty-state">
-        <p>No products found matching your criteria. Try a different search!</p>
+        <p>
+          {language === 'zh'
+            ? '找不到符合条件的商品，请尝试其他搜索或筛选。'
+            : 'No products found matching your criteria. Try a different search or filter.'}
+        </p>
       </div>
     );
   }

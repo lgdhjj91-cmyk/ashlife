@@ -32,6 +32,16 @@
   max-width: 300px;
 }
 
+.footer-area {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .footer-socials h4 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -41,6 +51,7 @@
 
 .social-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
 }
 
@@ -64,6 +75,10 @@
 
 .shopee-link:hover {
   color: #EE4D2D;
+}
+
+.whatsapp-link:hover {
+  color: #25D366;
 }
 
 .footer-bottom {

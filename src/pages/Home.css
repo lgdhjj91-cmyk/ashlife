@@ -71,6 +71,43 @@
   border-color: rgba(255, 255, 255, 0.92);
 }
 
+.hero-shopee {
+  background: #fff7f2;
+  border-color: rgba(238, 77, 45, 0.22);
+  color: #b94128;
+}
+
+.top-trust-badges {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--spacing-sm);
+  padding-top: 1.25rem;
+  padding-bottom: var(--spacing-xs);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.top-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(22, 122, 114, 0.18);
+  border-radius: var(--border-radius-pill);
+  background: white;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.top-trust-badge svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
+}
+
 .home-intro-band {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -118,6 +155,47 @@
   background: rgba(242, 118, 147, 0.1);
   border-color: rgba(242, 118, 147, 0.28);
   color: var(--accent-pink);
+}
+
+.popular-categories-section {
+  padding-top: 1rem;
+  padding-bottom: 2.5rem;
+}
+
+.popular-category-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.popular-category-card {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--spacing-sm);
+  min-height: 116px;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: white;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.popular-category-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(22, 122, 114, 0.35);
+  box-shadow: var(--shadow-md);
+}
+
+.popular-category-card svg {
+  color: var(--primary-color);
+}
+
+.popular-category-card span {
+  font-weight: 900;
+  line-height: 1.2;
 }
 
 .trust-order-band {
@@ -505,6 +583,57 @@
   margin: var(--spacing-md) 0 var(--spacing-xs);
 }
 
+.contact-trust-section {
+  margin: 1rem 0 3.5rem;
+  padding: 3rem 0;
+  background: #fff7f2;
+  border-block: 1px solid rgba(255, 138, 61, 0.16);
+}
+
+.contact-trust-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.contact-trust-inner h2 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  margin: var(--spacing-xs) 0;
+}
+
+.contact-trust-inner p,
+.contact-trust-notes {
+  color: var(--text-secondary);
+}
+
+.contact-trust-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.contact-trust-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.contact-trust-notes svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
+}
+
+.contact-trust-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
 @media (max-width: 900px) {
   .hero-shop-content {
     grid-template-columns: 1fr;
@@ -514,7 +643,8 @@
   .trust-order-band,
   .storefront-grid,
   .archive-layout,
-  .help-grid {
+  .help-grid,
+  .contact-trust-inner {
     grid-template-columns: 1fr;
   }
 
@@ -524,6 +654,14 @@
 
   .highlight-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .popular-category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .contact-trust-actions {
+    justify-content: flex-start;
   }
 
   .archive-gallery {
@@ -558,6 +696,25 @@
   .highlight-product-grid,
   .archive-gallery {
     grid-template-columns: 1fr;
+  }
+
+  .popular-category-grid {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-inline: calc(var(--spacing-md) * -1);
+    padding: 0 var(--spacing-md) var(--spacing-xs);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+
+  .popular-category-card {
+    min-width: 170px;
+    min-height: 98px;
+    scroll-snap-align: start;
+  }
+
+  .contact-trust-actions .btn {
+    width: 100%;
   }
 
   .archive-image-card {

@@ -45,6 +45,15 @@
   text-align: left;
 }
 
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Admin Dashboard Specific */
 .admin-dashboard {
   width: min(1680px, calc(100vw - 48px));
@@ -748,6 +757,71 @@
   padding: 2px 7px;
   border-radius: 10px;
   line-height: 1.4;
+}
+
+.category-management-panel .category-editor-list {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.category-icon-reference {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+}
+
+.category-icon-reference span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-pill);
+  background: var(--background-color);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.category-icon-reference svg,
+.category-row-heading svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
+}
+
+.category-management-panel .category-editor-row {
+  position: relative;
+  display: grid;
+  gap: var(--spacing-md);
+  padding-right: 3.5rem;
+}
+
+.category-management-panel .category-editor-row > .action-btn.delete {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+}
+
+.category-row-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.category-row-heading div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.category-row-heading strong {
+  color: var(--text-primary);
+}
+
+.category-row-heading span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
 }
 
 /* ============================================

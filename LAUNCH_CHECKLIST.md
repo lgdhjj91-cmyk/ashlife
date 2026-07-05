@@ -1,0 +1,32 @@
+# ASHLIFE Launch Checklist
+
+- [ ] Custom domain connected
+- [ ] HTTPS enabled
+- [ ] Vite base path switched to `/` for main domain
+- [ ] Favicon added
+- [ ] Meta title and description added
+- [ ] Open Graph image tested
+- [ ] `robots.txt` tested
+- [ ] `sitemap.xml` submitted or ready
+- [ ] Real product images uploaded
+- [ ] Placeholder products removed or marked as draft
+- [ ] WhatsApp link tested
+- [ ] Shopee store link tested
+- [ ] Cart quantity update tested
+- [ ] Cart remove item tested
+- [ ] WhatsApp checkout message tested
+- [ ] Online checkout payment note tested
+- [ ] Order submission tested
+- [ ] Mobile homepage tested
+- [ ] Mobile shop tested
+- [ ] Mobile product detail tested
+- [ ] Mobile cart tested
+- [ ] Mobile checkout tested
+- [ ] Mobile About page tested
+- [ ] Mobile DIY page tested
+- [ ] Admin hidden from public navigation
+- [ ] Firebase Auth admin account created
+- [ ] Firebase security rules reviewed
+- [ ] Firebase custom admin claim configured
+- [ ] Google Search Console ready
+- [ ] Final `npm run build` passes

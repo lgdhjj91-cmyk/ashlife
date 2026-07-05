@@ -41,6 +41,32 @@
   position: relative;
 }
 
+.checkout-trust-notes {
+  display: grid;
+  gap: var(--spacing-xs);
+  margin: 0 0 var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(22, 122, 114, 0.18);
+  border-radius: var(--border-radius-md);
+  background: #f7fffd;
+}
+
+.checkout-trust-notes span {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.checkout-trust-notes svg {
+  color: var(--primary-color);
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
 .checkout-stepper .step {
   display: flex;
   flex-direction: column;

@@ -4,7 +4,7 @@ import { ShoppingBag, ArrowLeft, Minus, Plus, MessageCircle, PackageCheck, Searc
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
-import { resolveAssetUrl } from '../utils/assets';
+import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { buildCartProduct, getDiscountInfo, getProductImages, getProductPrice, getProductPriceRange, getVariantLabel, normalizeVariants, usesIndividualVariantPrices } from '../utils/productVariants';
 import './ProductDetail.css';
 
@@ -19,7 +19,6 @@ const ProductDetail = () => {
   const [selectedVariantId, setSelectedVariantId] = useState('');
   const [showError, setShowError] = useState(false);
   const [variantSearch, setVariantSearch] = useState('');
-  const [showAllVariants, setShowAllVariants] = useState(false);
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
   const variants = useMemo(() => normalizeVariants(product), [product]);
@@ -38,9 +37,7 @@ const ProductDetail = () => {
         .includes(variantSearchTerm)
     );
   }, [variantSearchTerm, variants]);
-  const visibleVariants = hasManyVariants && !variantSearchTerm && !showAllVariants
-    ? matchingVariants.slice(0, 12)
-    : matchingVariants;
+  const visibleVariants = matchingVariants;
 
   if (!product) {
     return (
@@ -59,14 +56,31 @@ const ProductDetail = () => {
   const awaitingPricedVariant = usesIndividualVariantPrices(product) && variants.length > 0 && !selectedVariant;
   const activePrice = awaitingPricedVariant ? getProductPriceRange(product).min : getProductPrice(product, selectedVariant);
   const { hasDiscount, finalPrice, badge, savings } = getDiscountInfo(product, activePrice);
+  const detailText = language === 'zh'
+    ? {
+      from: '从 ',
+      youSave: '已省 RM',
+      variation: '规格',
+      option: '选项',
+      searchVariations: '搜索规格',
+      noVariation: '没有符合的规格。',
+    }
+    : {
+      from: 'From ',
+      youSave: 'You save RM',
+      variation: 'Variation',
+      option: 'options',
+      searchVariations: 'Search variations',
+      noVariation: 'No variation matches that search.',
+    };
 
   const isOutOfStock = variants.length > 0
     ? (selectedVariant ? (selectedVariant.stock ?? 0) <= 0 : false)
-    : (product.stock ?? 0) <= 0;
+    : product.stock == null ? false : (product.stock ?? 0) <= 0;
   const quantityLimit = selectedVariant
     ? (selectedVariant.stock ?? 0)
     : variants.length === 0
-      ? (product.stock ?? 0)
+      ? product.stock == null ? Infinity : (product.stock ?? 0)
       : Infinity;
   const selectedQuantity = Number.isFinite(quantityLimit) && quantityLimit > 0
     ? Math.min(quantity, quantityLimit)
@@ -84,7 +98,7 @@ const ProductDetail = () => {
   const handleQuantityChange = (type) => {
     const limit = selectedVariant
       ? (selectedVariant.stock ?? 0)
-      : (product?.stock ?? 0);
+      : product?.stock == null ? Infinity : (product.stock ?? 0);
 
     if (type === 'dec' && quantity > 1) {
       setQuantity(q => q - 1);
@@ -109,7 +123,7 @@ const ProductDetail = () => {
       <div className="detail-layout">
         <div className="detail-image-section">
           <div className="main-image-wrapper">
-            <img src={resolveAssetUrl(mainImage)} alt={displayName} loading="lazy" />
+            <img src={resolveAssetUrl(mainImage)} alt={displayName} loading="lazy" onError={handleImageFallback} />
           </div>
           {productImages.length > 1 && (
             <div className="thumbnail-gallery">
@@ -119,7 +133,12 @@ const ProductDetail = () => {
                   className={`thumbnail ${mainImage === imgUrl ? 'active' : ''}`}
                   onClick={() => setSelectedImage(imgUrl)}
                 >
-                  <img src={resolveAssetUrl(imgUrl)} alt={`${displayName} view ${index + 1}`} loading="lazy" />
+                  <img
+                    src={resolveAssetUrl(imgUrl)}
+                    alt={`${displayName} view ${index + 1}`}
+                    loading="lazy"
+                    onError={handleImageFallback}
+                  />
                 </div>
               ))}
             </div>
@@ -135,14 +154,14 @@ const ProductDetail = () => {
               <>
                 {badge && <span className="detail-discount-badge">{badge}</span>}
                 <div className="detail-price-row">
-                  <span className="product-price-large sale-price-large">{awaitingPricedVariant ? 'From ' : ''}RM {finalPrice.toFixed(2)}</span>
+                  <span className="product-price-large sale-price-large">{awaitingPricedVariant ? detailText.from : ''}RM {finalPrice.toFixed(2)}</span>
                   <span className="product-price-large-original">RM {activePrice.toFixed(2)}</span>
                 </div>
-                {savings > 0 && <p className="savings-text">You save RM {savings.toFixed(2)}</p>}
+                {savings > 0 && <p className="savings-text">{detailText.youSave} {savings.toFixed(2)}</p>}
               </>
             ) : (
               <div className="product-price-large">
-                {awaitingPricedVariant ? 'From ' : ''}RM {activePrice.toFixed(2)}
+                {awaitingPricedVariant ? detailText.from : ''}RM {activePrice.toFixed(2)}
               </div>
             )}
           </div>
@@ -168,7 +187,11 @@ const ProductDetail = () => {
                 <span className="stock-status-value select-variant">{t('select_variation_for_stock')}</span>
               )
             ) : (
-              (product.stock ?? 0) > 0 ? (
+              product.stock == null ? (
+                <span className="stock-status-value select-variant">
+                  {language === 'zh' ? '下单前 WhatsApp 确认库存' : 'Stock confirmed before order'}
+                </span>
+              ) : (product.stock ?? 0) > 0 ? (
                 (product.stock ?? 0) <= 5 ? (
                   <span className="stock-status-value low-stock">
                     {t('only_left')}{product.stock}{t('left')}
@@ -192,9 +215,9 @@ const ProductDetail = () => {
           {variants.length > 0 && (
             <div className={`variant-selector-block ${hasManyVariants ? 'many-variants' : ''}`}>
               <div className="variant-heading-row">
-                <h3>Variation</h3>
+                <h3>{detailText.variation}</h3>
                 {hasManyVariants && (
-                  <span>{variants.length} options</span>
+                  <span>{language === 'zh' ? `${variants.length} 个${detailText.option}` : `${variants.length} ${detailText.option}`}</span>
                 )}
               </div>
               {hasManyVariants && (
@@ -206,21 +229,11 @@ const ProductDetail = () => {
                       value={variantSearch}
                       onChange={(event) => {
                         setVariantSearch(event.target.value);
-                        setShowAllVariants(true);
                       }}
-                      placeholder="Search variations"
-                      aria-label="Search product variations"
+                      placeholder={detailText.searchVariations}
+                      aria-label={detailText.searchVariations}
                     />
                   </div>
-                  {!variantSearchTerm && variants.length > visibleVariants.length && (
-                    <button
-                      type="button"
-                      className="variant-show-all"
-                      onClick={() => setShowAllVariants(true)}
-                    >
-                      Show all
-                    </button>
-                  )}
                 </div>
               )}
               <div className="variant-options">
@@ -238,7 +251,12 @@ const ProductDetail = () => {
                       }}
                     >
                       {variant.image && (
-                        <img src={resolveAssetUrl(variant.image)} alt={variantLabel} loading="lazy" />
+                        <img
+                          src={resolveAssetUrl(variant.image)}
+                          alt={variantLabel}
+                          loading="lazy"
+                          onError={handleImageFallback}
+                        />
                       )}
                       <span>{variantLabel}</span>
                       {usesIndividualVariantPrices(product) && (
@@ -249,16 +267,7 @@ const ProductDetail = () => {
                 })}
               </div>
               {hasManyVariants && matchingVariants.length === 0 && (
-                <p className="variant-empty">No variation matches that search.</p>
-              )}
-              {hasManyVariants && !variantSearchTerm && showAllVariants && (
-                <button
-                  type="button"
-                  className="variant-show-less"
-                  onClick={() => setShowAllVariants(false)}
-                >
-                  Show fewer options
-                </button>
+                <p className="variant-empty">{detailText.noVariation}</p>
               )}
               {showError && (
                 <div className="variant-error-message mt-2">
