@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Search } from 'lucide-react';
+import { Gamepad2, ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductContext';
@@ -18,6 +18,7 @@ const Header = () => {
   const { products } = useProducts();
   const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
+  const playNavLabel = language === 'zh' ? '🎮 玩游戏赢奖励' : '🎮 Play & Win';
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -124,6 +125,10 @@ const Header = () => {
           <Link to="/" onClick={closeMenu}>{t('nav_home')}</Link>
           <Link to="/shop" onClick={closeMenu}>{t('nav_shop')}</Link>
           <Link to="/diy" onClick={closeMenu}>{t('nav_diy')}</Link>
+          <Link to="/play/" className="play-nav-link" onClick={closeMenu}>
+            <Gamepad2 size={17} />
+            <span>{playNavLabel}</span>
+          </Link>
           <Link to="/about" onClick={closeMenu}>{t('nav_about')}</Link>
         </nav>
 

@@ -41,6 +41,9 @@
 }
 
 .nav-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-weight: 600;
   color: var(--text-primary);
   transition: color 0.2s;
@@ -49,6 +52,14 @@
 
 .nav-links a:hover {
   color: var(--primary-color);
+}
+
+.play-nav-link {
+  color: var(--accent-pink) !important;
+}
+
+.play-nav-link svg {
+  flex: 0 0 auto;
 }
 
 .header-actions {

@@ -108,6 +108,53 @@
   flex: 0 0 auto;
 }
 
+.playroom-promo-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border: 1px solid rgba(242, 118, 147, 0.22);
+  border-radius: var(--border-radius-lg);
+  background: linear-gradient(135deg, #fff7fb 0%, #f5f7ff 100%);
+  box-shadow: var(--shadow-sm);
+}
+
+.playroom-promo-copy {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.playroom-promo-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--accent-pink);
+  background: #ffe1eb;
+}
+
+.playroom-promo-copy h2 {
+  margin: 0.2rem 0;
+  color: var(--text-primary);
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.playroom-promo-copy p:not(.section-kicker) {
+  color: var(--text-secondary);
+}
+
+.playroom-promo-button {
+  flex: 0 0 auto;
+  border-color: rgba(242, 118, 147, 0.36);
+  color: var(--accent-pink);
+}
+
 .home-intro-band {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -678,7 +725,8 @@
   }
 
   .hero-actions,
-  .section-header {
+  .section-header,
+  .playroom-promo-section {
     align-items: stretch;
     flex-direction: column;
   }
@@ -714,6 +762,14 @@
   }
 
   .contact-trust-actions .btn {
+    width: 100%;
+  }
+
+  .playroom-promo-copy {
+    align-items: flex-start;
+  }
+
+  .playroom-promo-button {
     width: 100%;
   }
 

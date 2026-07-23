@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
@@ -18,6 +18,9 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import DIY from './pages/DIY';
 import Checkout from './pages/Checkout';
+
+const PlayroomPage = lazy(() => import('./playroom/pages/PlayroomPage'));
+const AshlifeClawMachinePage = lazy(() => import('./playroom/games/claw-machine/AshlifeClawMachinePage'));
 
 function App() {
   const basename = import.meta.env.BASE_URL;
@@ -41,6 +44,38 @@ function App() {
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/diy" element={<DIY />} />
+                      <Route
+                        path="/play/claw-machine/"
+                        element={
+                          <Suspense fallback={<div className="page container">Loading Ashlife Swing & Win...</div>}>
+                            <AshlifeClawMachinePage />
+                          </Suspense>
+                        }
+                      />
+                      <Route
+                        path="/play/claw-machine"
+                        element={
+                          <Suspense fallback={<div className="page container">Loading Ashlife Swing & Win...</div>}>
+                            <AshlifeClawMachinePage />
+                          </Suspense>
+                        }
+                      />
+                      <Route
+                        path="/play/"
+                        element={
+                          <Suspense fallback={<div className="page container">Loading Ashlife Playroom...</div>}>
+                            <PlayroomPage />
+                          </Suspense>
+                        }
+                      />
+                      <Route
+                        path="/play"
+                        element={
+                          <Suspense fallback={<div className="page container">Loading Ashlife Playroom...</div>}>
+                            <PlayroomPage />
+                          </Suspense>
+                        }
+                      />
                       <Route path="/admin" element={<AdminLogin />} />
                       <Route path="/admin-dashboard" element={<AdminDashboard />} />
                     </Routes>

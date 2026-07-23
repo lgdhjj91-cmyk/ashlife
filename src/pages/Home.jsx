@@ -6,11 +6,13 @@ import {
   Cable,
   CheckCircle2,
   ExternalLink,
+  Gamepad2,
   Gift,
   Home as HomeIcon,
   MapPin,
   MessageCircle,
   PackageCheck,
+  PartyPopper,
   Sparkles,
   Store,
   ShoppingCart,
@@ -192,6 +194,19 @@ const Home = () => {
   const { t, language } = useLanguage();
   const { siteContent } = useSiteContent();
   const text = copy[language] || copy.en;
+  const playroomPromo = language === 'zh'
+    ? {
+      kicker: '玩游戏赢奖励',
+      title: 'Ashlife 游戏房',
+      description: '玩可爱的小游戏，配对萌萌贴纸，收集奖励。',
+      button: '开始玩',
+    }
+    : {
+      kicker: 'Play & Win',
+      title: 'Ashlife Playroom',
+      description: 'Play cute mini-games, match adorable stickers and collect rewards.',
+      button: 'Start Playing',
+    };
   const topMessage = language === 'zh'
     ? {
       title: '现货实用小物，适合家里、办公和日常使用',
@@ -286,6 +301,23 @@ const Home = () => {
             {badge}
           </span>
         ))}
+      </section>
+
+      <section className="container playroom-promo-section" aria-labelledby="playroom-promo-title">
+        <div className="playroom-promo-copy">
+          <div className="playroom-promo-icon">
+            <Gamepad2 size={24} />
+          </div>
+          <div>
+            <p className="section-kicker">{playroomPromo.kicker}</p>
+            <h2 id="playroom-promo-title">{playroomPromo.title}</h2>
+            <p>{playroomPromo.description}</p>
+          </div>
+        </div>
+        <Link to="/play/" className="btn btn-secondary playroom-promo-button">
+          <PartyPopper size={18} />
+          {playroomPromo.button}
+        </Link>
       </section>
 
       <section className="container home-intro-band">

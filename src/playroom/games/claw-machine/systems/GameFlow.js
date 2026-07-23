@@ -1,0 +1,23 @@
+export const formatAttemptsRemaining = (attemptsRemaining) =>
+  Number.isFinite(attemptsRemaining) ? attemptsRemaining : 'Unlimited';
+
+export const getLiftOutcomeState = ({ capturedPrize, attemptsRemaining }) => {
+  if (capturedPrize) return 'SWINGING';
+  return Number.isFinite(attemptsRemaining) && attemptsRemaining <= 0 ? 'FAILED' : 'AIMING';
+};
+
+export const getPauseTarget = ({ isPaused, currentState, previousState }) => {
+  if (isPaused) {
+    return {
+      shouldPause: false,
+      nextState: previousState || 'AIMING',
+      previousState: previousState || 'AIMING',
+    };
+  }
+
+  return {
+    shouldPause: true,
+    nextState: 'PAUSED',
+    previousState: currentState === 'PAUSED' ? previousState || 'AIMING' : currentState,
+  };
+};

@@ -9,11 +9,13 @@
     "build:github": "vite build --base=/ashlife/",
     "build:domain": "vite build --base=/",
     "lint": "eslint .",
+    "test": "node --test \"src/**/*.test.js\"",
     "preview": "vite preview"
   },
   "dependencies": {
     "firebase": "^12.12.0",
     "lucide-react": "^0.577.0",
+    "phaser": "3.90.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1"

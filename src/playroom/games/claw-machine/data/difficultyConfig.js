@@ -1,0 +1,43 @@
+export const clawDifficultyConfig = {
+  easy: {
+    label: 'Easy',
+    attempts: 7,
+    holeWidth: 150,
+    holeSensorWidth: 116,
+    cableLength: 118,
+    maxCableLength: 278,
+    trolleyAcceleration: 0.22,
+    trolleyMaxSpeed: 4.2,
+    damping: 0.988,
+    gripTolerance: 0.12,
+    rewardMultiplier: 0.85,
+  },
+  normal: {
+    label: 'Normal',
+    attempts: 5,
+    holeWidth: 128,
+    holeSensorWidth: 96,
+    cableLength: 132,
+    maxCableLength: 294,
+    trolleyAcceleration: 0.28,
+    trolleyMaxSpeed: 5,
+    damping: 0.992,
+    gripTolerance: 0,
+    rewardMultiplier: 1,
+  },
+  hard: {
+    label: 'Hard',
+    attempts: 4,
+    holeWidth: 108,
+    holeSensorWidth: 78,
+    cableLength: 148,
+    maxCableLength: 320,
+    trolleyAcceleration: 0.34,
+    trolleyMaxSpeed: 5.8,
+    damping: 0.995,
+    gripTolerance: -0.1,
+    rewardMultiplier: 1.35,
+  },
+};
+
+export const getClawDifficulty = (difficulty) => clawDifficultyConfig[difficulty] || clawDifficultyConfig.normal;

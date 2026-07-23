@@ -1,0 +1,602 @@
+import { getClawDifficulty } from '../../data/difficultyConfig';
+import { clamp, machineConfig } from '../../data/machineConfig';
+import { clawPrizeConfig, getPrizeConfig, initialPrizeLayout, testPrizeLayout } from '../../data/prizeConfig';
+import { formatAttemptsRemaining, getLiftOutcomeState, getPauseTarget } from '../../systems/GameFlow';
+import { evaluateGripQuality, getGripLabel, shouldGripSlip } from '../../systems/GripSystem';
+import { buildCaptureRegion, getCaptureContactPoints, isPrizeInWinZone } from '../../systems/PhysicsRules';
+
+const stateMessages = {
+  READY: 'Move the claw',
+  AIMING: 'Press Drop',
+  DROPPING: 'Close the claw',
+  GRABBING: 'Checking grip',
+  CLOSING: 'Closing claw',
+  LIFTING: 'Lifting',
+  SWINGING: 'Build momentum!',
+  RELEASED: 'Prize released',
+  RESOLVING: 'So close!',
+  SUCCESS: 'Prize won!',
+  FAILED: 'Try again',
+  PAUSED: 'Paused',
+};
+
+const clawMachineAsset = (filename) => `${import.meta.env.BASE_URL}assets/playroom/claw-machine/${filename}`;
+
+const canvasColors = {
+  pink: 0xfaa2bf,
+  deepPink: 0xe86f9a,
+  cream: 0xfff4df,
+  lavender: 0xd7c4ff,
+  peach: 0xffc7a8,
+  mint: 0xbfe8df,
+  text: 0x6b355c,
+  glass: 0xdff3ff,
+};
+
+const emit = (bridge, type, detail = {}) => {
+  bridge?.(type, detail);
+};
+
+export const createClawMachineScene = (Phaser, { events, settings, controlState }) =>
+  class ClawMachineScene extends Phaser.Scene {
+    constructor() {
+      super('ClawMachineScene');
+      this.bridge = events;
+      this.externalSettings = settings;
+      this.controlState = controlState;
+      this.gameState = 'READY';
+      this.mode = settings.mode || 'practice';
+      this.difficulty = settings.difficulty || 'normal';
+      this.trolleyVelocity = 0;
+      this.startedAt = 0;
+      this.lastUiEmit = 0;
+      this.releaseStartedAt = 0;
+      this.attemptsUsed = 0;
+      this.bonuses = [];
+      this.prizes = [];
+      this.testMode = Boolean(settings.testMode);
+      this.lastWonPrize = null;
+    }
+
+    preload() {
+      this.load.image('claw-cabinet', clawMachineAsset('cabinet/kawaii-cafe-cabinet.png'));
+      this.load.image('claw-open', clawMachineAsset('claw/claw-open.png'));
+      this.load.image('claw-partial', clawMachineAsset('claw/claw-partial.png'));
+      this.load.image('claw-closed', clawMachineAsset('claw/claw-closed.png'));
+      this.load.image('claw-trolley', clawMachineAsset('claw/trolley.png'));
+      this.load.image('grip-sparkle', clawMachineAsset('effects/grip-sparkle.png'));
+      clawPrizeConfig.forEach((prize) => {
+        this.load.image(`claw-prize-${prize.id}`, prize.image);
+      });
+    }
+
+    create() {
+      this.matter.world.setBounds(0, 0, machineConfig.width, machineConfig.height, 40, true, true, false, true);
+      this.drawStaticMachine();
+      this.createCabinetPhysics();
+      this.createPrizeHole();
+      this.createPrizes();
+      this.createClawRig();
+      this.createDecorations();
+      this.matter.world.on('collisionstart', this.handleCollisionStart, this);
+      this.input.keyboard?.on('keydown', () => this.markStarted());
+      this.resetRoundCounters();
+      emit(this.bridge, 'game-ready', this.getUiPayload());
+    }
+
+    resetRoundCounters() {
+      const difficulty = getClawDifficulty(this.difficulty);
+      this.attemptsRemaining = this.mode === 'practice' ? Infinity : difficulty.attempts;
+      this.attemptsUsed = 0;
+      this.score = 0;
+      this.bonuses = [];
+      this.startedAt = 0;
+      this.setGameState('READY');
+    }
+
+    setDifficulty(difficulty) {
+      this.difficulty = difficulty;
+      this.restartRound();
+    }
+
+    setMode(mode) {
+      this.mode = mode;
+      this.restartRound();
+    }
+
+    markStarted() {
+      if (!this.startedAt) this.startedAt = this.time.now;
+      if (this.gameState === 'READY') this.setGameState('AIMING');
+    }
+
+    setPaused(isPaused) {
+      if (isPaused && this.gameState !== 'PAUSED') {
+        this.previousState = this.gameState;
+        this.setGameState('PAUSED');
+        this.scene.pause();
+        emit(this.bridge, 'game-paused', this.getUiPayload());
+        return;
+      }
+
+      if (!isPaused && this.scene.isPaused()) {
+        this.scene.resume();
+        this.setGameState(this.previousState || 'AIMING');
+        emit(this.bridge, 'game-resumed', this.getUiPayload());
+      }
+    }
+
+    togglePause() {
+      const target = getPauseTarget({
+        isPaused: this.gameState === 'PAUSED' || this.scene.isPaused(),
+        currentState: this.gameState,
+        previousState: this.previousState,
+      });
+      this.setPaused(target.shouldPause);
+    }
+
+    setGameState(nextState, extra = {}) {
+      this.gameState = nextState;
+      emit(this.bridge, 'attempt-updated', {
+        ...this.getUiPayload(),
+        ...extra,
+      });
+    }
+
+    getUiPayload() {
+      const elapsedSeconds = this.startedAt ? Math.floor((this.time.now - this.startedAt) / 1000) : 0;
+      return {
+        state: this.gameState,
+        statusMessage: this.gripLabel || stateMessages[this.gameState],
+        gripStatus: this.gripLabel || '',
+        swingPower: Math.round(this.swingPower || 0),
+        attemptsRemaining: formatAttemptsRemaining(this.attemptsRemaining),
+        attemptsUsed: this.attemptsUsed,
+        score: this.score || 0,
+        elapsedSeconds,
+        mode: this.mode,
+        difficulty: this.difficulty,
+        debugState: this.testMode ? this.getDebugState() : undefined,
+      };
+    }
+
+    getDebugState() {
+      return {
+        state: this.gameState,
+        trolleyX: Math.round(this.anchorBody?.position.x || 0),
+        clawX: Math.round(this.clawBody?.position.x || 0),
+        clawY: Math.round(this.clawBody?.position.y || 0),
+        cableLength: Math.round(this.cableConstraint?.length || 0),
+        capturedPrizeId: this.capturedPrize?.prize.id || '',
+        releasedPrizeId: this.releasedPrize?.prize.id || '',
+        wonPrizeId: this.lastWonPrize?.id || '',
+        swingPower: Math.round(this.swingPower || 0),
+        prizePositions: this.prizes.map(({ prize, gameObject }) => ({
+          id: prize.id,
+          x: Math.round(gameObject.x),
+          y: Math.round(gameObject.y),
+        })),
+      };
+    }
+
+    drawStaticMachine() {
+      this.add.image(500, 380, 'claw-cabinet').setDisplaySize(1000, 760).setDepth(0);
+      this.add.rectangle(500, 388, 724, 388, canvasColors.glass, 0.08).setDepth(1);
+      this.staticFx = this.add.graphics().setDepth(2);
+    }
+
+    createCabinetPhysics() {
+      const { playArea, hole } = machineConfig;
+      const floorY = playArea.y + playArea.height;
+      this.matter.add.rectangle(playArea.x - 18, playArea.y + playArea.height / 2, 36, playArea.height, {
+        isStatic: true,
+        restitution: 0.18,
+        label: 'left-wall',
+      });
+      this.matter.add.rectangle(playArea.x + playArea.width + 18, playArea.y + playArea.height / 2, 36, playArea.height, {
+        isStatic: true,
+        restitution: 0.18,
+        label: 'right-wall',
+      });
+      this.matter.add.rectangle(playArea.x + 294, floorY + 20, 588, 40, {
+        isStatic: true,
+        friction: 0.92,
+        label: 'floor-left',
+      });
+      this.matter.add.rectangle(hole.x + 116, floorY + 20, 148, 40, {
+        isStatic: true,
+        friction: 0.92,
+        label: 'floor-right',
+      });
+      this.matter.add.rectangle(hole.x - 78, floorY - 8, 26, 42, {
+        isStatic: true,
+        restitution: 0.24,
+        label: 'hole-left-rim',
+      });
+      this.matter.add.rectangle(hole.x + 78, floorY - 8, 26, 42, {
+        isStatic: true,
+        restitution: 0.24,
+        label: 'hole-right-rim',
+      });
+    }
+
+    createPrizeHole() {
+      const difficulty = getClawDifficulty(this.difficulty);
+      const { hole } = machineConfig;
+      this.holeZone = {
+        x: hole.x,
+        y: hole.y + 34,
+        width: difficulty.holeSensorWidth,
+        height: 70,
+      };
+      this.holeSensor = this.matter.add.rectangle(this.holeZone.x, this.holeZone.y, this.holeZone.width, this.holeZone.height, {
+        isStatic: true,
+        isSensor: true,
+        label: 'prize-hole-sensor',
+      });
+      this.holeGraphics = this.add.graphics();
+      this.drawHole();
+    }
+
+    drawHole() {
+      const difficulty = getClawDifficulty(this.difficulty);
+      const { hole } = machineConfig;
+      this.holeGraphics.clear();
+      this.holeGraphics.fillStyle(0xf6a4bd, 1);
+      this.holeGraphics.fillRoundedRect(hole.x - difficulty.holeWidth / 2, hole.y - 15, difficulty.holeWidth, 58, 28);
+      this.holeGraphics.fillStyle(0x381c25, 1);
+      this.holeGraphics.fillEllipse(hole.x, hole.y + 14, difficulty.holeWidth - 26, 38);
+      this.holeGraphics.lineStyle(5, 0xffd6e3, 1);
+      this.holeGraphics.strokeEllipse(hole.x, hole.y + 14, difficulty.holeWidth - 22, 42);
+    }
+
+    createPrizes() {
+      this.prizes.forEach((entry) => entry.gameObject.destroy());
+      const layout = this.testMode ? testPrizeLayout : initialPrizeLayout;
+      this.prizes = layout.map(([id, x, y, rotation]) => {
+        const prize = getPrizeConfig(id);
+        const options = {
+          label: `prize:${id}`,
+          friction: prize.friction,
+          frictionAir: prize.frictionAir,
+          restitution: prize.restitution,
+        };
+        if (prize.shape === 'circle') {
+          options.shape = { type: 'circle', radius: prize.width / 2 };
+        }
+        const gameObject = this.matter.add.image(x, y, `claw-prize-${id}`, null, options);
+        gameObject.setDisplaySize(prize.width, prize.height);
+        if (prize.shape === 'circle') {
+          gameObject.setCircle(prize.width * 0.42);
+        } else if (prize.shape === 'long') {
+          gameObject.setRectangle(prize.width * 0.86, prize.height * 0.7);
+        } else if (prize.shape === 'keychain') {
+          gameObject.setRectangle(prize.width * 0.72, prize.height * 0.72);
+        } else {
+          gameObject.setRectangle(prize.width * 0.74, prize.height * 0.78);
+        }
+        gameObject.setAngle(Phaser.Math.RadToDeg(rotation));
+        gameObject.setMass(prize.mass);
+        gameObject.setFriction(prize.friction, 0.02, prize.frictionAir);
+        gameObject.body.plugin = { prizeId: id, won: false };
+        gameObject.setData('prize', prize);
+        gameObject.setDepth(12);
+        return { prize, gameObject };
+      });
+    }
+
+    createClawRig() {
+      const difficulty = getClawDifficulty(this.difficulty);
+      const startX = 500;
+      this.anchorBody = this.matter.add.rectangle(startX, machineConfig.trolley.y, 24, 20, {
+        isStatic: true,
+        isSensor: true,
+        label: 'trolley-anchor',
+      });
+      this.clawBody = this.matter.add.rectangle(startX, machineConfig.trolley.y + difficulty.cableLength, 62, 48, {
+        frictionAir: 0.018,
+        restitution: 0.16,
+        label: 'claw-body',
+      });
+      this.cableConstraint = this.matter.add.constraint(this.anchorBody, this.clawBody, difficulty.cableLength, 0.92, {
+        damping: 0.08,
+      });
+      this.clawGraphics = this.add.graphics().setDepth(20);
+      this.trolleySprite = this.add.image(startX, machineConfig.trolley.y - 4, 'claw-trolley').setDisplaySize(116, 58).setDepth(22);
+      this.clawSprite = this.add.image(startX, machineConfig.trolley.y + difficulty.cableLength, 'claw-open').setDisplaySize(126, 154).setDepth(24);
+    }
+
+    createDecorations() {
+      this.add.text(500, 728, 'Swing, release, drop it in!', {
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#c94f7c',
+        strokeThickness: 4,
+      }).setOrigin(0.5).setDepth(25);
+    }
+
+    dropGrab() {
+      this.markStarted();
+      if (this.gameState === 'READY' || this.gameState === 'AIMING') {
+        if (Number.isFinite(this.attemptsRemaining)) this.attemptsRemaining -= 1;
+        this.attemptsUsed += 1;
+        this.setGameState('DROPPING');
+        emit(this.bridge, 'attempt-started', this.getUiPayload());
+        return;
+      }
+      if (this.gameState === 'DROPPING') {
+        this.tryGrab();
+      }
+    }
+
+    tryGrab() {
+      if (this.gameState === 'CLOSING' || this.gameState === 'LIFTING') return;
+      this.setGameState('CLOSING');
+      const clawPosition = this.clawBody.position;
+      const clawVelocity = this.clawBody.velocity;
+      const captureRegion = buildCaptureRegion(clawPosition, this.testMode ? 118 : 96);
+      const candidates = this.prizes
+        .filter(({ gameObject }) => !gameObject.body.plugin?.won)
+        .map(({ prize, gameObject }) => {
+          const contactPoints = getCaptureContactPoints(captureRegion, {
+            x: gameObject.x,
+            y: gameObject.y,
+            width: prize.width,
+            height: prize.height,
+          });
+          const distance = Phaser.Math.Distance.Between(captureRegion.centerX, captureRegion.centerY, gameObject.x, gameObject.y);
+          const grip = evaluateGripQuality({
+            claw: { x: captureRegion.centerX, y: captureRegion.centerY, velocityX: clawVelocity.x },
+            prize: {
+              ...prize,
+              x: gameObject.x,
+              y: gameObject.y,
+              velocityX: gameObject.body.velocity.x,
+            },
+            contactPoints,
+          });
+          return { prize, gameObject, grip, distance };
+        })
+        .filter((candidate) => candidate.grip.state !== 'missed')
+        .sort((a, b) => b.grip.score - a.grip.score || a.distance - b.distance);
+
+      const best = candidates[0];
+      this.gripLabel = getGripLabel(best?.grip.state);
+      emit(this.bridge, 'grip-changed', { ...this.getUiPayload(), gripStatus: this.gripLabel });
+
+      if (best && best.grip.state !== 'missed') {
+        this.capturedPrize = best;
+        this.gripStartedAt = this.time.now;
+        this.gripConstraint = this.matter.add.constraint(this.clawBody, best.gameObject.body, 40, best.grip.state === 'weak' ? 0.34 : 0.68, {
+          damping: best.grip.state === 'hooked' ? 0.1 : 0.18,
+        });
+        if (best.grip.state === 'hooked') this.bonuses.push('hook-master');
+        if (best.grip.state === 'secure') this.bonuses.push('perfect-grip');
+      } else {
+        this.capturedPrize = null;
+      }
+
+      this.time.delayedCall(360, () => this.setGameState('LIFTING'));
+    }
+
+    releasePrize() {
+      if (this.gameState !== 'SWINGING' || !this.capturedPrize) return;
+      const released = this.capturedPrize;
+      const velocity = this.clawBody.velocity;
+      const isApexRelease = Math.abs(velocity.y) < 0.75 && Math.abs(this.swingPower) > 35;
+      if (isApexRelease) this.bonuses.push('apex-release');
+      this.matter.world.removeConstraint(this.gripConstraint);
+      this.gripConstraint = null;
+      this.capturedPrize = null;
+      if (this.testMode) {
+        released.gameObject.setVelocity(18, 4.8);
+      } else {
+        released.gameObject.setVelocity(velocity.x * 1.08, velocity.y * 0.84 - (isApexRelease ? 1.5 : 0.25));
+      }
+      released.gameObject.setAngularVelocity(released.gameObject.body.angularVelocity + velocity.x * 0.012);
+      this.releasedPrize = released;
+      this.releaseStartedAt = this.time.now;
+      this.setGameState('RELEASED');
+      emit(this.bridge, 'prize-released', this.getUiPayload());
+      this.time.delayedCall(280, () => this.setGameState('RESOLVING'));
+    }
+
+    restartRound() {
+      if (this.gripConstraint) {
+        this.matter.world.removeConstraint(this.gripConstraint);
+      }
+      this.gripConstraint = null;
+      this.capturedPrize = null;
+      this.releasedPrize = null;
+      this.lastWonPrize = null;
+      this.gripLabel = '';
+      this.trolleyVelocity = 0;
+      this.createPrizes();
+      if (this.anchorBody) {
+        Phaser.Physics.Matter.Matter.Body.setPosition(this.anchorBody, { x: 500, y: machineConfig.trolley.y });
+        Phaser.Physics.Matter.Matter.Body.setPosition(this.clawBody, {
+          x: 500,
+          y: machineConfig.trolley.y + getClawDifficulty(this.difficulty).cableLength,
+        });
+      }
+      if (this.holeSensor) this.matter.world.remove(this.holeSensor);
+      this.createPrizeHole();
+      this.resetRoundCounters();
+    }
+
+    handleCollisionStart(event) {
+      event.pairs.forEach((pair) => {
+        const sensorBody = pair.bodyA.label === 'prize-hole-sensor' ? pair.bodyA : pair.bodyB.label === 'prize-hole-sensor' ? pair.bodyB : null;
+        const prizeBody = pair.bodyA.label.startsWith('prize:') ? pair.bodyA : pair.bodyB.label.startsWith('prize:') ? pair.bodyB : null;
+        if (sensorBody && prizeBody) {
+          this.checkPrizeWon(prizeBody);
+        }
+
+        if (this.gameState === 'RESOLVING' && prizeBody && (pair.bodyA.label.includes('wall') || pair.bodyB.label.includes('wall'))) {
+          this.bonuses.push('wall-bounce');
+        }
+      });
+    }
+
+    checkPrizeWon(prizeBody) {
+      if (prizeBody.plugin?.won || !this.releasedPrize || this.gameState === 'SUCCESS') return;
+      const position = prizeBody.position;
+      if (
+        !isPrizeInWinZone(position, {
+          x: this.holeZone.x,
+          rimY: machineConfig.hole.y,
+          sensorWidth: this.holeZone.width,
+          sensorHeight: this.holeZone.height + 28,
+        })
+      ) {
+        return;
+      }
+
+      prizeBody.plugin.won = true;
+      const prize = getPrizeConfig(prizeBody.plugin.prizeId);
+      this.lastWonPrize = prize;
+      this.score += 500 + prize.rewardCoins * 8;
+      this.setGameState('SUCCESS', { prize });
+      emit(this.bridge, 'prize-won', {
+        ...this.getUiPayload(),
+        prize,
+        attemptsUsed: this.attemptsUsed,
+        remainingAttempts: Number.isFinite(this.attemptsRemaining) ? this.attemptsRemaining : 0,
+        bonuses: [...new Set(this.bonuses)],
+      });
+      this.time.delayedCall(280, () => {
+        this.prizes = this.prizes.filter((entry) => {
+          if (entry.gameObject.body === prizeBody) {
+            entry.gameObject.destroy();
+            return false;
+          }
+          return true;
+        });
+      });
+    }
+
+    update(_time, delta) {
+      if (!this.anchorBody || this.gameState === 'PAUSED') return;
+      const difficulty = getClawDifficulty(this.difficulty);
+      this.updateTrolley(difficulty);
+      this.updateCableLength(difficulty);
+      this.updateGripStability();
+      this.updateResolving();
+      this.drawRig();
+      if (this.time.now - this.lastUiEmit > 160) {
+        this.lastUiEmit = this.time.now;
+        emit(this.bridge, 'attempt-updated', this.getUiPayload());
+      }
+      this.matter.world.engine.timing.timeScale = delta > 24 ? 0.92 : 1;
+    }
+
+    updateTrolley(difficulty) {
+      if (!['READY', 'AIMING', 'DROPPING', 'SWINGING'].includes(this.gameState)) return;
+      const direction = (this.controlState.right ? 1 : 0) - (this.controlState.left ? 1 : 0);
+      this.trolleyVelocity += direction * difficulty.trolleyAcceleration;
+      this.trolleyVelocity *= direction ? difficulty.damping : 0.9;
+      this.trolleyVelocity = clamp(this.trolleyVelocity, -difficulty.trolleyMaxSpeed, difficulty.trolleyMaxSpeed);
+      const nextX = clamp(
+        this.anchorBody.position.x + this.trolleyVelocity,
+        machineConfig.trolley.minX,
+        machineConfig.trolley.maxX
+      );
+      Phaser.Physics.Matter.Matter.Body.setPosition(this.anchorBody, { x: nextX, y: machineConfig.trolley.y });
+      Phaser.Physics.Matter.Matter.Body.setVelocity(this.anchorBody, { x: this.trolleyVelocity, y: 0 });
+      this.swingPower = clamp(
+        Math.abs(this.clawBody.position.x - this.anchorBody.position.x) * 0.82 + Math.abs(this.clawBody.velocity.x) * 10,
+        0,
+        100
+      );
+    }
+
+    updateCableLength(difficulty) {
+      if (this.gameState === 'DROPPING') {
+        this.cableConstraint.length = Math.min(difficulty.maxCableLength, this.cableConstraint.length + machineConfig.claw.dropSpeed);
+        if (this.cableConstraint.length >= difficulty.maxCableLength - 1) {
+          this.tryGrab();
+        }
+      }
+      if (this.gameState === 'LIFTING') {
+        this.cableConstraint.length = Math.max(difficulty.cableLength, this.cableConstraint.length - machineConfig.claw.liftSpeed);
+        if (this.cableConstraint.length <= difficulty.cableLength + 2) {
+          const nextState = getLiftOutcomeState({
+            capturedPrize: this.capturedPrize,
+            attemptsRemaining: this.attemptsRemaining,
+          });
+          this.setGameState(nextState, {
+            statusMessage: nextState === 'AIMING' ? 'Try again' : undefined,
+          });
+          if (nextState === 'AIMING' || nextState === 'FAILED') {
+            emit(this.bridge, 'attempt-failed', this.getUiPayload());
+            this.gripLabel = '';
+          }
+        }
+      }
+    }
+
+    updateGripStability() {
+      if (!this.capturedPrize || !this.gripConstraint || !['LIFTING', 'SWINGING'].includes(this.gameState)) return;
+      if (this.testMode) return;
+      if (this.time.now - (this.gripStartedAt || 0) < 1600) return;
+      const angle = Phaser.Math.RadToDeg(this.capturedPrize.gameObject.rotation);
+      if (this.capturedPrize.grip.state === 'weak' && this.swingPower < 58 && this.capturedPrize.gameObject.body.speed < 5) {
+        return;
+      }
+      const shouldSlip = shouldGripSlip({
+        grip: this.capturedPrize.grip,
+        swingPower: this.swingPower,
+        impactSpeed: this.capturedPrize.gameObject.body.speed,
+        prizeAngle: angle,
+        directionChange: Math.abs(this.trolleyVelocity),
+      });
+      if (shouldSlip && this.gameState === 'SWINGING') {
+        this.bonuses.push('save-the-slip');
+        this.matter.world.removeConstraint(this.gripConstraint);
+        this.gripConstraint = null;
+        this.releasedPrize = this.capturedPrize;
+        this.capturedPrize = null;
+        this.setGameState('RESOLVING', { statusMessage: 'Prize slipping!' });
+      }
+    }
+
+    updateResolving() {
+      if (!['RELEASED', 'RESOLVING'].includes(this.gameState) || !this.releasedPrize) return;
+      this.checkPrizeWon(this.releasedPrize.gameObject.body);
+      const body = this.releasedPrize.gameObject.body;
+      const settled = body.speed < 0.18 && this.time.now - this.releaseStartedAt > 1400;
+      const timedOut = this.time.now - this.releaseStartedAt > 5200;
+      if ((settled || timedOut) && this.gameState !== 'SUCCESS') {
+        if (Number.isFinite(this.attemptsRemaining) && this.attemptsRemaining <= 0) {
+          this.setGameState('FAILED', { statusMessage: 'Out of tries' });
+        } else {
+          this.setGameState('AIMING', { statusMessage: 'So close!' });
+        }
+        emit(this.bridge, 'attempt-failed', this.getUiPayload());
+        this.releasedPrize = null;
+        this.gripLabel = '';
+      }
+    }
+
+    drawRig() {
+      const anchor = this.anchorBody.position;
+      const claw = this.clawBody.position;
+      this.clawGraphics.clear();
+      this.clawGraphics.lineStyle(6, 0x493642, 0.95);
+      this.clawGraphics.lineBetween(anchor.x, anchor.y - 6, claw.x, claw.y - 44);
+      this.trolleySprite?.setPosition(anchor.x, anchor.y - 12);
+      if (this.clawSprite) {
+        const texture =
+          this.gameState === 'DROPPING'
+            ? 'claw-open'
+            : this.gameState === 'CLOSING'
+              ? 'claw-partial'
+              : ['LIFTING', 'SWINGING', 'RELEASED', 'RESOLVING'].includes(this.gameState)
+                ? 'claw-closed'
+                : 'claw-open';
+        this.clawSprite.setTexture(texture);
+        this.clawSprite.setPosition(claw.x, claw.y + 14);
+        this.clawSprite.setRotation(this.clawBody.angle);
+      }
+    }
+  };
