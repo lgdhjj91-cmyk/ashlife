@@ -42,3 +42,25 @@ export const isPrizeInWinZone = (position, hole) => {
   const insideY = position.y <= hole.rimY + hole.sensorHeight;
   return belowRim && insideX && insideY;
 };
+
+export const getEffectiveHoleSensorWidth = ({ holeWidth, sensorWidth }) =>
+  Math.max(sensorWidth, holeWidth - 8);
+
+export const getPrizeHoleSensorZone = ({ x, rimY, width }) => ({
+  x,
+  y: rimY + 105,
+  width,
+  height: 90,
+});
+
+export const getPrizeChuteOpening = ({ x, rimOffset, rimWidth }) => {
+  const halfRim = rimWidth / 2;
+  const left = x - rimOffset + halfRim;
+  const right = x + rimOffset - halfRim;
+
+  return {
+    left,
+    right,
+    width: right - left,
+  };
+};

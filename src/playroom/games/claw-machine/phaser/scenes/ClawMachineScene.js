@@ -1,9 +1,33 @@
 import { getClawDifficulty } from '../../data/difficultyConfig';
 import { clamp, machineConfig } from '../../data/machineConfig';
 import { clawPrizeConfig, getPrizeConfig, initialPrizeLayout, testPrizeLayout } from '../../data/prizeConfig';
+import {
+  cabinetForegroundCrops,
+  getCabinetCropPlacement,
+  joystickPrizeGuard,
+} from '../../systems/CabinetPresentation';
+import {
+  dampClawTilt,
+  getClawCableEnd,
+  getClawTextureForState,
+  getClawTiltTarget,
+} from '../../systems/ClawMotion';
 import { formatAttemptsRemaining, getLiftOutcomeState, getPauseTarget } from '../../systems/GameFlow';
 import { evaluateGripQuality, getGripLabel, shouldGripSlip } from '../../systems/GripSystem';
-import { buildCaptureRegion, getCaptureContactPoints, isPrizeInWinZone } from '../../systems/PhysicsRules';
+import {
+  buildCaptureRegion,
+  getCaptureContactPoints,
+  getEffectiveHoleSensorWidth,
+  getPrizeHoleSensorZone,
+  isPrizeInWinZone,
+} from '../../systems/PhysicsRules';
+import {
+  getCapturedPrizeDistance,
+  getWonPrizeDisplaySize,
+  getWonPrizeShelfLayout,
+  getWonPrizeTransition,
+  isReleasedPrizeCandidate,
+} from '../../systems/PrizePresentation';
 
 const stateMessages = {
   READY: 'Move the claw',
@@ -54,12 +78,14 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.attemptsUsed = 0;
       this.bonuses = [];
       this.prizes = [];
+      this.wonPrizeShelf = [];
       this.testMode = Boolean(settings.testMode);
       this.lastWonPrize = null;
     }
 
     preload() {
       this.load.image('claw-cabinet', clawMachineAsset('cabinet/kawaii-cafe-cabinet.png'));
+      this.load.image('claw-joystick-foreground', clawMachineAsset('cabinet/joystick-foreground.png'));
       this.load.image('claw-open', clawMachineAsset('claw/claw-open.png'));
       this.load.image('claw-partial', clawMachineAsset('claw/claw-partial.png'));
       this.load.image('claw-closed', clawMachineAsset('claw/claw-closed.png'));
@@ -166,9 +192,11 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         clawX: Math.round(this.clawBody?.position.x || 0),
         clawY: Math.round(this.clawBody?.position.y || 0),
         cableLength: Math.round(this.cableConstraint?.length || 0),
+        visualTiltDegrees: Math.round(Phaser.Math.RadToDeg(this.clawVisualTilt || 0)),
         capturedPrizeId: this.capturedPrize?.prize.id || '',
         releasedPrizeId: this.releasedPrize?.prize.id || '',
         wonPrizeId: this.lastWonPrize?.id || '',
+        wonShelfPrizeIds: this.wonPrizeShelf.map((entry) => entry.prize.id),
         swingPower: Math.round(this.swingPower || 0),
         prizePositions: this.prizes.map(({ prize, gameObject }) => ({
           id: prize.id,
@@ -179,9 +207,32 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     drawStaticMachine() {
-      this.add.image(500, 380, 'claw-cabinet').setDisplaySize(1000, 760).setDepth(0);
+      const cabinet = this.add.image(500, 380, 'claw-cabinet').setDisplaySize(1000, 760).setDepth(0);
       this.add.rectangle(500, 388, 724, 388, canvasColors.glass, 0.08).setDepth(1);
       this.staticFx = this.add.graphics().setDepth(2);
+      const cabinetSource = cabinet.texture.getSourceImage();
+      cabinetForegroundCrops.forEach((crop) => {
+        const placement = getCabinetCropPlacement({
+          crop,
+          sourceWidth: cabinetSource.width,
+          sourceHeight: cabinetSource.height,
+          displayWidth: machineConfig.width,
+          displayHeight: machineConfig.height,
+        });
+        this.add
+          .image(
+            placement.x + (crop.width * placement.scaleX) / 2,
+            placement.y + (crop.height * placement.scaleY) / 2,
+            'claw-joystick-foreground'
+          )
+          .setDisplaySize(crop.width * placement.scaleX, crop.height * placement.scaleY)
+          .setDepth(crop.depth);
+      });
+      const { playArea } = machineConfig;
+      this.prizeMaskSource = this.make.graphics({ add: false });
+      this.prizeMaskSource.fillStyle(0xffffff, 1);
+      this.prizeMaskSource.fillRect(playArea.x, playArea.y - 8, playArea.width, playArea.height + 8);
+      this.prizeMask = this.prizeMaskSource.createGeometryMask();
     }
 
     createCabinetPhysics() {
@@ -202,11 +253,18 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         friction: 0.92,
         label: 'floor-left',
       });
-      this.matter.add.rectangle(hole.x + 116, floorY + 20, 148, 40, {
-        isStatic: true,
-        friction: 0.92,
-        label: 'floor-right',
-      });
+      this.matter.add.rectangle(
+        joystickPrizeGuard.x,
+        joystickPrizeGuard.y,
+        joystickPrizeGuard.width,
+        joystickPrizeGuard.height,
+        {
+          isStatic: true,
+          friction: 0.82,
+          restitution: 0.12,
+          label: 'joystick-prize-guard',
+        }
+      );
       this.matter.add.rectangle(hole.x - 78, floorY - 8, 26, 42, {
         isStatic: true,
         restitution: 0.24,
@@ -222,31 +280,20 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     createPrizeHole() {
       const difficulty = getClawDifficulty(this.difficulty);
       const { hole } = machineConfig;
-      this.holeZone = {
+      const sensorWidth = getEffectiveHoleSensorWidth({
+        holeWidth: difficulty.holeWidth,
+        sensorWidth: difficulty.holeSensorWidth,
+      });
+      this.holeZone = getPrizeHoleSensorZone({
         x: hole.x,
-        y: hole.y + 34,
-        width: difficulty.holeSensorWidth,
-        height: 70,
-      };
+        rimY: hole.y,
+        width: sensorWidth,
+      });
       this.holeSensor = this.matter.add.rectangle(this.holeZone.x, this.holeZone.y, this.holeZone.width, this.holeZone.height, {
         isStatic: true,
         isSensor: true,
         label: 'prize-hole-sensor',
       });
-      this.holeGraphics = this.add.graphics();
-      this.drawHole();
-    }
-
-    drawHole() {
-      const difficulty = getClawDifficulty(this.difficulty);
-      const { hole } = machineConfig;
-      this.holeGraphics.clear();
-      this.holeGraphics.fillStyle(0xf6a4bd, 1);
-      this.holeGraphics.fillRoundedRect(hole.x - difficulty.holeWidth / 2, hole.y - 15, difficulty.holeWidth, 58, 28);
-      this.holeGraphics.fillStyle(0x381c25, 1);
-      this.holeGraphics.fillEllipse(hole.x, hole.y + 14, difficulty.holeWidth - 26, 38);
-      this.holeGraphics.lineStyle(5, 0xffd6e3, 1);
-      this.holeGraphics.strokeEllipse(hole.x, hole.y + 14, difficulty.holeWidth - 22, 42);
     }
 
     createPrizes() {
@@ -280,6 +327,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         gameObject.body.plugin = { prizeId: id, won: false };
         gameObject.setData('prize', prize);
         gameObject.setDepth(12);
+        gameObject.setMask(this.prizeMask);
         return { prize, gameObject };
       });
     }
@@ -297,12 +345,21 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         restitution: 0.16,
         label: 'claw-body',
       });
+      Phaser.Physics.Matter.Matter.Body.setInertia(this.clawBody, Infinity);
       this.cableConstraint = this.matter.add.constraint(this.anchorBody, this.clawBody, difficulty.cableLength, 0.92, {
         damping: 0.08,
       });
       this.clawGraphics = this.add.graphics().setDepth(20);
       this.trolleySprite = this.add.image(startX, machineConfig.trolley.y - 4, 'claw-trolley').setDisplaySize(116, 58).setDepth(22);
-      this.clawSprite = this.add.image(startX, machineConfig.trolley.y + difficulty.cableLength, 'claw-open').setDisplaySize(126, 154).setDepth(24);
+      this.clawSprite = this.add
+        .image(startX, machineConfig.trolley.y + difficulty.cableLength, 'claw-open')
+        .setOrigin(0.5, 0.035)
+        .setDisplaySize(126, 154)
+        .setDepth(24);
+      this.clawBaseScaleX = this.clawSprite.scaleX;
+      this.clawBaseScaleY = this.clawSprite.scaleY;
+      this.currentClawTexture = 'claw-open';
+      this.clawVisualTilt = 0;
     }
 
     createDecorations() {
@@ -313,6 +370,17 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         stroke: '#c94f7c',
         strokeThickness: 4,
       }).setOrigin(0.5).setDepth(25);
+      this.wonShelfLabel = this.add
+        .text(520, 644, 'WON PRIZES', {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#8d3d75',
+          backgroundColor: '#fff4df',
+          padding: { x: 9, y: 4 },
+        })
+        .setOrigin(0.5)
+        .setDepth(26)
+        .setVisible(false);
     }
 
     dropGrab() {
@@ -366,10 +434,20 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
 
       if (best && best.grip.state !== 'missed') {
         this.capturedPrize = best;
+        best.originalInertia = best.gameObject.body.inertia;
+        Phaser.Physics.Matter.Matter.Body.setAngularVelocity(best.gameObject.body, 0);
+        Phaser.Physics.Matter.Matter.Body.setAngle(best.gameObject.body, 0);
+        Phaser.Physics.Matter.Matter.Body.setInertia(best.gameObject.body, Infinity);
         this.gripStartedAt = this.time.now;
-        this.gripConstraint = this.matter.add.constraint(this.clawBody, best.gameObject.body, 40, best.grip.state === 'weak' ? 0.34 : 0.68, {
-          damping: best.grip.state === 'hooked' ? 0.1 : 0.18,
-        });
+        this.gripConstraint = this.matter.add.constraint(
+          this.clawBody,
+          best.gameObject.body,
+          getCapturedPrizeDistance(best.prize),
+          best.grip.state === 'weak' ? 0.34 : 0.68,
+          {
+            damping: best.grip.state === 'hooked' ? 0.1 : 0.18,
+          }
+        );
         if (best.grip.state === 'hooked') this.bonuses.push('hook-master');
         if (best.grip.state === 'secure') this.bonuses.push('perfect-grip');
       } else {
@@ -388,8 +466,11 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.matter.world.removeConstraint(this.gripConstraint);
       this.gripConstraint = null;
       this.capturedPrize = null;
+      if (Number.isFinite(released.originalInertia)) {
+        Phaser.Physics.Matter.Matter.Body.setInertia(released.gameObject.body, released.originalInertia);
+      }
       if (this.testMode) {
-        released.gameObject.setVelocity(18, 4.8);
+        released.gameObject.setVelocity(16, -7);
       } else {
         released.gameObject.setVelocity(velocity.x * 1.08, velocity.y * 0.84 - (isApexRelease ? 1.5 : 0.25));
       }
@@ -413,11 +494,17 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.trolleyVelocity = 0;
       this.createPrizes();
       if (this.anchorBody) {
+        const difficulty = getClawDifficulty(this.difficulty);
         Phaser.Physics.Matter.Matter.Body.setPosition(this.anchorBody, { x: 500, y: machineConfig.trolley.y });
         Phaser.Physics.Matter.Matter.Body.setPosition(this.clawBody, {
           x: 500,
-          y: machineConfig.trolley.y + getClawDifficulty(this.difficulty).cableLength,
+          y: machineConfig.trolley.y + difficulty.cableLength,
         });
+        Phaser.Physics.Matter.Matter.Body.setVelocity(this.clawBody, { x: 0, y: 0 });
+        Phaser.Physics.Matter.Matter.Body.setAngularVelocity(this.clawBody, 0);
+        Phaser.Physics.Matter.Matter.Body.setAngle(this.clawBody, 0);
+        this.cableConstraint.length = difficulty.cableLength;
+        this.clawVisualTilt = 0;
       }
       if (this.holeSensor) this.matter.world.remove(this.holeSensor);
       this.createPrizeHole();
@@ -439,7 +526,14 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     checkPrizeWon(prizeBody) {
-      if (prizeBody.plugin?.won || !this.releasedPrize || this.gameState === 'SUCCESS') return;
+      const releasedBody = this.releasedPrize?.gameObject?.body;
+      if (
+        prizeBody.plugin?.won ||
+        !isReleasedPrizeCandidate(releasedBody, prizeBody) ||
+        this.gameState === 'SUCCESS'
+      ) {
+        return;
+      }
       const position = prizeBody.position;
       if (
         !isPrizeInWinZone(position, {
@@ -457,20 +551,80 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.lastWonPrize = prize;
       this.score += 500 + prize.rewardCoins * 8;
       this.setGameState('SUCCESS', { prize });
-      emit(this.bridge, 'prize-won', {
+      const winPayload = {
         ...this.getUiPayload(),
         prize,
         attemptsUsed: this.attemptsUsed,
         remainingAttempts: Number.isFinite(this.attemptsRemaining) ? this.attemptsRemaining : 0,
         bonuses: [...new Set(this.bonuses)],
+      };
+      const transition = getWonPrizeTransition({
+        holeX: machineConfig.hole.x,
+        holeY: machineConfig.hole.y,
       });
-      this.time.delayedCall(280, () => {
-        this.prizes = this.prizes.filter((entry) => {
-          if (entry.gameObject.body === prizeBody) {
-            entry.gameObject.destroy();
-            return false;
-          }
-          return true;
+      const wonEntry = this.prizes.find((entry) => entry.gameObject.body === prizeBody);
+      if (wonEntry) {
+        Phaser.Physics.Matter.Matter.Body.setStatic(prizeBody, true);
+        wonEntry.gameObject.setAngularVelocity(0);
+        this.tweens.add({
+          targets: wonEntry.gameObject,
+          x: transition.sink.x,
+          y: transition.sink.y,
+          angle: 0,
+          alpha: 0,
+          scaleX: wonEntry.gameObject.scaleX * 0.55,
+          scaleY: wonEntry.gameObject.scaleY * 0.55,
+          duration: transition.sink.duration,
+          ease: 'Sine.In',
+          onComplete: () => {
+            wonEntry.gameObject.destroy();
+            this.prizes = this.prizes.filter((entry) => entry !== wonEntry);
+            this.addWonPrizeToShelf(prize, transition);
+          },
+        });
+      } else {
+        this.addWonPrizeToShelf(prize, transition);
+      }
+      this.time.delayedCall(transition.modalDelay, () => {
+        emit(this.bridge, 'prize-won', winPayload);
+      });
+    }
+
+    addWonPrizeToShelf(prize, transition = getWonPrizeTransition({
+      holeX: machineConfig.hole.x,
+      holeY: machineConfig.hole.y,
+    })) {
+      if (this.wonPrizeShelf.length >= 5) {
+        const oldest = this.wonPrizeShelf.shift();
+        oldest?.sprite.destroy();
+      }
+
+      const displaySize = getWonPrizeDisplaySize(prize);
+      const sprite = this.add
+        .image(transition.reveal.x, transition.reveal.y, `claw-prize-${prize.id}`)
+        .setDisplaySize(displaySize.width, displaySize.height)
+        .setAlpha(0)
+        .setDepth(27);
+      const finalScaleX = sprite.scaleX;
+      const finalScaleY = sprite.scaleY;
+      sprite.setScale(finalScaleX * 0.3, finalScaleY * 0.3);
+      this.wonPrizeShelf.push({ prize, sprite });
+      this.wonShelfLabel?.setVisible(true);
+
+      const layout = getWonPrizeShelfLayout(this.wonPrizeShelf.length);
+      this.wonPrizeShelf.forEach((entry, index) => {
+        const target = layout[index];
+        this.tweens.killTweensOf(entry.sprite);
+        this.tweens.add({
+          targets: entry.sprite,
+          x: target.x,
+          y: target.y,
+          alpha: 1,
+          scaleX: entry.sprite === sprite ? finalScaleX : entry.sprite.scaleX,
+          scaleY: entry.sprite === sprite ? finalScaleY : entry.sprite.scaleY,
+          delay: entry.sprite === sprite ? transition.reveal.delay : 0,
+          duration: entry.sprite === sprite ? transition.reveal.duration : 240,
+          ease: entry.sprite === sprite ? 'Back.Out' : 'Sine.Out',
         });
       });
     }
@@ -482,7 +636,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.updateCableLength(difficulty);
       this.updateGripStability();
       this.updateResolving();
-      this.drawRig();
+      this.drawRig(delta);
       if (this.time.now - this.lastUiEmit > 160) {
         this.lastUiEmit = this.time.now;
         emit(this.bridge, 'attempt-updated', this.getUiPayload());
@@ -578,25 +732,60 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       }
     }
 
-    drawRig() {
+    updateClawTexture(texture) {
+      if (!this.clawSprite || this.currentClawTexture === texture) return;
+      this.currentClawTexture = texture;
+      this.tweens.killTweensOf(this.clawSprite);
+      this.clawSprite.setTexture(texture);
+      this.clawSprite.setScale(this.clawBaseScaleX, this.clawBaseScaleY);
+
+      if (texture === 'claw-closed') {
+        this.clawSprite.setScale(this.clawBaseScaleX * 1.06, this.clawBaseScaleY * 0.92);
+        this.tweens.add({
+          targets: this.clawSprite,
+          scaleX: this.clawBaseScaleX,
+          scaleY: this.clawBaseScaleY,
+          duration: 170,
+          ease: 'Back.Out',
+        });
+        return;
+      }
+
+      if (texture === 'claw-open') {
+        this.clawSprite.setScale(this.clawBaseScaleX * 0.96, this.clawBaseScaleY * 1.04);
+        this.tweens.add({
+          targets: this.clawSprite,
+          scaleX: this.clawBaseScaleX,
+          scaleY: this.clawBaseScaleY,
+          duration: 150,
+          ease: 'Sine.Out',
+        });
+      }
+    }
+
+    drawRig(delta) {
       const anchor = this.anchorBody.position;
       const claw = this.clawBody.position;
+      const cableEnd = getClawCableEnd(claw);
+      const tiltTarget = getClawTiltTarget({
+        anchorX: anchor.x,
+        clawX: claw.x,
+        trolleyVelocity: this.trolleyVelocity,
+        clawVelocityX: this.clawBody.velocity.x,
+        state: this.gameState,
+      });
+      this.clawVisualTilt = dampClawTilt(this.clawVisualTilt || 0, tiltTarget, delta);
+
       this.clawGraphics.clear();
-      this.clawGraphics.lineStyle(6, 0x493642, 0.95);
-      this.clawGraphics.lineBetween(anchor.x, anchor.y - 6, claw.x, claw.y - 44);
+      this.clawGraphics.lineStyle(5, 0x493642, 0.95);
+      this.clawGraphics.lineBetween(anchor.x, anchor.y - 6, cableEnd.x, cableEnd.y);
+      this.clawGraphics.fillStyle(0x493642, 1);
+      this.clawGraphics.fillCircle(cableEnd.x, cableEnd.y, 3);
       this.trolleySprite?.setPosition(anchor.x, anchor.y - 12);
       if (this.clawSprite) {
-        const texture =
-          this.gameState === 'DROPPING'
-            ? 'claw-open'
-            : this.gameState === 'CLOSING'
-              ? 'claw-partial'
-              : ['LIFTING', 'SWINGING', 'RELEASED', 'RESOLVING'].includes(this.gameState)
-                ? 'claw-closed'
-                : 'claw-open';
-        this.clawSprite.setTexture(texture);
-        this.clawSprite.setPosition(claw.x, claw.y + 14);
-        this.clawSprite.setRotation(this.clawBody.angle);
+        this.updateClawTexture(getClawTextureForState(this.gameState));
+        this.clawSprite.setPosition(cableEnd.x, cableEnd.y);
+        this.clawSprite.setRotation(this.clawVisualTilt);
       }
     }
   };

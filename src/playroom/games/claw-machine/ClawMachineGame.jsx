@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createClawGame } from './phaser/createClawGame';
 import LoadingScreen from './components/LoadingScreen';
+import { shouldIgnoreDocumentGameplayKey } from './systems/KeyboardControls';
 
 const initialStatus = {
   state: 'READY',
@@ -22,12 +23,8 @@ const clearMount = (mount) => {
   }
 };
 
-const shouldIgnoreGameplayKey = (target) => {
-  const tagName = target?.tagName;
-  return target?.isContentEditable || tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
-};
-
 const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, registerControls }) => {
+  const shellRef = useRef(null);
   const mountRef = useRef(null);
   const bridgeRef = useRef(null);
   const [status, setStatus] = useState(initialStatus);
@@ -119,11 +116,11 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
 
   useEffect(() => {
     const onDocumentKeyDown = (event) => {
-      if (shouldIgnoreGameplayKey(event.target)) return;
+      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current)) return;
       handleKeyDown(event);
     };
     const onDocumentKeyUp = (event) => {
-      if (shouldIgnoreGameplayKey(event.target)) return;
+      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current)) return;
       handleKeyUp(event);
     };
     document.addEventListener('keydown', onDocumentKeyDown);
@@ -136,6 +133,7 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
 
   return (
     <div
+      ref={shellRef}
       className="claw-canvas-shell"
       tabIndex={0}
       role="application"
