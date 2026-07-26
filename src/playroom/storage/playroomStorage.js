@@ -19,6 +19,7 @@ export const defaultPlayroomProgress = {
     soundEnabled: false,
     musicEnabled: false,
     vibrationEnabled: true,
+    classicLastPlayedDate: '',
     bestScore: 0,
     fastestSuccess: null,
     fewestAttempts: null,
@@ -91,6 +92,10 @@ export const normalizePlayroomProgress = (value) => {
       controlLayout: ['left', 'right'].includes(value.clawMachine?.controlLayout)
         ? value.clawMachine.controlLayout
         : base.clawMachine.controlLayout,
+      classicLastPlayedDate:
+        typeof value.clawMachine?.classicLastPlayedDate === 'string'
+          ? value.clawMachine.classicLastPlayedDate
+          : base.clawMachine.classicLastPlayedDate,
     },
     records: {
       ...base.records,

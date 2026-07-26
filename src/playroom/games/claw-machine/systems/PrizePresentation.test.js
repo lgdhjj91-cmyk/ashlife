@@ -5,7 +5,7 @@ import {
   getWonPrizeDisplaySize,
   getWonPrizeShelfLayout,
   getWonPrizeTransition,
-  isReleasedPrizeCandidate,
+  isCollectiblePrize,
 } from './PrizePresentation.js';
 
 test('captured prizes hang below the claw instead of hiding inside its head', () => {
@@ -45,9 +45,8 @@ test('won prize transition visibly sinks into the chute before returning to the 
   });
 });
 
-test('only the prize deliberately released by the claw can be awarded', () => {
-  const releasedBody = {};
-  assert.equal(isReleasedPrizeCandidate(releasedBody, releasedBody), true);
-  assert.equal(isReleasedPrizeCandidate(releasedBody, {}), false);
-  assert.equal(isReleasedPrizeCandidate(null, releasedBody), false);
+test('any unwon prize inside the chute can be awarded once', () => {
+  assert.equal(isCollectiblePrize({ isWon: false, inWinZone: true }), true);
+  assert.equal(isCollectiblePrize({ isWon: true, inWinZone: true }), false);
+  assert.equal(isCollectiblePrize({ isWon: false, inWinZone: false }), false);
 });

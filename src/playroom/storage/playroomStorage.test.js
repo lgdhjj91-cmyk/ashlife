@@ -14,6 +14,7 @@ test('normalizes claw-machine progress without losing existing memory records', 
     clawMachine: {
       wonPrizeIds: ['bunny-plush', 'bunny-plush', 'heart-keychain'],
       prizeQuantities: { 'bunny-plush': 2 },
+      classicLastPlayedDate: '2026-07-27',
       completedPractice: true,
       selectedDifficulty: 'hard',
       selectedMode: 'classic',
@@ -24,6 +25,7 @@ test('normalizes claw-machine progress without losing existing memory records', 
   assert.equal(progress.records.normal.bestScore, 1234);
   assert.deepEqual(progress.clawMachine.wonPrizeIds, ['bunny-plush', 'heart-keychain']);
   assert.equal(progress.clawMachine.prizeQuantities['bunny-plush'], 2);
+  assert.equal(progress.clawMachine.classicLastPlayedDate, '2026-07-27');
   assert.equal(progress.clawMachine.selectedDifficulty, 'hard');
   assert.equal(progress.clawMachine.controlLayout, 'left');
 });

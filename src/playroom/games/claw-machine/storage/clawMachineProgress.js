@@ -1,5 +1,16 @@
-import { getLocalDateKey } from '../../memory-match/dailyChallenge';
-import { calculateClawReward, calculateClawScore } from '../utils/scoring';
+import { getLocalDateKey } from '../../../utils/dateKey.js';
+import { calculateClawReward, calculateClawScore } from '../utils/scoring.js';
+
+export const isClassicAvailable = (progress, dateKey = getLocalDateKey()) =>
+  progress?.clawMachine?.classicLastPlayedDate !== dateKey;
+
+export const markClassicComplete = (progress, dateKey = getLocalDateKey()) => ({
+  ...progress,
+  clawMachine: {
+    ...progress.clawMachine,
+    classicLastPlayedDate: dateKey,
+  },
+});
 
 export const applyClawPrizeReward = (progress, { prize, mode, difficulty, attemptsUsed, remainingAttempts, elapsedSeconds, bonuses }) => {
   const previousQuantity = progress.clawMachine?.prizeQuantities?.[prize.id] || 0;
