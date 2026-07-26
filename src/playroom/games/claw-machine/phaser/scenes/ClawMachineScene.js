@@ -139,11 +139,13 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     setDifficulty(difficulty) {
+      if (this.difficulty === difficulty) return;
       this.difficulty = difficulty;
       this.restartRound();
     }
 
     setMode(mode) {
+      if (this.mode === mode) return;
       this.mode = mode;
       this.restartRound();
     }

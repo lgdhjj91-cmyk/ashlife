@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createClawGame } from './phaser/createClawGame';
 import LoadingScreen from './components/LoadingScreen';
 import { shouldIgnoreDocumentGameplayKey } from './systems/KeyboardControls';
+import { createEventBridge } from './systems/EventBridge';
 
 const initialStatus = {
   state: 'READY',
@@ -27,19 +28,28 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
   const shellRef = useRef(null);
   const mountRef = useRef(null);
   const bridgeRef = useRef(null);
+  const modeRef = useRef(mode);
+  const difficultyRef = useRef(difficulty);
+  const [eventBridge] = useState(() => createEventBridge(onEvent));
   const [status, setStatus] = useState(initialStatus);
   const [loadError, setLoadError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  const emit = useCallback(
-    (type, detail) => {
-      if (type === 'attempt-updated' || type === 'game-ready' || type === 'grip-changed') {
-        setStatus((current) => ({ ...current, ...detail }));
-      }
-      onEvent?.(type, detail);
-    },
-    [onEvent]
-  );
+  useEffect(() => {
+    eventBridge.update(onEvent);
+  }, [eventBridge, onEvent]);
+
+  useEffect(() => {
+    modeRef.current = mode;
+    difficultyRef.current = difficulty;
+  }, [difficulty, mode]);
+
+  const emit = useCallback((type, detail) => {
+    if (type === 'attempt-updated' || type === 'game-ready' || type === 'grip-changed') {
+      setStatus((current) => ({ ...current, ...detail }));
+    }
+    eventBridge.emit(type, detail);
+  }, [eventBridge]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +63,11 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
         setIsLoading(true);
         bridge = await createClawGame({
           parent: mountNode,
-          settings: { mode, difficulty, testMode },
+          settings: {
+            mode: modeRef.current,
+            difficulty: difficultyRef.current,
+            testMode,
+          },
           events: emit,
         });
         if (cancelled) {
@@ -61,6 +75,8 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
           return;
         }
         bridgeRef.current = bridge;
+        bridge.setMode(modeRef.current);
+        bridge.setDifficulty(difficultyRef.current);
         registerControls?.(bridge);
         setIsLoading(false);
       } catch (error) {
@@ -79,7 +95,7 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
       clearMount(mountNode);
       bridgeRef.current = null;
     };
-  }, [difficulty, emit, mode, registerControls, testMode]);
+  }, [emit, registerControls, testMode]);
 
   useEffect(() => {
     bridgeRef.current?.setMode(mode);

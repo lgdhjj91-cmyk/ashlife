@@ -71,6 +71,8 @@ export const createClawGame = async ({ parent, events, settings }) => {
       return getScene()?.getDebugState?.() || null;
     },
     destroy() {
+      controlState.left = false;
+      controlState.right = false;
       const canvas = game.canvas;
       game.destroy(true);
       canvas?.parentNode?.removeChild(canvas);
