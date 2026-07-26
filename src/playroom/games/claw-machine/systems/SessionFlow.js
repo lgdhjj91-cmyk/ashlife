@@ -26,3 +26,12 @@ export const summarizeSession = (entries) => ({
   ),
   entries,
 });
+
+export const getSessionControlLocks = ({ mode, attemptsUsed, sessionEnded }) => {
+  const locked = mode === 'classic' && attemptsUsed > 0 && !sessionEnded;
+  return {
+    mode: locked,
+    difficulty: locked,
+    restart: locked,
+  };
+};

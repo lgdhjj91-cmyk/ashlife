@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   appendSessionPrize,
+  getSessionControlLocks,
   getTurnSecondsRemaining,
   shouldAutoDrop,
   shouldEndClassicSession,
@@ -56,4 +57,19 @@ test('empty session summary reports zero prizes and coins', () => {
     totalCoins: 0,
     entries: [],
   });
+});
+
+test('classic controls lock only after its first attempt and unlock after ending', () => {
+  assert.deepEqual(
+    getSessionControlLocks({ mode: 'classic', attemptsUsed: 0, sessionEnded: false }),
+    { mode: false, difficulty: false, restart: false }
+  );
+  assert.deepEqual(
+    getSessionControlLocks({ mode: 'classic', attemptsUsed: 1, sessionEnded: false }),
+    { mode: true, difficulty: true, restart: true }
+  );
+  assert.deepEqual(
+    getSessionControlLocks({ mode: 'classic', attemptsUsed: 5, sessionEnded: true }),
+    { mode: false, difficulty: false, restart: false }
+  );
 });

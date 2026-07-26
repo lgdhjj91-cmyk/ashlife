@@ -11,13 +11,23 @@ const StatPill = ({ icon, label, value }) => (
   </span>
 );
 
-const GameHUD = ({ status, coins, onRestart }) => (
+const GameHUD = ({ status, coins, onRestart, restartDisabled = false }) => (
   <section className="claw-hud" aria-label="Ashlife Swing & Win status">
     <StatPill icon={<Coins size={18} />} label="Joy Coins" value={coins} />
     <StatPill icon={<Trophy size={18} />} label="Tries" value={status.attemptsRemaining} />
-    <StatPill icon={<Timer size={18} />} label="Time" value={`${status.elapsedSeconds || 0}s`} />
+    <StatPill
+      icon={<Timer size={18} />}
+      label="Time left"
+      value={`${status.turnSecondsRemaining ?? 10}s`}
+    />
     <StatPill icon={<Gauge size={18} />} label="Swing" value={`${status.swingPower || 0}%`} />
-    <button className="claw-mini-button" type="button" onClick={onRestart}>
+    <button
+      className="claw-mini-button"
+      type="button"
+      onClick={onRestart}
+      disabled={restartDisabled}
+      title={restartDisabled ? 'Classic sessions cannot be restarted after the first try.' : undefined}
+    >
       <RotateCcw size={18} />
       Restart
     </button>

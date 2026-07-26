@@ -2,12 +2,23 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, Pause, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { usePlayroomProgress } from '../../hooks/usePlayroomProgress';
-import { applyClawPrizeReward } from './storage/clawMachineProgress';
+import { getLocalDateKey } from '../../utils/dateKey';
+import {
+  applyClawPrizeReward,
+  isClassicAvailable,
+  markClassicComplete,
+} from './storage/clawMachineProgress';
 import ClawMachineGame from './ClawMachineGame';
 import GameHUD from './components/GameHUD';
 import MobileControls from './components/MobileControls';
-import SuccessModal from './components/SuccessModal';
+import SessionCard from './components/SessionCard';
+import SessionSummaryModal from './components/SessionSummaryModal';
 import TutorialOverlay from './components/TutorialOverlay';
+import {
+  appendSessionPrize,
+  getSessionControlLocks,
+  summarizeSession,
+} from './systems/SessionFlow';
 import './styles/claw-machine.css';
 
 const modeOptions = [
@@ -30,6 +41,8 @@ const defaultStatus = {
   attemptsUsed: 0,
   score: 0,
   elapsedSeconds: 0,
+  turnSecondsRemaining: 10,
+  classicSessionEnded: false,
 };
 
 const AshlifeClawMachinePage = () => {
@@ -37,14 +50,22 @@ const AshlifeClawMachinePage = () => {
   const progressActions = usePlayroomProgress();
   const { progress, summary, updateProgress, updateSettings } = progressActions;
   const progressRef = useRef(progress);
-  const [mode, setMode] = useState(progress.clawMachine.selectedMode || 'practice');
+  const todayDateKey = useMemo(() => getLocalDateKey(), []);
+  const [mode, setMode] = useState(() => {
+    const selectedMode = progress.clawMachine.selectedMode || 'practice';
+    return selectedMode === 'classic' && !isClassicAvailable(progress, todayDateKey)
+      ? 'practice'
+      : selectedMode;
+  });
   const [difficulty, setDifficulty] = useState(progress.clawMachine.selectedDifficulty || 'normal');
   const [controlLayout, setControlLayout] = useState(progress.clawMachine.controlLayout || 'right');
   const [soundEnabled, setSoundEnabled] = useState(progress.clawMachine.soundEnabled || progress.settings.soundEnabled);
   const [showTutorial, setShowTutorial] = useState(!progress.clawMachine.tutorialCompleted);
   const [status, setStatus] = useState(defaultStatus);
   const [controls, setControls] = useState(null);
-  const [successResult, setSuccessResult] = useState(null);
+  const [sessionEntries, setSessionEntries] = useState([]);
+  const sessionEntriesRef = useRef([]);
+  const [sessionSummary, setSessionSummary] = useState(null);
   const [paused, setPaused] = useState(false);
   const testMode = useMemo(
     () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('clawTest') === '1',
@@ -78,12 +99,30 @@ const AshlifeClawMachinePage = () => {
     [updateProgress]
   );
 
+  const resetSessionEntries = useCallback(() => {
+    sessionEntriesRef.current = [];
+    setSessionEntries([]);
+    setSessionSummary(null);
+  }, []);
+
+  const classicAvailable = isClassicAvailable(progress, todayDateKey);
+  const controlLocks = getSessionControlLocks({
+    mode,
+    attemptsUsed: status.attemptsUsed,
+    sessionEnded: Boolean(sessionSummary) || status.classicSessionEnded,
+  });
+
   const handleModeChange = (nextMode) => {
+    if (controlLocks.mode) return;
+    if (nextMode === 'classic' && !classicAvailable) return;
+    resetSessionEntries();
     setMode(nextMode);
     saveClawSetting({ selectedMode: nextMode });
   };
 
   const handleDifficultyChange = (nextDifficulty) => {
+    if (controlLocks.difficulty) return;
+    resetSessionEntries();
     setDifficulty(nextDifficulty);
     saveClawSetting({ selectedDifficulty: nextDifficulty });
   };
@@ -108,7 +147,7 @@ const AshlifeClawMachinePage = () => {
       if (type === 'game-paused') setPaused(true);
       if (type === 'game-resumed') setPaused(false);
 
-      if (type === 'prize-won') {
+      if (type === 'prize-collected') {
         const { nextProgress, reward } = applyClawPrizeReward(progressRef.current, {
           prize: detail.prize,
           mode,
@@ -118,15 +157,29 @@ const AshlifeClawMachinePage = () => {
           elapsedSeconds: detail.elapsedSeconds,
           bonuses: detail.bonuses,
         });
+        progressRef.current = nextProgress;
         updateProgress(nextProgress);
-        setSuccessResult({
+        const entry = {
           prize: detail.prize,
           reward,
+          attemptsUsed: detail.attemptsUsed,
+        };
+        const nextEntries = appendSessionPrize(sessionEntriesRef.current, entry);
+        sessionEntriesRef.current = nextEntries;
+        setSessionEntries(nextEntries);
+      }
+
+      if (type === 'classic-session-ended') {
+        const completedProgress = markClassicComplete(progressRef.current, todayDateKey);
+        progressRef.current = completedProgress;
+        updateProgress(completedProgress);
+        setSessionSummary({
+          ...summarizeSession(sessionEntriesRef.current),
           attemptsUsed: detail.attemptsUsed,
         });
       }
     },
-    [difficulty, mode, updateProgress]
+    [difficulty, mode, todayDateKey, updateProgress]
   );
 
   const toggleSound = () => {
@@ -152,12 +205,19 @@ const AshlifeClawMachinePage = () => {
       onDropGrab: () => controls?.dropGrab(),
       onRelease: () => controls?.releasePrize(),
       onRestart: () => {
-        setSuccessResult(null);
+        if (controlLocks.restart) return;
+        resetSessionEntries();
         controls?.restart();
       },
     }),
-    [controls]
+    [controlLocks.restart, controls, resetSessionEntries]
   );
+
+  const playPractice = () => {
+    resetSessionEntries();
+    setMode('practice');
+    saveClawSetting({ selectedMode: 'practice' });
+  };
 
   return (
     <main
@@ -200,10 +260,18 @@ const AshlifeClawMachinePage = () => {
                   type="button"
                   className={mode === option.key ? 'selected' : ''}
                   key={option.key}
+                  disabled={
+                    controlLocks.mode ||
+                    (option.key === 'classic' && !classicAvailable)
+                  }
                   onClick={() => handleModeChange(option.key)}
                 >
                   <strong>{option.label}</strong>
-                  <span>{option.note}</span>
+                  <span>
+                    {option.key === 'classic' && !classicAvailable
+                      ? 'Completed today'
+                      : option.note}
+                  </span>
                 </button>
               ))}
             </div>
@@ -213,6 +281,7 @@ const AshlifeClawMachinePage = () => {
                   type="button"
                   className={difficulty === option.key ? 'selected' : ''}
                   key={option.key}
+                  disabled={controlLocks.difficulty}
                   onClick={() => handleDifficultyChange(option.key)}
                 >
                   {option.label}
@@ -222,7 +291,12 @@ const AshlifeClawMachinePage = () => {
           </div>
         </section>
 
-        <GameHUD status={status} coins={summary.coins} onRestart={controlApi.onRestart} />
+        <GameHUD
+          status={status}
+          coins={summary.coins}
+          onRestart={controlApi.onRestart}
+          restartDisabled={controlLocks.restart}
+        />
 
         <section className="claw-game-layout">
           <ClawMachineGame
@@ -239,6 +313,7 @@ const AshlifeClawMachinePage = () => {
             onRelease={controlApi.onRelease}
           />
           <aside className="claw-side-panel">
+            <SessionCard mode={mode} entries={sessionEntries} />
             <h2>Controls</h2>
             <dl>
               <div>
@@ -269,12 +344,9 @@ const AshlifeClawMachinePage = () => {
       </div>
 
       <TutorialOverlay open={showTutorial} onClose={closeTutorial} />
-      <SuccessModal
-        result={successResult}
-        onPlayAgain={() => {
-          setSuccessResult(null);
-          controls?.restart();
-        }}
+      <SessionSummaryModal
+        summary={sessionSummary}
+        onPlayPractice={playPractice}
         onBackToPlayroom={() => navigate('/play/')}
       />
     </main>
