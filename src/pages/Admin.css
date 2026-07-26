@@ -151,6 +151,22 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.admin-testing-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-testing-card .settings-desc {
+  margin-bottom: 0;
+}
+
+.admin-testing-card .btn {
+  flex: 0 0 auto;
+}
+
 .product-list-heading {
   display: flex;
   justify-content: space-between;

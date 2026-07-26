@@ -7,6 +7,11 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { resolveAssetUrl } from '../utils/assets';
 import { getProductPriceRange, normalizeVariants } from '../utils/productVariants';
 import {
+  loadPlayroomProgress,
+  savePlayroomProgress,
+} from '../playroom/storage/playroomStorage';
+import { clearClassicDailyLock } from '../playroom/games/claw-machine/storage/clawMachineProgress';
+import {
   Baby,
   BriefcaseBusiness,
   Cable,
@@ -292,6 +297,12 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     await signOutAdmin();
     navigate('/admin');
+  };
+
+  const handleResetClassicDailyTest = () => {
+    const currentProgress = loadPlayroomProgress();
+    savePlayroomProgress(clearClassicDailyLock(currentProgress));
+    showToast('success', 'Classic daily test reset for this browser.');
   };
 
   // ============================================
@@ -1483,6 +1494,20 @@ const AdminDashboard = () => {
       {/* ========== PAYMENT SETTINGS TAB ========== */}
       {activeTab === 'settings' && (
         <div className="settings-panel">
+          <div className="admin-panel settings-section admin-testing-card">
+            <div>
+              <h3>Playroom Testing</h3>
+              <p className="settings-desc">
+                Unlock another Classic claw-machine session in this browser for testing.
+                Customer browsers and saved rewards are not affected.
+              </p>
+            </div>
+            <button className="btn btn-secondary" type="button" onClick={handleResetClassicDailyTest}>
+              <Wrench size={17} />
+              Reset Classic Daily Test
+            </button>
+          </div>
+
           {/* QR Code Upload */}
           <div className="admin-panel settings-section">
             <h3>Payment QR Codes</h3>

@@ -12,6 +12,14 @@ export const markClassicComplete = (progress, dateKey = getLocalDateKey()) => ({
   },
 });
 
+export const clearClassicDailyLock = (progress) => ({
+  ...progress,
+  clawMachine: {
+    ...progress.clawMachine,
+    classicLastPlayedDate: '',
+  },
+});
+
 export const applyClawPrizeReward = (progress, { prize, mode, difficulty, attemptsUsed, remainingAttempts, elapsedSeconds, bonuses }) => {
   const previousQuantity = progress.clawMachine?.prizeQuantities?.[prize.id] || 0;
   const reward = calculateClawReward({
