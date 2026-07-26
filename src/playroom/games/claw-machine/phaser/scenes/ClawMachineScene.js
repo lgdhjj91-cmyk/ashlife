@@ -30,6 +30,7 @@ import {
 } from '../../systems/PrizePresentation';
 import {
   getTurnSecondsRemaining,
+  isAttemptResolved,
   shouldAutoDrop,
   shouldEndClassicSession,
   TURN_DURATION_MS,
@@ -570,9 +571,15 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
           x: this.holeZone.x,
           rimY: machineConfig.hole.y,
           sensorWidth: this.holeZone.width,
-          sensorHeight: this.holeZone.height + 28,
+          sensorHeight: this.holeZone.height + 10,
         });
-      if (!isCollectiblePrize({ isWon: prizeBody.plugin?.won, inWinZone })) {
+      if (
+        !isCollectiblePrize({
+          isWon: prizeBody.plugin?.won,
+          inWinZone,
+          collectionWindowOpen: ['RELEASED', 'RESOLVING'].includes(this.gameState),
+        })
+      ) {
         return;
       }
 
@@ -776,10 +783,12 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       const body = this.releasedPrize?.gameObject?.body;
       if (body && !body.plugin?.won) this.checkPrizeWon(body);
       const resolvingFor = this.time.now - this.releaseStartedAt;
-      const collectionSettled = this.time.now - this.lastPrizeCollectedAt > 650;
-      const settled = body
-        ? body.speed < 0.18 && resolvingFor > 1400 && collectionSettled
-        : resolvingFor > 900 && collectionSettled;
+      const settled = isAttemptResolved({
+        hasReleasedBody: Boolean(body),
+        bodySpeed: body?.speed || 0,
+        resolvingFor,
+        millisecondsSinceCollection: this.time.now - this.lastPrizeCollectedAt,
+      });
       const timedOut = this.time.now - this.releaseStartedAt > 5200;
       if (settled || timedOut) {
         emit(this.bridge, 'attempt-failed', this.getUiPayload());

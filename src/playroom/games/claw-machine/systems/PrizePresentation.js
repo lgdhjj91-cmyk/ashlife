@@ -32,7 +32,8 @@ export const getWonPrizeDisplaySize = (prize, maxSize = 58) => {
 export const isReleasedPrizeCandidate = (releasedBody, candidateBody) =>
   Boolean(releasedBody) && releasedBody === candidateBody;
 
-export const isCollectiblePrize = ({ isWon, inWinZone }) => !isWon && inWinZone;
+export const isCollectiblePrize = ({ isWon, inWinZone, collectionWindowOpen }) =>
+  collectionWindowOpen && !isWon && inWinZone;
 
 export const getWonPrizeTransition = ({ holeX, holeY }) => ({
   sink: {

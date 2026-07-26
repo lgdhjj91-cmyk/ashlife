@@ -46,7 +46,23 @@ test('won prize transition visibly sinks into the chute before returning to the 
 });
 
 test('any unwon prize inside the chute can be awarded once', () => {
-  assert.equal(isCollectiblePrize({ isWon: false, inWinZone: true }), true);
-  assert.equal(isCollectiblePrize({ isWon: true, inWinZone: true }), false);
-  assert.equal(isCollectiblePrize({ isWon: false, inWinZone: false }), false);
+  assert.equal(
+    isCollectiblePrize({ isWon: false, inWinZone: true, collectionWindowOpen: true }),
+    true
+  );
+  assert.equal(
+    isCollectiblePrize({ isWon: true, inWinZone: true, collectionWindowOpen: true }),
+    false
+  );
+  assert.equal(
+    isCollectiblePrize({ isWon: false, inWinZone: false, collectionWindowOpen: true }),
+    false
+  );
+});
+
+test('idle chute physics cannot award a prize before release', () => {
+  assert.equal(
+    isCollectiblePrize({ isWon: false, inWinZone: true, collectionWindowOpen: false }),
+    false
+  );
 });

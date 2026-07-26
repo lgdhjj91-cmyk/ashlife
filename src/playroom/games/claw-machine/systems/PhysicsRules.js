@@ -50,7 +50,7 @@ export const getPrizeHoleSensorZone = ({ x, rimY, width }) => ({
   x,
   y: rimY + 105,
   width,
-  height: 90,
+  height: 140,
 });
 
 export const getPrizeChuteOpening = ({ x, rimOffset, rimWidth }) => {

@@ -58,7 +58,7 @@ test('the chute sensor starts below the rim so collision begins inside the valid
     x: 804,
     y: 705,
     width: 120,
-    height: 90,
+    height: 140,
   });
 });
 

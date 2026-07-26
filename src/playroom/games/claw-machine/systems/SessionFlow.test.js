@@ -4,6 +4,7 @@ import {
   appendSessionPrize,
   getSessionControlLocks,
   getTurnSecondsRemaining,
+  isAttemptResolved,
   shouldAutoDrop,
   shouldEndClassicSession,
   summarizeSession,
@@ -71,5 +72,35 @@ test('classic controls lock only after its first attempt and unlock after ending
   assert.deepEqual(
     getSessionControlLocks({ mode: 'classic', attemptsUsed: 5, sessionEnded: true }),
     { mode: false, difficulty: false, restart: false }
+  );
+});
+
+test('a collected release waits for the chute cascade before resolving', () => {
+  assert.equal(
+    isAttemptResolved({
+      hasReleasedBody: false,
+      bodySpeed: 0,
+      resolvingFor: 900,
+      millisecondsSinceCollection: 700,
+    }),
+    false
+  );
+  assert.equal(
+    isAttemptResolved({
+      hasReleasedBody: false,
+      bodySpeed: 0,
+      resolvingFor: 2600,
+      millisecondsSinceCollection: 900,
+    }),
+    true
+  );
+  assert.equal(
+    isAttemptResolved({
+      hasReleasedBody: true,
+      bodySpeed: 0.1,
+      resolvingFor: 1500,
+      millisecondsSinceCollection: 700,
+    }),
+    true
   );
 });

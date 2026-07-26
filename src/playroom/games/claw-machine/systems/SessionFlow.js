@@ -35,3 +35,16 @@ export const getSessionControlLocks = ({ mode, attemptsUsed, sessionEnded }) => 
     restart: locked,
   };
 };
+
+export const isAttemptResolved = ({
+  hasReleasedBody,
+  bodySpeed,
+  resolvingFor,
+  millisecondsSinceCollection,
+}) => {
+  const chuteIsQuiet = millisecondsSinceCollection > 650;
+  if (hasReleasedBody) {
+    return bodySpeed < 0.18 && resolvingFor > 1400 && chuteIsQuiet;
+  }
+  return resolvingFor > 2400 && chuteIsQuiet;
+};
