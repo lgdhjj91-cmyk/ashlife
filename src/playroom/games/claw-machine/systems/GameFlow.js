@@ -6,6 +6,11 @@ export const getLiftOutcomeState = ({ capturedPrize, attemptsRemaining }) => {
   return Number.isFinite(attemptsRemaining) && attemptsRemaining <= 0 ? 'FAILED' : 'AIMING';
 };
 
+export const getNextAttemptState = ({ mode, attemptsRemaining }) =>
+  mode === 'classic' && Number.isFinite(attemptsRemaining) && attemptsRemaining <= 0
+    ? 'FAILED'
+    : 'AIMING';
+
 export const getPauseTarget = ({ isPaused, currentState, previousState }) => {
   if (isPaused) {
     return {
