@@ -1,270 +1,38 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  Cable,
   CheckCircle2,
-  ExternalLink,
   Gamepad2,
-  Gift,
-  Home as HomeIcon,
   MapPin,
   MessageCircle,
   PackageCheck,
-  PartyPopper,
-  Sparkles,
   Store,
-  ShoppingCart,
-  Utensils,
-  X,
-  ZoomIn,
+  Truck,
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteContent } from '../context/SiteContentContext';
-import { resolveAssetUrl } from '../utils/assets';
-import { normalizeVariants } from '../utils/productVariants';
+import {
+  HOME_CATEGORIES,
+  getHomeCopy,
+  selectHomepageProducts,
+} from './homeContent.js';
 import './Home.css';
 
 const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
-
-const SHOPEE_HIGHLIGHTS = [
-  {
-    title: 'Hook & Loop Cable Tie Roll',
-    tag: 'Cable Management',
-    image: asset('/brand/shopee/cable-tie.webp'),
-    to: '/product/hook-loop-cable-tie-roll',
-  },
-  {
-    title: 'Self-Adhesive Hook & Loop Tape',
-    tag: 'DIY Fastening',
-    image: asset('/brand/shopee/hook-loop-tape.webp'),
-    to: '/product/self-adhesive-hook-loop-tape',
-  },
-  {
-    title: 'Silicone Garlic Peeler Set',
-    tag: 'Kitchen Shortcut',
-    image: asset('/brand/shopee/kitchen-tool.webp'),
-    to: '/product/silicone-garlic-peeler-set',
-  },
-  {
-    title: 'Webcam Privacy Cover',
-    tag: 'Work Essentials',
-    image: asset('/brand/shopee/webcam-cover.webp'),
-    to: '/product/webcam-privacy-cover',
-  },
-];
-
-const CREATIVE_HIGHLIGHTS = [
-  {
-    src: asset('/brand/shop-product-2-optimized.webp'),
-    alt: 'ASHLIFE creative shop display with cute gifts and nano bricks',
-  },
-  {
-    src: asset('/brand/craft-feature-1-optimized.webp'),
-    alt: 'Super cute creative collection poster',
-  },
-  {
-    src: asset('/brand/craft-feature-2-optimized.webp'),
-    alt: 'DIY craft supply poster',
-  },
-];
-
-const ARCHIVE_GALLERY = [
-  {
-    src: asset('/brand/shop-poster-optimized.webp'),
-    alt: 'ASHLIFE kawaii superstore opening sale poster',
-  },
-  {
-    src: asset('/brand/shop-product-2-optimized.webp'),
-    alt: 'Creative mini figures, stationery and nano brick items',
-  },
-];
-
-const popularCategoryLinks = [
-  { key: 'home', icon: HomeIcon, labelEn: 'Home Essentials', labelZh: '家居实用', to: '/shop?category=Home%20Gadgets' },
-  { key: 'cable', icon: Cable, labelEn: 'Cable Management', labelZh: '电线收纳', to: '/shop?search=cable' },
-  { key: 'kitchen', icon: Utensils, labelEn: 'Kitchen Helpers', labelZh: '厨房小帮手', to: '/shop?category=Cleaning%20Tools' },
-  { key: 'diy', icon: Sparkles, labelEn: 'DIY & Craft', labelZh: 'DIY 手作', to: '/shop?category=DIY%20Crafts' },
-  { key: 'toys', icon: Store, labelEn: 'Toys', labelZh: '玩具小物', to: '/shop?search=toy' },
-  { key: 'gifts', icon: Gift, labelEn: 'Gifts & Small Items', labelZh: '礼品小物', to: '/shop?category=Cute%20Accessories' },
-];
-
-const productHasStock = (product) => {
-  const variants = normalizeVariants(product);
-  if (variants.length > 0) {
-    return variants.some((variant) => Number(variant.stock) > 0);
-  }
-  return Number(product.stock) > 0;
-};
-
-const copy = {
-  en: {
-    shopeeStatus: 'Active on Shopee',
-    shopStatus: 'Archive and inspiration',
-    linesTitle: 'Two ASHLIFE sides, one useful little shop',
-    linesIntro:
-      'The current Shopee range handles practical daily needs. The old shop collection keeps ASHLIFE playful with stationery, gifts, mini toys and resin craft ideas.',
-    shopeeTitle: 'Shopee essentials',
-    shopeeText:
-      'Cable ties, hook-and-loop tapes, adhesive helpers, kitchen tools, home organization and work-desk fixes that are still part of the active selling direction.',
-    shopTitle: 'Creative shop roots',
-    shopText:
-      'Stationery, dolls, nano blocks, stickers and DIY resin pieces are no longer the main active shop, but they still tell customers what ASHLIFE feels like.',
-    creativeCategory: 'DIY Crafts',
-    enlargeNote: 'Tap photos to enlarge',
-    activeTitle: 'Current focus products',
-    activeIntro: 'A quick look at the kinds of items customers can expect from the active ASHLIFE Shopee range.',
-    archiveTitle: 'Cute and creative corner',
-    archiveIntro:
-      'The older shop visuals stay on the site as a brand story and inspiration area, instead of being shown as a live inventory promise.',
-    shopNow: 'Browse catalogue',
-    chat: 'Ask availability',
-    shopNowCta: 'Shop Now',
-    whatsappCta: 'Order via WhatsApp',
-    shopeeCta: 'View Shopee',
-    trustBadges: [
-      'Ready Stock Malaysia',
-      'WhatsApp Confirmation',
-      'Self Pickup Available',
-      'Delivery Available',
-      'Shopee Store Available',
-    ],
-    categoryTitle: 'Popular Categories',
-    popularTitle: 'Best Sellers / Popular Now',
-    popularIntro: 'Useful ready-stock picks from the current catalogue. Availability is confirmed before processing.',
-    contactTitle: 'Contact and ordering options',
-    contactIntro: 'Ask about stock, pickup around Seri Kembangan / Serdang, delivery fee, or Shopee purchase options.',
-    areaNote: 'Business area: Malaysia / Seri Kembangan / Serdang',
-    operatingNote: 'Orders are confirmed manually by WhatsApp before processing.',
-    featuredTitle: 'Browse the website catalogue',
-    featuredIntro: 'These products come from the current site catalogue. Stock and ordering are confirmed through WhatsApp.',
-    howTitle: 'How ASHLIFE helps',
-    howOne: 'Find the right small tool for home, office, cable, kitchen or craft needs.',
-    howTwo: 'Confirm whether the item is active on Shopee or better handled through WhatsApp.',
-    howThree: 'Keep both practical essentials and cute creative items under one ASHLIFE brand.',
-  },
-  zh: {
-    shopeeStatus: 'Shopee 现售',
-    shopStatus: '旧店故事与灵感',
-    linesTitle: 'ASHLIFE 的两个方向，合成一个实用小店',
-    linesIntro: '现在 Shopee 主打日常实用小物；旧店系列保留文具、礼品、迷你玩具与树脂手作的可爱感。',
-    shopeeTitle: 'Shopee 实用系列',
-    shopeeText: '电线收纳、魔术贴、粘贴工具、厨房用品、家居整理和办公桌小物，是目前仍在发展的现售方向。',
-    shopTitle: '创意小店根源',
-    shopText: '文具、公仔、微型积木、贴纸与 DIY 树脂材料不再是主要现售店，但它们继续代表 ASHLIFE 的可爱与创意。',
-    activeTitle: '当前主打商品',
-    activeIntro: '快速了解 ASHLIFE Shopee 现售系列会出现的商品类型。',
-    archiveTitle: '可爱创意角落',
-    archiveIntro: '旧店素材会以品牌故事和灵感形式保留，不会让顾客误会全部都是实时库存。',
-    shopNow: '浏览商品',
-    chat: '询问库存',
-    shopNowCta: '立即选购',
-    whatsappCta: 'WhatsApp 下单',
-    shopeeCta: '查看 Shopee',
-    trustBadges: [
-      '马来西亚现货',
-      'WhatsApp 人工确认',
-      '可安排自取',
-      '可安排配送',
-      'Shopee 店铺',
-    ],
-    categoryTitle: '热门分类',
-    popularTitle: '热卖 / 近期热门',
-    popularIntro: '来自当前商品目录的实用现货选择，处理前会先确认库存。',
-    contactTitle: '联系与下单方式',
-    contactIntro: '可以询问库存、Seri Kembangan / Serdang 一带自取、运费或 Shopee 购买方式。',
-    areaNote: '服务区域：Malaysia / Seri Kembangan / Serdang',
-    operatingNote: '订单会先通过 WhatsApp 人工确认，再继续处理。',
-    featuredTitle: '网站商品目录',
-    featuredIntro: '这些商品来自当前网站目录，库存与下单会通过 WhatsApp 确认。',
-    howTitle: 'ASHLIFE 可以怎样帮你',
-    howOne: '帮你找到家居、办公、电线、厨房或手作用途的小工具。',
-    howTwo: '确认商品适合到 Shopee 购买，还是通过 WhatsApp 人工处理。',
-    howThree: '把实用小物和可爱创意用品统一在 ASHLIFE 品牌下。',
-  },
-};
+const ORDERING_ICONS = [CheckCircle2, MapPin, Truck, MessageCircle];
 
 const Home = () => {
-  const navigate = useNavigate();
-  const [lightboxImage, setLightboxImage] = useState(null);
   const { products } = useProducts();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const { siteContent } = useSiteContent();
-  const text = copy[language] || copy.en;
-  const playroomPromo = language === 'zh'
-    ? {
-      kicker: '玩游戏赢奖励',
-      title: 'Ashlife 游戏房',
-      description: '玩可爱的小游戏，配对萌萌贴纸，收集奖励。',
-      button: '开始玩',
-    }
-    : {
-      kicker: 'Play & Win',
-      title: 'Ashlife Playroom',
-      description: 'Play cute mini-games, match adorable stickers and collect rewards.',
-      button: 'Start Playing',
-    };
-  const topMessage = language === 'zh'
-    ? {
-      title: '现货实用小物，适合家里、办公和日常使用',
-      subtitle: '家居、办公、电线收纳、厨房、DIY、文具和日常小物。先把商品加入购物车，再通过网站或 Shopee 下单。',
-      introTitle: '现在可购买的实用商品',
-      introBody: '浏览当前商品目录，把需要的商品加入购物车，再选择在线付款或把整理好的订单发送到 WhatsApp。喜欢 Shopee 结账的顾客也可以直接到 Shopee 店铺。',
-    }
-    : {
-      title: 'Ready-stock useful products for everyday home and work',
-      subtitle: 'Home, office, cable management, kitchen, DIY, stationery and small daily needs. Add products to cart, then order through the website or Shopee.',
-      introTitle: 'Useful items customers can buy now',
-      introBody: 'Browse the current catalogue, add the items you want to cart, then checkout online or send the prepared order summary through WhatsApp. Shopee is available for customers who prefer marketplace checkout.',
-    };
-  const featuredProducts = products.slice(0, 4);
-  const popularProducts = (() => {
-    const flagged = products.filter((product) => product.bestSeller || product.popular || product.featured);
-    const fallback = [
-      ...(siteContent.homeFocusProductIds || [])
-        .map((id) => products.find((product) => product.id === id))
-        .filter(Boolean),
-      ...products.filter(productHasStock),
-      ...products,
-    ];
-    const seen = new Set();
-    return [...flagged, ...fallback].filter((product) => {
-      if (!product || seen.has(product.id)) return false;
-      seen.add(product.id);
-      return true;
-    }).slice(0, 8);
-  })();
-  const categories = siteContent.categories || [];
-  const categoryLabel = (category) => {
-    const match = categories.find((item) => item.en === category);
-    return language === 'zh' ? match?.zh || category : match?.en || category;
-  };
-  const focusProducts = (() => {
-    const selectedIds = siteContent.homeFocusProductIds || [];
-    const selectedProducts = selectedIds
-      .map((id) => products.find((product) => product.id === id))
-      .filter(Boolean);
-
-    if (selectedProducts.length > 0) {
-      return selectedProducts.map((product) => ({
-        title: language === 'zh' ? product.name_zh || product.name : product.name,
-        tag: categoryLabel(product.category),
-        image: resolveAssetUrl(product.image),
-        to: `/product/${product.id}`,
-      }));
-    }
-
-    return SHOPEE_HIGHLIGHTS;
-  })();
-  const creativeImages = (siteContent.creativeRootsImages?.length
-    ? siteContent.creativeRootsImages
-    : CREATIVE_HIGHLIGHTS
-  ).map((image) => ({ ...image, src: resolveAssetUrl(image.src) }));
-  const archiveImages = (siteContent.archiveImages?.length ? siteContent.archiveImages : ARCHIVE_GALLERY).map(
-    (image) => ({ ...image, src: resolveAssetUrl(image.src) })
+  const text = getHomeCopy(language);
+  const popularProducts = selectHomepageProducts(
+    products,
+    siteContent.homeFocusProductIds,
+    4
   );
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
@@ -274,317 +42,160 @@ const Home = () => {
 
   return (
     <div className="page animate-fade-in home-page">
-      <section className="hero-shop" style={{ '--hero-image': `url(${asset('/brand/ashlife-hero-wide-v2.webp')})` }}>
-        <div className="container hero-shop-content">
-          <div className="hero-text-stack">
-            <p className="eyebrow">{t('hero_eyebrow')}</p>
-            <h1>{topMessage.title}</h1>
-            <p className="hero-copy">{topMessage.subtitle}</p>
-            <div className="hero-actions">
-              <button className="btn btn-primary" onClick={() => navigate('/shop')}>
-                {text.shopNowCta}
+      <section className="home-hero">
+        <div className="container home-hero-grid">
+          <div className="home-hero-copy">
+            <p className="home-eyebrow">{text.hero.eyebrow}</p>
+            <h1>{text.hero.title}</h1>
+            <p className="home-hero-subtitle">{text.hero.subtitle}</p>
+            <div className="home-actions">
+              <Link className="btn btn-primary" to="/shop">
+                {text.hero.primaryAction}
                 <ArrowRight size={18} />
-              </button>
-              <a className="btn btn-secondary hero-shopee" href={shopeeUrl} target="_blank" rel="noreferrer">
+              </Link>
+              <a
+                className="btn btn-secondary"
+                href={shopeeUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Store size={18} />
-                {text.shopeeCta}
+                {text.hero.secondaryAction}
               </a>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section className="container top-trust-badges" aria-label="ASHLIFE trust badges">
-        {text.trustBadges.map((badge) => (
-          <span className="top-trust-badge" key={badge}>
-            <CheckCircle2 size={16} />
-            {badge}
-          </span>
-        ))}
-      </section>
-
-      <section className="container playroom-promo-section" aria-labelledby="playroom-promo-title">
-        <div className="playroom-promo-copy">
-          <div className="playroom-promo-icon">
-            <Gamepad2 size={24} />
-          </div>
-          <div>
-            <p className="section-kicker">{playroomPromo.kicker}</p>
-            <h2 id="playroom-promo-title">{playroomPromo.title}</h2>
-            <p>{playroomPromo.description}</p>
+          <div className="home-hero-visual">
+            <img
+              src={asset('/brand/ashlife-hero-wide-v2.webp')}
+              alt="ASHLIFE home, work and DIY essentials"
+              fetchPriority="high"
+            />
           </div>
         </div>
-        <Link to="/play/" className="btn btn-secondary playroom-promo-button">
-          <PartyPopper size={18} />
-          {playroomPromo.button}
-        </Link>
       </section>
 
-      <section className="container home-intro-band">
-        <div>
-          <span className="status-pill">{text.shopeeStatus}</span>
-          <h2>{topMessage.introTitle}</h2>
-        </div>
-        <p>{topMessage.introBody}</p>
-      </section>
-
-      <section className="container popular-categories-section">
-        <div className="section-header compact">
-          <div>
-            <p className="section-kicker">ASHLIFE</p>
-            <h2>{text.categoryTitle}</h2>
-          </div>
-        </div>
-        <div className="popular-category-grid">
-          {popularCategoryLinks.map((category) => {
+      <section
+        className="container home-categories"
+        aria-labelledby="home-categories-title"
+      >
+        <h2 id="home-categories-title">{text.categories.title}</h2>
+        <div className="home-category-grid">
+          {HOME_CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
-              <Link to={category.to} className="popular-category-card" key={category.key}>
-                <Icon size={22} />
+              <Link
+                className="home-category-link"
+                to={category.to}
+                key={category.key}
+              >
+                <Icon size={22} strokeWidth={1.8} />
                 <span>{language === 'zh' ? category.labelZh : category.labelEn}</span>
+                <ArrowRight size={16} aria-hidden="true" />
               </Link>
             );
           })}
         </div>
       </section>
 
-      {/* Store Location Banner */}
-      <section className="store-location-banner">
-        <div className="container store-location-inner">
-          <div className="store-location-icon">
-            <MapPin size={32} />
+      <section
+        className="container home-products"
+        aria-labelledby="home-products-title"
+      >
+        <div className="home-section-heading">
+          <div>
+            <h2 id="home-products-title">{text.products.title}</h2>
+            <p>{text.products.description}</p>
           </div>
-          <div className="store-location-copy">
-            <h2>{t('store_location_title')}</h2>
-            <p className="store-location-subtitle">{t('store_location_subtitle')}</p>
-            <p className="store-location-desc">{t('store_location_desc')}</p>
+          <Link className="home-text-link" to="/shop">
+            {text.products.action}
+            <ArrowRight size={17} />
+          </Link>
+        </div>
+
+        {popularProducts.length > 0 ? (
+          <div className="home-product-grid">
+            {popularProducts.map((product) => (
+              <ProductCard product={product} key={product.id} />
+            ))}
           </div>
-          <div className="store-location-actions">
+        ) : (
+          <div className="home-products-empty">
+            <PackageCheck size={24} />
+            <p>{text.products.empty}</p>
+            <Link to="/shop">{text.products.action}</Link>
+          </div>
+        )}
+      </section>
+
+      <section
+        className="home-ordering"
+        aria-labelledby="home-ordering-title"
+      >
+        <div className="container home-ordering-grid">
+          <div className="home-ordering-copy">
+            <h2 id="home-ordering-title">{text.ordering.title}</h2>
+            <p>{text.ordering.description}</p>
+          </div>
+          <div className="home-ordering-points">
+            {text.ordering.points.map((point, index) => {
+              const Icon = ORDERING_ICONS[index];
+              return (
+                <div className="home-ordering-point" key={point}>
+                  <Icon size={20} strokeWidth={1.8} />
+                  <span>{point}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container home-playroom"
+        aria-labelledby="home-playroom-title"
+      >
+        <img
+          className="home-playroom-mascot"
+          src={asset('/assets/game/playroom-mascot.webp')}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+        />
+        <div className="home-playroom-copy">
+          <p className="home-eyebrow">{text.playroom.eyebrow}</p>
+          <h2 id="home-playroom-title">{text.playroom.title}</h2>
+          <p>{text.playroom.description}</p>
+        </div>
+        <Link className="btn home-playroom-action" to="/play/">
+          <Gamepad2 size={18} />
+          {text.playroom.action}
+        </Link>
+      </section>
+
+      <section
+        className="home-closing"
+        aria-labelledby="home-closing-title"
+      >
+        <div className="container home-closing-inner">
+          <h2 id="home-closing-title">{text.closing.title}</h2>
+          <div className="home-actions">
+            <Link className="btn home-closing-primary" to="/shop">
+              {text.closing.primaryAction}
+              <ArrowRight size={18} />
+            </Link>
             <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hello ASHLIFE, I would like to arrange a store pickup. Can you share the store address?')}`}
+              className="btn home-closing-secondary"
+              href={whatsappHref}
               target="_blank"
               rel="noreferrer"
-              className="btn btn-primary"
             >
               <MessageCircle size={18} />
-              {t('store_location_btn')}
-            </a>
-            <Link to="/shop" className="btn btn-secondary">
-              {t('hero_btn')}
-            </Link>
-          </div>
-        </div>
-      </section>
-      <br />
-
-      <section className="container trust-order-band">
-        
-        <div className="trust-order-copy">
-          
-          <span className="status-pill">{t('confirm_order')}</span>
-          <h2>{t('trust_title')}</h2>
-          <p>{t('trust_intro')}</p>
-        </div>
-        <div className="trust-order-steps">
-          <div className="trust-step">
-            <ShoppingCart size={22} />
-            <p>{t('trust_point_one')}</p>
-          </div>
-          <div className="trust-step">
-            <MessageCircle size={22} />
-            <p>{t('trust_point_two')}</p>
-          </div>
-          <div className="trust-step">
-            <PackageCheck size={22} />
-            <p>{t('trust_point_three')}</p>
-          </div>
-        </div>
-      </section>
-<br></br>
-      <section className="container storefront-grid">
-        <article className="storefront-panel essentials-panel">
-          <div className="panel-icon"><Store size={22} /></div>
-          <span className="status-pill">{text.shopeeStatus}</span>
-          <h3>{text.shopeeTitle}</h3>
-          <p>{text.shopeeText}</p>
-          <div className="mini-category-row">
-            <Link to="/shop?category=Home%20Gadgets"><Cable size={16} />{t('cat_cable')}</Link>
-            <Link to="/shop?category=Cleaning%20Tools"><Utensils size={16} />{t('cat_home_kitchen')}</Link>
-            <Link to="/shop?category=Lifestyle%20Items"><HomeIcon size={16} />{t('cat_work')}</Link>
-          </div>
-        </article>
-
-        <article className="storefront-panel creative-panel">
-          <div className="panel-icon"><Sparkles size={22} /></div>
-          <span className="status-pill muted">{text.shopStatus}</span>
-          <h3>{text.shopTitle}</h3>
-          <p>{text.shopText}</p>
-          <div className="creative-actions">
-            <Link to="/shop?category=DIY%20Crafts" className="creative-category-link">
-              {text.creativeCategory || (language === 'zh' ? 'DIY 手作' : 'DIY Crafts')}
-              <ExternalLink size={16} />
-            </Link>
-            <span className="image-expand-note">
-              <ZoomIn size={15} />
-              {text.enlargeNote || (language === 'zh' ? '点击照片放大' : 'Tap photos to enlarge')}
-            </span>
-          </div>
-          <div className="creative-thumb-row">
-            {creativeImages.map((image) => (
-              <button
-                className="image-zoom-button creative-thumb"
-                key={image.src}
-                type="button"
-                onClick={() => setLightboxImage(image)}
-                aria-label={`Open larger image: ${image.alt}`}
-                title="Open larger image"
-              >
-                <img src={image.src} alt={image.alt} loading="lazy" />
-                <ZoomIn size={18} />
-              </button>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="container home-section">
-        <div className="section-header">
-          <div>
-            <p className="section-kicker">{text.shopeeStatus}</p>
-            <h2>{text.activeTitle}</h2>
-            <p>{text.activeIntro}</p>
-          </div>
-          <Link to="/shop" className="view-all">{text.shopNow}</Link>
-        </div>
-        <div className="highlight-product-grid">
-          {focusProducts.map((item) => (
-            <Link className="highlight-product" key={item.title} to={item.to} aria-label={`View ${item.title}`}>
-              <img src={item.image} alt={item.title} loading="lazy" />
-              <div>
-                <span>{item.tag}</span>
-                <h3>{item.title}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="archive-band">
-        <div className="container archive-layout">
-          <div className="archive-copy">
-            <p className="section-kicker">{text.shopStatus}</p>
-            <h2>{text.archiveTitle}</h2>
-            <p>{text.archiveIntro}</p>
-            <a className="btn btn-secondary" href={whatsappHref} target="_blank" rel="noreferrer">
-              <MessageCircle size={18} />
-              {text.chat}
-            </a>
-          </div>
-          <div className="archive-gallery">
-            {archiveImages.map((image) => (
-              <button
-                className="image-zoom-button archive-image-card"
-                key={image.src}
-                type="button"
-                onClick={() => setLightboxImage(image)}
-                aria-label={`Open larger image: ${image.alt}`}
-                title="Open larger image"
-              >
-                <img src={image.src} alt={image.alt} loading="lazy" />
-                <ZoomIn size={20} />
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="container help-section">
-        <div className="section-header compact">
-          <div>
-            <p className="section-kicker">ASHLIFE</p>
-            <h2>{text.howTitle}</h2>
-          </div>
-        </div>
-        <div className="help-grid">
-          {[text.howOne, text.howTwo, text.howThree].map((item, index) => (
-            <div className="help-item" key={item}>
-              <PackageCheck size={22} />
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <p>{item}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <br></br>
-      {popularProducts.length > 0 && (
-        <section className="container home-section">
-          <div className="section-header">
-            <div>
-              <p className="section-kicker">{text.shopeeStatus}</p>
-              <h2>{text.popularTitle}</h2>
-              <p>{text.popularIntro}</p>
-            </div>
-            <Link to="/shop" className="view-all">{text.shopNow}</Link>
-          </div>
-          <div className="grid-mobile-1 grid-sm-2 grid-md-4">
-            {popularProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="contact-trust-section">
-        <div className="container contact-trust-inner">
-          <div>
-            <p className="section-kicker">ASHLIFE</p>
-            <h2>{text.contactTitle}</h2>
-            <p>{text.contactIntro}</p>
-            <div className="contact-trust-notes">
-              <span><MapPin size={16} />{text.areaNote}</span>
-              <span><PackageCheck size={16} />{text.operatingNote}</span>
-            </div>
-          </div>
-          <div className="contact-trust-actions">
-            <a className="btn btn-primary" href={whatsappHref} target="_blank" rel="noreferrer">
-              <MessageCircle size={18} />
-              WhatsApp
-            </a>
-            <a className="btn btn-secondary" href={shopeeUrl} target="_blank" rel="noreferrer">
-              <Store size={18} />
-              Shopee
+              {text.closing.secondaryAction}
             </a>
           </div>
         </div>
       </section>
-
-      {featuredProducts.length > 0 && (
-        <section className="container home-section">
-          <div className="section-header">
-            <div>
-              <p className="section-kicker">{t('section_featured')}</p>
-              <h2>{text.featuredTitle}</h2>
-              <p>{text.featuredIntro}</p>
-            </div>
-            <Link to="/shop" className="view-all">{t('view_all')}</Link>
-          </div>
-          <div className="grid-mobile-1 grid-sm-2 grid-md-4">
-            {featuredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {lightboxImage && createPortal(
-        <div className="image-lightbox" role="dialog" aria-modal="true" aria-label={lightboxImage.alt} onClick={() => setLightboxImage(null)}>
-          <button className="lightbox-close" type="button" onClick={() => setLightboxImage(null)} aria-label="Close image preview">
-            <X size={24} />
-          </button>
-          <img src={lightboxImage.src} alt={lightboxImage.alt} onClick={(event) => event.stopPropagation()} />
-        </div>,
-        document.body
-      )}
     </div>
   );
 };
