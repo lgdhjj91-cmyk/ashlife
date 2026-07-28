@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import * as cabinetPresentation from './CabinetPresentation.js';
+
+const {
   cabinetForegroundCrops,
   getCabinetCropPlacement,
   joystickPrizeGuard,
-} from './CabinetPresentation.js';
+} = cabinetPresentation;
 
 test('foreground artwork contains only the joystick and cannot duplicate the prize chute', () => {
   assert.deepEqual(cabinetForegroundCrops, [
@@ -42,6 +44,23 @@ test('cabinet crop placement preserves its position in the full cabinet artwork'
       y: 556,
       scaleX: 1000 / 1438,
       scaleY: 760 / 1093,
+    }
+  );
+});
+
+test('joystick foreground mask follows the knob, stem, and base instead of a rectangle', () => {
+  assert.equal(typeof cabinetPresentation.getJoystickForegroundMaskPlacement, 'function');
+  assert.deepEqual(
+    cabinetPresentation.getJoystickForegroundMaskPlacement({
+      x: 10,
+      y: 20,
+      scaleX: 2,
+      scaleY: 3,
+    }),
+    {
+      knob: { x: 218, y: 281, radius: 108 },
+      stem: { x: 174, y: 398, width: 92, height: 240, radius: 24 },
+      base: { x: 218, y: 620, width: 284, height: 198 },
     }
   );
 });

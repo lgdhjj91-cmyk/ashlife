@@ -132,11 +132,11 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
 
   useEffect(() => {
     const onDocumentKeyDown = (event) => {
-      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current)) return;
+      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current, event.code)) return;
       handleKeyDown(event);
     };
     const onDocumentKeyUp = (event) => {
-      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current)) return;
+      if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current, event.code)) return;
       handleKeyUp(event);
     };
     document.addEventListener('keydown', onDocumentKeyDown);

@@ -1,9 +1,15 @@
 import { getClawDifficulty } from '../../data/difficultyConfig';
 import { clamp, machineConfig } from '../../data/machineConfig';
-import { clawPrizeConfig, getPrizeConfig, initialPrizeLayout, testPrizeLayout } from '../../data/prizeConfig';
+import {
+  clawPrizeConfig,
+  createRandomPrizeLayout,
+  getPrizeConfig,
+  testPrizeLayout,
+} from '../../data/prizeConfig';
 import {
   cabinetForegroundCrops,
   getCabinetCropPlacement,
+  getJoystickForegroundMaskPlacement,
   joystickPrizeGuard,
 } from '../../systems/CabinetPresentation';
 import {
@@ -12,7 +18,7 @@ import {
   getClawTextureForState,
   getClawTiltTarget,
 } from '../../systems/ClawMotion';
-import { formatAttemptsRemaining, getPauseTarget } from '../../systems/GameFlow';
+import { canMoveTrolleyInState, formatAttemptsRemaining, getPauseTarget } from '../../systems/GameFlow';
 import { evaluateGripQuality, getGripLabel, shouldGripSlip } from '../../systems/GripSystem';
 import {
   buildCaptureRegion,
@@ -93,6 +99,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.classicSessionEnded = false;
       this.lastPrizeCollectedAt = 0;
       this.collectedDuringAttempt = false;
+      this.prizeLayoutSeed = Math.floor(Math.random() * 4294967296);
     }
 
     preload() {
@@ -237,6 +244,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.add.rectangle(500, 388, 724, 388, canvasColors.glass, 0.08).setDepth(1);
       this.staticFx = this.add.graphics().setDepth(2);
       const cabinetSource = cabinet.texture.getSourceImage();
+      this.foregroundMaskSources = [];
       cabinetForegroundCrops.forEach((crop) => {
         const placement = getCabinetCropPlacement({
           crop,
@@ -245,7 +253,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
           displayWidth: machineConfig.width,
           displayHeight: machineConfig.height,
         });
-        this.add
+        const foreground = this.add
           .image(
             placement.x + (crop.width * placement.scaleX) / 2,
             placement.y + (crop.height * placement.scaleY) / 2,
@@ -253,6 +261,31 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
           )
           .setDisplaySize(crop.width * placement.scaleX, crop.height * placement.scaleY)
           .setDepth(crop.depth);
+        if (crop.id === 'joystick') {
+          const maskPlacement = getJoystickForegroundMaskPlacement(placement);
+          const maskSource = this.make.graphics({ add: false });
+          maskSource.fillStyle(0xffffff, 1);
+          maskSource.fillCircle(
+            maskPlacement.knob.x,
+            maskPlacement.knob.y,
+            maskPlacement.knob.radius
+          );
+          maskSource.fillRoundedRect(
+            maskPlacement.stem.x,
+            maskPlacement.stem.y,
+            maskPlacement.stem.width,
+            maskPlacement.stem.height,
+            maskPlacement.stem.radius
+          );
+          maskSource.fillEllipse(
+            maskPlacement.base.x,
+            maskPlacement.base.y,
+            maskPlacement.base.width,
+            maskPlacement.base.height
+          );
+          foreground.setMask(maskSource.createGeometryMask());
+          this.foregroundMaskSources.push(maskSource);
+        }
       });
       const { playArea } = machineConfig;
       this.prizeMaskSource = this.make.graphics({ add: false });
@@ -324,7 +357,13 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
 
     createPrizes() {
       this.prizes.forEach((entry) => entry.gameObject.destroy());
-      const layout = this.testMode ? testPrizeLayout : initialPrizeLayout;
+      this.prizeLayoutSeed = (this.prizeLayoutSeed + 1) >>> 0;
+      const layout = this.testMode
+        ? testPrizeLayout
+        : createRandomPrizeLayout({
+            prizes: clawPrizeConfig,
+            seed: this.prizeLayoutSeed,
+          });
       this.prizes = layout.map(([id, x, y, rotation]) => {
         const prize = getPrizeConfig(id);
         const options = {
@@ -713,7 +752,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     updateTrolley(difficulty) {
-      if (!['READY', 'AIMING', 'DROPPING', 'SWINGING'].includes(this.gameState)) return;
+      if (!canMoveTrolleyInState(this.gameState)) return;
       const direction = (this.controlState.right ? 1 : 0) - (this.controlState.left ? 1 : 0);
       this.trolleyVelocity += direction * difficulty.trolleyAcceleration;
       this.trolleyVelocity *= direction ? difficulty.damping : 0.9;

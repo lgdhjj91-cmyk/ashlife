@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import * as gameFlow from './GameFlow.js';
+
+const {
   formatAttemptsRemaining,
   getLiftOutcomeState,
   getNextAttemptState,
   getPauseTarget,
-} from './GameFlow.js';
+} = gameFlow;
 
 test('missed lift returns to aiming while attempts remain', () => {
   assert.equal(getLiftOutcomeState({ capturedPrize: null, attemptsRemaining: 2 }), 'AIMING');
@@ -39,5 +41,28 @@ test('keyboard pause toggles between paused and the previous playable state', ()
     shouldPause: false,
     nextState: 'SWINGING',
     previousState: 'SWINGING',
+  });
+});
+
+test('trolley input stays available throughout a non-terminal claw cycle', () => {
+  const playableStates = [
+    'READY',
+    'AIMING',
+    'DROPPING',
+    'CLOSING',
+    'LIFTING',
+    'SWINGING',
+    'RELEASED',
+    'RESOLVING',
+  ];
+
+  playableStates.forEach((state) => {
+    assert.equal(gameFlow.canMoveTrolleyInState(state), true, `${state} should accept trolley input`);
+  });
+});
+
+test('trolley input stops only while paused or after the session ends', () => {
+  ['PAUSED', 'SUCCESS', 'FAILED'].forEach((state) => {
+    assert.equal(gameFlow.canMoveTrolleyInState(state), false, `${state} should block trolley input`);
   });
 });

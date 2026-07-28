@@ -14,13 +14,6 @@ const StatPill = ({ icon, label, value }) => (
 const GameHUD = ({ status, coins, onRestart, restartDisabled = false }) => (
   <section className="claw-hud" aria-label="Ashlife Swing & Win status">
     <StatPill icon={<Coins size={18} />} label="Joy Coins" value={coins} />
-    <StatPill icon={<Trophy size={18} />} label="Tries" value={status.attemptsRemaining} />
-    <StatPill
-      icon={<Timer size={18} />}
-      label="Time left"
-      value={`${status.turnSecondsRemaining ?? 10}s`}
-    />
-    <StatPill icon={<Gauge size={18} />} label="Swing" value={`${status.swingPower || 0}%`} />
     <button
       className="claw-mini-button"
       type="button"
@@ -31,6 +24,24 @@ const GameHUD = ({ status, coins, onRestart, restartDisabled = false }) => (
       <RotateCcw size={18} />
       Restart
     </button>
+    <div className="claw-mobile-live-status">
+      <LiveGameStats status={status} />
+    </div>
+  </section>
+);
+
+export const LiveGameStats = ({ status }) => (
+  <section className="claw-live-status-card" aria-label="Live game status">
+    <span className="claw-session-kicker">Live status</span>
+    <div className="claw-live-stats">
+      <StatPill icon={<Trophy size={18} />} label="Tries" value={status.attemptsRemaining} />
+      <StatPill
+        icon={<Timer size={18} />}
+        label="Time left"
+        value={`${status.turnSecondsRemaining ?? 10}s`}
+      />
+      <StatPill icon={<Gauge size={18} />} label="Swing" value={`${status.swingPower || 0}%`} />
+    </div>
     <div className="claw-swing-meter" aria-label={`Swing power ${status.swingPower || 0}%`}>
       <span style={{ width: `${Math.min(100, status.swingPower || 0)}%` }} />
     </div>

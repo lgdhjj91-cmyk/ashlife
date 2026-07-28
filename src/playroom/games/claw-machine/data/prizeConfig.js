@@ -264,3 +264,5 @@ export const testPrizeLayout = [
 export const prizeById = new Map(clawPrizeConfig.map((prize) => [prize.id, prize]));
 
 export const getPrizeConfig = (id) => prizeById.get(id);
+
+export { createRandomPrizeLayout, isPrizeSpawnSafe } from '../systems/PrizeLayout.js';

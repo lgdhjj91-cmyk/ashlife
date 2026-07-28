@@ -20,3 +20,21 @@ test('document listener ignores keys already handled by the focused game canvas'
   assert.equal(shouldIgnoreDocumentGameplayKey(canvasChild, mount), true);
   assert.equal(shouldIgnoreDocumentGameplayKey({ id: 'outside' }, mount), false);
 });
+
+test('movement keys still reach the game after a mode or difficulty button is clicked', () => {
+  const focusedButton = { tagName: 'BUTTON' };
+
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'ArrowLeft'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'ArrowRight'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyA'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyD'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'Space'), true);
+});
+
+test('movement keys remain blocked while typing in an editable field', () => {
+  assert.equal(shouldIgnoreDocumentGameplayKey({ tagName: 'INPUT' }, null, 'ArrowRight'), true);
+  assert.equal(
+    shouldIgnoreDocumentGameplayKey({ tagName: 'DIV', isContentEditable: true }, null, 'KeyD'),
+    true
+  );
+});

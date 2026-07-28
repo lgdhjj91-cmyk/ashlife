@@ -26,3 +26,7 @@ export const getPauseTarget = ({ isPaused, currentState, previousState }) => {
     previousState: currentState === 'PAUSED' ? previousState || 'AIMING' : currentState,
   };
 };
+
+const trolleyBlockedStates = new Set(['PAUSED', 'SUCCESS', 'FAILED']);
+
+export const canMoveTrolleyInState = (state) => !trolleyBlockedStates.has(state);

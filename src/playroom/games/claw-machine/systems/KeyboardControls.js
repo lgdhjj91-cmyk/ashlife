@@ -10,5 +10,17 @@ export const shouldIgnoreGameplayKey = (target) => {
   );
 };
 
-export const shouldIgnoreDocumentGameplayKey = (target, gameMount) =>
-  shouldIgnoreGameplayKey(target) || Boolean(gameMount?.contains?.(target));
+const movementKeys = new Set(['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD']);
+
+export const shouldIgnoreDocumentGameplayKey = (target, gameMount, code) => {
+  if (gameMount?.contains?.(target)) return true;
+  if (!movementKeys.has(code)) return shouldIgnoreGameplayKey(target);
+
+  const tagName = target?.tagName;
+  return (
+    target?.isContentEditable ||
+    tagName === 'INPUT' ||
+    tagName === 'TEXTAREA' ||
+    tagName === 'SELECT'
+  );
+};

@@ -33,3 +33,27 @@ export const getCabinetCropPlacement = ({
     scaleY,
   };
 };
+
+export const getJoystickForegroundMaskPlacement = ({ x, y, scaleX, scaleY }) => {
+  const uniformScale = Math.min(scaleX, scaleY);
+  return {
+    knob: {
+      x: x + 104 * scaleX,
+      y: y + 87 * scaleY,
+      radius: 54 * uniformScale,
+    },
+    stem: {
+      x: x + 82 * scaleX,
+      y: y + 126 * scaleY,
+      width: 46 * scaleX,
+      height: 80 * scaleY,
+      radius: 12 * uniformScale,
+    },
+    base: {
+      x: x + 104 * scaleX,
+      y: y + 200 * scaleY,
+      width: 142 * scaleX,
+      height: 66 * scaleY,
+    },
+  };
+};

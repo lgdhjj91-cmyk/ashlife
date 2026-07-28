@@ -9,7 +9,7 @@ import {
   markClassicComplete,
 } from './storage/clawMachineProgress';
 import ClawMachineGame from './ClawMachineGame';
-import GameHUD from './components/GameHUD';
+import GameHUD, { LiveGameStats } from './components/GameHUD';
 import MobileControls from './components/MobileControls';
 import SessionCard from './components/SessionCard';
 import SessionSummaryModal from './components/SessionSummaryModal';
@@ -313,6 +313,7 @@ const AshlifeClawMachinePage = () => {
             onRelease={controlApi.onRelease}
           />
           <aside className="claw-side-panel">
+            <LiveGameStats status={status} />
             <SessionCard mode={mode} entries={sessionEntries} />
             <h2>Controls</h2>
             <dl>

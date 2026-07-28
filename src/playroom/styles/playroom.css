@@ -307,116 +307,19 @@
 }
 
 .claw-feature-preview {
-  position: relative;
-  min-height: 280px;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 22px;
-  background:
-    radial-gradient(circle at 20% 24%, rgba(255, 255, 255, 0.86), transparent 11rem),
-    linear-gradient(180deg, #ffcfde 0%, #fff5e8 42%, #f5d3ef 100%);
+  background: #f8d4e1;
   border: 6px solid rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 -18px 36px rgba(177, 91, 127, 0.14);
+  box-shadow: 0 14px 30px rgba(177, 91, 127, 0.16);
 }
 
-.claw-mini-awning {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 70px;
-  background: repeating-linear-gradient(90deg, #f69fba 0 42px, #fff1dc 42px 84px);
-  border-bottom: 4px solid rgba(213, 91, 135, 0.3);
-}
-
-.claw-mini-sign {
-  position: absolute;
-  top: 44px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.42rem 1.3rem;
-  border-radius: 999px;
-  color: #d95787;
-  background: #fff5e6;
-  border: 3px solid #efa4bc;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-}
-
-.claw-mini-cable {
-  position: absolute;
-  top: 88px;
-  left: 50%;
-  width: 8px;
-  height: 84px;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: #3f2f38;
-}
-
-.claw-mini-claw {
-  position: absolute;
-  top: 160px;
-  left: 50%;
-  width: 74px;
-  height: 58px;
-  transform: translateX(-50%);
-  border-radius: 22px;
-  background: #f4a7bf;
-  border: 4px solid #795066;
-}
-
-.claw-mini-claw::before,
-.claw-mini-claw::after {
-  content: '';
-  position: absolute;
-  bottom: -42px;
-  width: 16px;
-  height: 58px;
-  border: 7px solid #d65f8b;
-  border-top: 0;
-}
-
-.claw-mini-claw::before {
-  left: 5px;
-  border-radius: 0 0 0 34px;
-  transform: rotate(18deg);
-}
-
-.claw-mini-claw::after {
-  right: 5px;
-  border-radius: 0 0 34px 0;
-  transform: rotate(-18deg);
-}
-
-.claw-mini-prize,
-.claw-mini-hole {
-  position: absolute;
-  bottom: 22px;
-}
-
-.claw-mini-prize {
-  width: 72px;
-  height: 72px;
-  border-radius: 28px 28px 24px 24px;
-  background: #fff;
-  border: 4px solid rgba(127, 78, 103, 0.22);
-  box-shadow: 0 12px 20px rgba(112, 67, 106, 0.12);
-}
-
-.claw-mini-prize.bunny {
-  left: 20%;
-  background: #fff4f7;
-}
-
-.claw-mini-prize.bear {
-  left: 42%;
-  background: #dca079;
-}
-
-.claw-mini-hole {
-  right: 9%;
-  width: 124px;
-  height: 44px;
-  border-radius: 999px;
-  background: radial-gradient(ellipse at center, #2e1722 0 58%, #f39ab7 60%);
+.claw-feature-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .claw-card-meta {

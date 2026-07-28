@@ -441,14 +441,13 @@ const PlayroomPage = () => {
               </div>
 
               <article className="claw-feature-card">
-                <div className="claw-feature-preview" aria-hidden="true">
-                  <span className="claw-mini-awning" />
-                  <span className="claw-mini-sign">ASHLIFE</span>
-                  <span className="claw-mini-cable" />
-                  <span className="claw-mini-claw" />
-                  <span className="claw-mini-prize bunny" />
-                  <span className="claw-mini-prize bear" />
-                  <span className="claw-mini-hole" />
+                <div className="claw-feature-preview">
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
+                    alt="Pastel ASHLIFE claw machine filled with cute plush prizes"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div className="memory-game-copy">
                   <Gamepad2 size={28} />
