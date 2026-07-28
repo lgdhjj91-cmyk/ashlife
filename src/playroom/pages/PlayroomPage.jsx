@@ -52,6 +52,12 @@ const playroomCopy = {
     clawButton: 'Play Now',
     clawDifficulty: 'Skill-based',
     clawReward: 'Joy Coins and collectible stickers',
+    badgeStudioPill: 'Create and print',
+    badgeStudioTitle: 'Badge Studio',
+    badgeStudioDescription: 'Upload your photos, design 58 mm badges and build a print-ready A4 sheet.',
+    badgeStudioButton: 'Start Designing',
+    badgeStudioMeta: 'Free browser tool',
+    badgeStudioOutput: '300 DPI A4 export',
     selectMode: 'Select a mode before the game starts.',
     matchTitle: 'Match Ashlife product stickers',
     matchDescription: 'Flip pastel cards, find every pair, earn Joy Coins and unlock sticker rewards.',
@@ -188,6 +194,12 @@ const playroomCopy = {
     clawButton: 'Play Now',
     clawDifficulty: 'Skill-based',
     clawReward: 'Joy Coins and collectible stickers',
+    badgeStudioPill: '创作与打印',
+    badgeStudioTitle: '徽章设计室',
+    badgeStudioDescription: '上传照片，设计 58 毫米徽章，并自动排版成可打印的 A4 文件。',
+    badgeStudioButton: '开始设计',
+    badgeStudioMeta: '免费浏览器工具',
+    badgeStudioOutput: '300 DPI A4 输出',
     selectMode: '开始前请选择难度。',
     matchTitle: '配对 Ashlife 商品贴纸',
     matchDescription: '翻开粉彩卡牌，找出所有相同贴纸，赚取 Joy Coins 并解锁收藏。',
@@ -501,6 +513,37 @@ const PlayroomPage = () => {
                   </article>
                 ))}
               </div>
+
+              <div className="playroom-section-heading badge-studio-section-heading">
+                <span className="playroom-pill">{labels.badgeStudioPill}</span>
+                <h2>{labels.badgeStudioTitle}</h2>
+                <p>{labels.badgeStudioDescription}</p>
+              </div>
+
+              <article className="badge-studio-feature-card">
+                <div className="badge-studio-feature-preview">
+                  <img
+                    src={`${import.meta.env.BASE_URL}diy/badge-display-1.webp`}
+                    alt="A display collection of custom Ashlife badges"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span>58 mm</span>
+                </div>
+                <div className="memory-game-copy">
+                  <Sparkles size={28} />
+                  <h3>{labels.badgeStudioTitle}</h3>
+                  <p>{labels.badgeStudioDescription}</p>
+                  <div className="claw-card-meta">
+                    <span>{labels.badgeStudioMeta}</span>
+                    <span>{labels.badgeStudioOutput}</span>
+                  </div>
+                  <Link className="playroom-button primary" to="/play/badge-studio/">
+                    <Sparkles size={18} />
+                    {labels.badgeStudioButton}
+                  </Link>
+                </div>
+              </article>
             </section>
           </>
         ) : (

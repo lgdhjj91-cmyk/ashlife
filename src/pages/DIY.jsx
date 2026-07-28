@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
+  ArrowRight,
   BadgeCheck,
   Car,
   CheckCircle2,
@@ -10,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteContent } from '../context/SiteContentContext';
+import { getBadgeStudioPromotion } from './diyBadgeStudioContent';
 import './DIY.css';
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '60123456789';
@@ -20,9 +23,9 @@ const DIY_PRODUCTS = [
     id: 'badge',
     icon: BadgeCheck,
     tab: { en: 'Custom Badge', zh: '定制徽章' },
-    kicker: { en: 'Custom merch · 25mm round badge', zh: '定制周边 · 25mm 圆形徽章' },
+    kicker: { en: 'Custom merch · 58mm round badge', zh: '定制周边 · 58mm 圆形徽章' },
     title: { en: 'Custom Badge', zh: '定制徽章' },
-    subtitle: { en: '25mm pin button badge', zh: '25mm 圆形别针徽章' },
+    subtitle: { en: '58mm pin button badge', zh: '58mm 圆形别针徽章' },
     badge: { en: 'Min 5 pcs', zh: '5 件起订' },
     description: {
       en: 'Make your own small round badges with photos, fan art, logos or character designs. The finished badge has a glossy front and pin-back, suitable for gifts, event souvenirs and small merch runs.',
@@ -36,14 +39,14 @@ const DIY_PRODUCTS = [
     },
     specs: {
       en: [
-        'Size: 25mm round badge',
+        'Size: 58mm round badge',
         'Minimum order: 5 pieces',
         'Custom artwork accepted in PNG or JPG',
         'Glossy print with pin-back',
         'Good for gifts, events and fan merch',
       ],
       zh: [
-        '尺寸：25mm 圆形徽章',
+        '尺寸：58mm 圆形徽章',
         '最低起订量：5 件',
         '接受 PNG 或 JPG 定制图案',
         '亮面印刷，背面带别针',
@@ -70,7 +73,7 @@ const DIY_PRODUCTS = [
       {
         type: 'image',
         srcByLang: { en: asset('diy/badge-info-en.svg'), zh: asset('diy/badge-info-zh.svg') },
-        alt: '25mm custom badge info card',
+        alt: '58mm custom badge info card',
       },
       { type: 'image', src: asset('diy/badge-back.webp'), alt: 'Badge pin-back sample' },
     ],
@@ -370,6 +373,40 @@ function PriceCard({ price, language }) {
   );
 }
 
+function BadgeStudioPromo({ language }) {
+  const promotion = getBadgeStudioPromotion(language);
+
+  return (
+    <aside className="diy-badge-studio-promo" aria-labelledby="diy-badge-studio-title">
+      <div className="diy-badge-studio-preview" aria-hidden="true">
+        <img src={asset('diy/badge-display-1.webp')} alt="" loading="lazy" />
+        <span>58 mm</span>
+      </div>
+
+      <div className="diy-badge-studio-copy">
+        <div className="diy-badge-studio-heading">
+          <Sparkles size={18} />
+          <h3 id="diy-badge-studio-title">{promotion.title}</h3>
+        </div>
+        <p>{promotion.description}</p>
+        <ul>
+          {promotion.features.map((feature) => (
+            <li key={feature}>
+              <CheckCircle2 size={15} />
+              {feature}
+            </li>
+          ))}
+        </ul>
+        <Link className="diy-badge-studio-link" to="/play/badge-studio/">
+          {promotion.cta}
+          <ArrowRight size={18} />
+        </Link>
+        <small>{promotion.note}</small>
+      </div>
+    </aside>
+  );
+}
+
 function DIYProductTab({ product, language }) {
   const l = language === 'zh' ? 'zh' : 'en';
 
@@ -388,6 +425,8 @@ function DIYProductTab({ product, language }) {
             <span className="zh-subtitle">{product.subtitle[l]}</span>
           </h2>
           <p className="diy-product-desc">{product.description[l]}</p>
+
+          {product.id === 'badge' && <BadgeStudioPromo language={language} />}
 
           <PriceCard price={product.price} language={language} />
 

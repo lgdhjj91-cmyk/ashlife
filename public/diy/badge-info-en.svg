@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
-  <title id="title">25mm custom badge info</title>
-  <desc id="desc">English info card for ASHLIFE 25mm custom pin button badge.</desc>
+  <title id="title">58mm custom badge info</title>
+  <desc id="desc">English info card for ASHLIFE 58mm custom pin button badge.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff1f5"/>
@@ -12,7 +12,7 @@
     </linearGradient>
   </defs>
   <rect width="1000" height="1000" fill="url(#bg)"/>
-  <text x="500" y="102" text-anchor="middle" fill="#ef4776" font-family="Arial, sans-serif" font-size="68" font-weight="900">25MM PIN BUTTON BADGE</text>
+  <text x="500" y="102" text-anchor="middle" fill="#ef4776" font-family="Arial, sans-serif" font-size="68" font-weight="900">58MM PIN BUTTON BADGE</text>
   <rect x="250" y="132" width="500" height="58" rx="29" fill="#ef4776"/>
   <text x="500" y="171" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="900">CUSTOM YOUR OWN DESIGN</text>
 
@@ -27,7 +27,7 @@
   <g font-family="Arial, sans-serif" fill="#1f2933">
     <circle cx="122" cy="275" r="46" fill="#fff"/>
     <text x="122" y="291" text-anchor="middle" fill="#ef4776" font-size="44" font-weight="900">✓</text>
-    <text x="190" y="268" font-size="28" font-weight="800">25mm round size</text>
+    <text x="190" y="268" font-size="28" font-weight="800">58mm round size</text>
     <text x="190" y="304" font-size="22" font-weight="700" fill="#5d6670">Small, cute and easy to wear</text>
 
     <circle cx="122" cy="405" r="46" fill="#fff"/>
