@@ -102,9 +102,14 @@
   object-position: center;
 }
 
-.home-categories,
-.home-products {
-  padding-block: clamp(3.75rem, 7vw, 6rem);
+.container.home-categories {
+  padding-top: clamp(3.75rem, 7vw, 6rem);
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.container.home-products {
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(3.75rem, 7vw, 6rem);
 }
 
 .home-categories h2 {
@@ -160,10 +165,6 @@
 .home-category-link:hover {
   background: rgba(45, 168, 155, 0.08);
   color: var(--primary-color);
-}
-
-.home-products {
-  padding-top: 1.5rem;
 }
 
 .home-section-heading {
@@ -286,7 +287,7 @@
   color: var(--primary-color);
 }
 
-.home-playroom {
+.container.home-playroom {
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr) auto;
   align-items: center;
@@ -373,6 +374,10 @@
 .home-closing-secondary:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
+}
+
+.home-page + .footer {
+  margin-top: 0;
 }
 
 .home-category-link:focus-visible,
@@ -492,13 +497,14 @@
     padding-inline: 0.85rem;
   }
 
-  .home-categories,
-  .home-products {
-    padding-block: 3.5rem;
+  .container.home-categories {
+    padding-top: 3.5rem;
+    padding-bottom: 2rem;
   }
 
-  .home-products {
-    padding-top: 1rem;
+  .container.home-products {
+    padding-top: 2.5rem;
+    padding-bottom: 3.5rem;
   }
 
   .home-category-grid {
@@ -559,7 +565,7 @@
     border-left: 0;
   }
 
-  .home-playroom {
+  .container.home-playroom {
     grid-template-columns: 1fr;
     justify-items: start;
     margin-block: 4rem;
