@@ -102,7 +102,7 @@
 
 .container.home-products {
   padding-top: clamp(2.5rem, 5vw, 4rem);
-  padding-bottom: clamp(3.75rem, 7vw, 6rem);
+  padding-bottom: clamp(3rem, 5vw, 4rem);
 }
 
 .home-categories h2 {
@@ -237,7 +237,7 @@
 }
 
 .home-ordering {
-  margin-block: clamp(2rem, 5vw, 4rem);
+  margin-block: clamp(1.5rem, 2.5vw, 2rem);
   padding-block: clamp(2.75rem, 5vw, 4rem);
   border-block: 1px solid rgba(22, 122, 114, 0.14);
   background: #eaf5f2;
@@ -285,7 +285,7 @@
   grid-template-columns: 132px minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1.25rem, 3vw, 2.5rem);
-  margin-block: clamp(4rem, 8vw, 7rem);
+  margin-block: clamp(3rem, 5vw, 4.5rem);
   padding: clamp(1.4rem, 3vw, 2.5rem);
   overflow: hidden;
   border: 1px solid rgba(22, 122, 114, 0.16);
@@ -500,7 +500,7 @@
 
   .container.home-products {
     padding-top: 2.5rem;
-    padding-bottom: 3.5rem;
+    padding-bottom: 2.5rem;
   }
 
   .home-category-grid {
@@ -539,7 +539,7 @@
   }
 
   .home-ordering {
-    margin-block: 2rem;
+    margin-block: 1rem;
     padding-block: 3rem;
   }
 
@@ -564,7 +564,7 @@
   .container.home-playroom {
     grid-template-columns: 1fr;
     justify-items: start;
-    margin-block: 4rem;
+    margin-block: 3rem;
   }
 
   .home-playroom-mascot {
