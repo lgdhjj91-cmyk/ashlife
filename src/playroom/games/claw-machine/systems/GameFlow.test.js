@@ -31,6 +31,10 @@ test('practice attempts render as an accessible label', () => {
   assert.equal(formatAttemptsRemaining(Infinity), 'Unlimited');
 });
 
+test('practice attempts can use the active language label', () => {
+  assert.equal(formatAttemptsRemaining(Infinity, '无限'), '无限');
+});
+
 test('keyboard pause toggles between paused and the previous playable state', () => {
   assert.deepEqual(getPauseTarget({ isPaused: false, currentState: 'SWINGING' }), {
     shouldPause: true,

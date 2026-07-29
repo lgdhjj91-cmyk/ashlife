@@ -14,6 +14,7 @@ import {
   Sparkles,
   Upload,
 } from 'lucide-react';
+import { useLanguage } from '../../../context/LanguageContext';
 import A4SheetPreview from './components/A4SheetPreview';
 import BadgeArtwork from './components/BadgeArtwork';
 import BadgeCanvas from './components/BadgeCanvas';
@@ -32,6 +33,7 @@ import {
   validateOrderDetails,
 } from './badgeStudioLogic';
 import { clearBadgeDraft, loadBadgeDraft, saveBadgeDraft } from './draftStorage';
+import { getBadgeStudioCopy } from './badgeStudioCopy';
 import './badge-studio.css';
 
 const EMPTY_DETAILS = {
@@ -49,7 +51,7 @@ const EMPTY_DETAILS = {
 const createDesignId = () =>
   `badge-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
 
-const readImage = (file) =>
+const readImage = (file, copy) =>
   new Promise((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
     const image = new Image();
@@ -61,13 +63,13 @@ const readImage = (file) =>
       });
     image.onerror = () => {
       URL.revokeObjectURL(imageUrl);
-      reject(new Error(`${file.name} could not be opened as an image.`));
+      reject(new Error(copy.notices.imageOpenFailed(file.name)));
     };
     image.src = imageUrl;
   });
 
-const makeDesign = async (file) => {
-  const image = await readImage(file);
+const makeDesign = async (file, copy) => {
+  const image = await readImage(file, copy);
   return {
     id: createDesignId(),
     imageName: file.name,
@@ -93,6 +95,8 @@ const makeDesign = async (file) => {
 };
 
 const BadgeStudioPage = () => {
+  const { language } = useLanguage();
+  const copy = useMemo(() => getBadgeStudioCopy(language), [language]);
   const [stepIndex, setStepIndex] = useState(0);
   const [designs, setDesigns] = useState([]);
   const [activeId, setActiveId] = useState('');
@@ -101,7 +105,7 @@ const BadgeStudioPage = () => {
   const [details, setDetails] = useState(EMPTY_DETAILS);
   const [formErrors, setFormErrors] = useState({});
   const [notice, setNotice] = useState('');
-  const [draftStatus, setDraftStatus] = useState('New project');
+  const [draftStatus, setDraftStatus] = useState('new');
   const [isRestoring, setIsRestoring] = useState(true);
   const [orderId, setOrderId] = useState('');
   const [exportBundle, setExportBundle] = useState(null);
@@ -164,9 +168,9 @@ const BadgeStudioPage = () => {
         setDetails({ ...EMPTY_DETAILS, ...draft.details });
         setStepIndex(Math.min(Number(draft.stepIndex) || 0, 3));
         setOrderId(draft.orderId || '');
-        setDraftStatus('Draft restored');
+        setDraftStatus('restored');
       })
-      .catch(() => setDraftStatus('Draft saving unavailable'))
+      .catch(() => setDraftStatus('unavailable'))
       .finally(() => {
         if (!cancelled) setIsRestoring(false);
       });
@@ -180,7 +184,7 @@ const BadgeStudioPage = () => {
 
   useEffect(() => {
     if (isRestoring || designs.length === 0) return undefined;
-    setDraftStatus('Saving…');
+    setDraftStatus('saving');
     const timer = window.setTimeout(() => {
       saveBadgeDraft({
         designs,
@@ -190,8 +194,8 @@ const BadgeStudioPage = () => {
         stepIndex,
         orderId,
       })
-        .then(() => setDraftStatus('Draft saved'))
-        .catch(() => setDraftStatus('Draft saving unavailable'));
+        .then(() => setDraftStatus('saved'))
+        .catch(() => setDraftStatus('unavailable'));
     }, 500);
     return () => window.clearTimeout(timer);
   }, [activeId, arrangedEntries, designs, details, isRestoring, orderId, stepIndex]);
@@ -204,13 +208,13 @@ const BadgeStudioPage = () => {
     const incoming = [...fileList];
     setNotice('');
     if (!replacingId && designs.length + incoming.length > badgeConfig.maxImages) {
-      setNotice(`You can use up to ${badgeConfig.maxImages} photos in one project.`);
+      setNotice(copy.notices.maxPhotos(badgeConfig.maxImages));
       return;
     }
 
     const validFiles = [];
     for (const file of incoming) {
-      const validation = validateImageFile(file);
+      const validation = validateImageFile(file, copy.validation);
       if (!validation.valid) {
         setNotice(`${file.name}: ${validation.error}`);
       } else {
@@ -221,7 +225,7 @@ const BadgeStudioPage = () => {
 
     try {
       if (replacingId) {
-        const replacement = await makeDesign(validFiles[0]);
+        const replacement = await makeDesign(validFiles[0], copy);
         const next = designs.map((design) => {
           if (design.id !== replacingId) return design;
           if (design.imageUrl?.startsWith('blob:')) URL.revokeObjectURL(design.imageUrl);
@@ -232,7 +236,7 @@ const BadgeStudioPage = () => {
         setActiveId(replacingId);
       } else {
         const created = [];
-        for (const file of validFiles) created.push(await makeDesign(file));
+        for (const file of validFiles) created.push(await makeDesign(file, copy));
         const next = [...designs, ...created];
         setDesigns(next);
         setArrangedEntries(expandDesignQuantities(next));
@@ -271,7 +275,7 @@ const BadgeStudioPage = () => {
     const quantity = Math.max(1, Math.min(badgeConfig.maxQuantityPerDesign, requested));
     const nextTotal = totalQuantity - design.quantity + quantity;
     if (nextTotal > badgeConfig.maxTotalBadges) {
-      setNotice(`One project can contain up to ${badgeConfig.maxTotalBadges} badges.`);
+      setNotice(copy.notices.maxBadges(badgeConfig.maxTotalBadges));
       return;
     }
     const next = designs.map((item) => (item.id === id ? { ...item, quantity } : item));
@@ -282,7 +286,7 @@ const BadgeStudioPage = () => {
 
   const duplicateDesign = (id) => {
     if (totalQuantity >= badgeConfig.maxTotalBadges || designs.length >= badgeConfig.maxImages) {
-      setNotice('This project has reached its design or badge limit.');
+      setNotice(copy.notices.limitReached);
       return;
     }
     const source = designs.find((design) => design.id === id);
@@ -328,7 +332,7 @@ const BadgeStudioPage = () => {
       setExportBundle(bundle);
       return bundle;
     } catch (error) {
-      setNotice(error.message || 'The print files could not be prepared.');
+      setNotice(language === 'zh' ? copy.notices.prepareFailed : error.message || copy.notices.prepareFailed);
       return null;
     } finally {
       setIsPreparing(false);
@@ -338,12 +342,12 @@ const BadgeStudioPage = () => {
   const goForward = async () => {
     setNotice('');
     if (stepIndex === 0 && !designs.length) {
-      setNotice('Add at least one photo to start your badge collection.');
+      setNotice(copy.notices.addPhoto);
       return;
     }
     if (stepIndex === 3) {
       if (details.honeypot) return;
-      const errors = validateOrderDetails(details, { hasLowResolution });
+      const errors = validateOrderDetails(details, { hasLowResolution, messages: copy.validation });
       setFormErrors(errors);
       if (Object.keys(errors).length) return;
       setStepIndex(4);
@@ -357,7 +361,7 @@ const BadgeStudioPage = () => {
     const bundle = exportBundle || (await prepareExports());
     if (!bundle) return;
     abortRef.current = new AbortController();
-    setSubmission({ status: 'working', message: 'Starting your order…', completed: 0, total: bundle.files.length + 2 });
+    setSubmission({ status: 'working', message: copy.finish.starting, completed: 0, total: bundle.files.length + 2 });
     try {
       await submitBadgeOrder({
         endpoint,
@@ -369,20 +373,34 @@ const BadgeStudioPage = () => {
           setSubmission({
             status: progress.stage === 'complete' ? 'complete' : 'working',
             ...progress,
+            message:
+              progress.stage === 'uploading'
+                ? copy.finish.uploading(progress.fileName || '')
+                : copy.finish[progress.stage] || progress.message,
           }),
       });
       await clearBadgeDraft().catch(() => undefined);
     } catch (error) {
       if (error.name === 'AbortError') {
-        setSubmission({ status: 'idle', message: 'Upload cancelled.', completed: 0, total: 1 });
+        setSubmission({ status: 'idle', message: copy.finish.uploadCancelled, completed: 0, total: 1 });
       } else {
-        setSubmission({ status: 'error', message: error.message, completed: 0, total: 1 });
+        setSubmission({
+          status: 'error',
+          message: language === 'zh' ? copy.finish.uploadFailed : error.message,
+          completed: 0,
+          total: 1,
+        });
       }
     }
   };
 
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hi Ashlife, I have completed my badge design.\n\nOrder ID: ${orderId || 'Not submitted yet'}\nBadge size: 58 mm\nQuantity: ${totalQuantity}\nA4 sheets: ${pages.length}\nCustomer name: ${details.name || '-'}\n\nPlease help me check the design and confirm the order. Thank you.`
+    copy.whatsappMessage({
+      orderId,
+      quantity: totalQuantity,
+      sheets: pages.length,
+      name: details.name,
+    })
   )}`;
 
   const renderUpload = () => (
@@ -396,18 +414,18 @@ const BadgeStudioPage = () => {
         }}
       >
         <div className="badge-upload-icon"><Upload size={34} /></div>
-        <h2>Upload your photos</h2>
-        <p>Each photo becomes one badge design automatically. You can adjust and duplicate it next.</p>
+        <h2>{copy.upload.title}</h2>
+        <p>{copy.upload.description}</p>
         <button type="button" className="badge-primary-button" onClick={() => fileInputRef.current?.click()}>
-          <FileImage size={19} />Choose photos
+          <FileImage size={19} />{copy.upload.choosePhotos}
         </button>
-        <span>JPG, PNG or WebP · up to 20 photos · 15 MB each</span>
+        <span>{copy.upload.limits}</span>
       </div>
       <div className="badge-privacy-note">
         <ShieldCheck size={24} />
         <div>
-          <strong>Your photos stay on this device while you design.</strong>
-          <p>Only completed print files, the preview, and order details are sent when you choose Submit.</p>
+          <strong>{copy.upload.privacyTitle}</strong>
+          <p>{copy.upload.privacyDescription}</p>
         </div>
       </div>
       {designs.length > 0 && (
@@ -431,6 +449,7 @@ const BadgeStudioPage = () => {
             replaceIdRef.current = activeDesign.id;
             replaceInputRef.current?.click();
           }}
+          copy={copy.canvas}
         />
       )}
       <DesignCollection
@@ -443,6 +462,7 @@ const BadgeStudioPage = () => {
         onAddPhotos={() => fileInputRef.current?.click()}
         totalQuantity={totalQuantity}
         maxTotal={badgeConfig.maxTotalBadges}
+        copy={copy.designs}
       />
     </div>
   );
@@ -450,14 +470,14 @@ const BadgeStudioPage = () => {
   const renderArrange = () => (
     <div className="badge-arrange-layout">
       <div className="badge-arrange-copy">
-        <h2>Arrange your print sheets</h2>
-        <p>Quantities are filled automatically. Use the arrows on a badge to swap its print order.</p>
+        <h2>{copy.arrange.title}</h2>
+        <p>{copy.arrange.description}</p>
         <div className="badge-sheet-stats">
-          <span><strong>{totalQuantity}</strong> badges</span>
-          <span><strong>{pages.length}</strong> A4 sheet{pages.length === 1 ? '' : 's'}</span>
-          <span><strong>{badgeConfig.artworkDiameterMm} mm</strong> artwork</span>
+          <span><strong>{totalQuantity}</strong> {copy.arrange.badges}</span>
+          <span><strong>{pages.length}</strong> {pages.length === 1 ? copy.arrange.sheet : copy.arrange.sheets}</span>
+          <span><strong>{badgeConfig.artworkDiameterMm} mm</strong> {copy.arrange.artwork}</span>
         </div>
-        <div className="badge-sheet-tabs" aria-label="Print sheet selection">
+        <div className="badge-sheet-tabs" aria-label={copy.arrange.sheetSelectionAria}>
           {pages.map((_, index) => (
             <button
               type="button"
@@ -465,12 +485,12 @@ const BadgeStudioPage = () => {
               onClick={() => setSheetIndex(index)}
               key={index}
             >
-              Sheet {index + 1}
+              {copy.arrange.sheetLabel} {index + 1}
             </button>
           ))}
         </div>
         <p className="badge-calibration-note">
-          The default uses 8 non-overlapping 70 mm circles. Print one test at 100% scale before production.
+          {copy.arrange.calibration}
         </p>
       </div>
       {pages[sheetIndex] && (
@@ -484,6 +504,7 @@ const BadgeStudioPage = () => {
             setArrangedEntries((entries) => moveSlot(entries, index, direction));
             setExportBundle(null);
           }}
+          copy={copy.arrange}
         />
       )}
     </div>
@@ -492,17 +513,17 @@ const BadgeStudioPage = () => {
   const renderDetails = () => (
     <section className="badge-details-step">
       <div className="badge-details-heading">
-        <h2>Who is this badge collection for?</h2>
-        <p>These details help Ashlife match your print files with your WhatsApp order.</p>
+        <h2>{copy.details.title}</h2>
+        <p>{copy.details.description}</p>
       </div>
       <div className="badge-order-form">
         <label>
-          <span>Name *</span>
+          <span>{copy.details.name}</span>
           <input value={details.name} onChange={(event) => setDetails({ ...details, name: event.target.value })} />
           {formErrors.name && <small className="field-error">{formErrors.name}</small>}
         </label>
         <label>
-          <span>WhatsApp number *</span>
+          <span>{copy.details.whatsapp}</span>
           <input
             inputMode="tel"
             placeholder="012 345 6789"
@@ -512,44 +533,44 @@ const BadgeStudioPage = () => {
           {formErrors.whatsapp && <small className="field-error">{formErrors.whatsapp}</small>}
         </label>
         <label>
-          <span>Email (optional)</span>
+          <span>{copy.details.email}</span>
           <input type="email" value={details.email} onChange={(event) => setDetails({ ...details, email: event.target.value })} />
         </label>
         <label>
-          <span>Order type</span>
+          <span>{copy.details.orderType}</span>
           <select value={details.salesChannel} onChange={(event) => setDetails({ ...details, salesChannel: event.target.value })}>
-            <option value="direct">Direct / WhatsApp</option>
-            <option value="shopee">Shopee</option>
-            <option value="tiktok">TikTok Shop</option>
-            <option value="pickup">Store pickup</option>
+            <option value="direct">{copy.details.direct}</option>
+            <option value="shopee">{copy.details.shopee}</option>
+            <option value="tiktok">{copy.details.tiktok}</option>
+            <option value="pickup">{copy.details.pickup}</option>
           </select>
         </label>
         {['shopee', 'tiktok'].includes(details.salesChannel) && (
           <label className="wide">
-            <span>Marketplace order number</span>
+            <span>{copy.details.marketplaceNumber}</span>
             <input value={details.orderNumber} onChange={(event) => setDetails({ ...details, orderNumber: event.target.value })} />
           </label>
         )}
         <label className="wide">
-          <span>Notes (optional)</span>
+          <span>{copy.details.notes}</span>
           <textarea rows="4" value={details.notes} onChange={(event) => setDetails({ ...details, notes: event.target.value })} />
         </label>
         <label className="badge-honeypot" aria-hidden="true">
-          <span>Website</span>
+          <span>{copy.details.website}</span>
           <input tabIndex="-1" autoComplete="off" value={details.honeypot} onChange={(event) => setDetails({ ...details, honeypot: event.target.value })} />
         </label>
       </div>
       <div className="badge-confirmations">
         <label>
           <input type="checkbox" checked={details.designChecked} onChange={(event) => setDetails({ ...details, designChecked: event.target.checked })} />
-          <span>I checked every badge and kept important details inside the safe circle.</span>
+          <span>{copy.details.checked}</span>
         </label>
         {formErrors.designChecked && <small className="field-error">{formErrors.designChecked}</small>}
         {hasLowResolution && (
           <>
             <label className="warning">
               <input type="checkbox" checked={details.lowResolutionAccepted} onChange={(event) => setDetails({ ...details, lowResolutionAccepted: event.target.checked })} />
-              <span>I understand that low-resolution photos may look blurry when printed.</span>
+              <span>{copy.details.lowResolution}</span>
             </label>
             {formErrors.lowResolutionAccepted && <small className="field-error">{formErrors.lowResolutionAccepted}</small>}
           </>
@@ -565,21 +586,24 @@ const BadgeStudioPage = () => {
         <div className={`badge-finish-mark${submission.status === 'complete' ? ' complete' : ''}`}>
           {submission.status === 'complete' ? <Check size={34} /> : <Sparkles size={34} />}
         </div>
-        <h2>{submission.status === 'complete' ? 'Your badge design was submitted!' : 'Your print files are ready'}</h2>
+        <h2>{submission.status === 'complete' ? copy.finish.submitted : copy.finish.ready}</h2>
         <p className="badge-order-id">{orderId}</p>
-        <p>{totalQuantity} badges · {pages.length} A4 sheet{pages.length === 1 ? '' : 's'}</p>
+        <p>
+          {totalQuantity} {copy.action.badges} · {pages.length}{' '}
+          {pages.length === 1 ? copy.action.sheet : copy.action.sheets}
+        </p>
 
-        {isPreparing && <div className="badge-preparing"><LoaderCircle size={22} />Preparing 300 DPI print files…</div>}
+        {isPreparing && <div className="badge-preparing"><LoaderCircle size={22} />{copy.finish.preparing}</div>}
         {exportBundle && (
           <div className="badge-download-grid">
-            <button type="button" onClick={() => downloadBlob(exportBundle.pdfFile)}><Download size={19} />Print PDF</button>
+            <button type="button" onClick={() => downloadBlob(exportBundle.pdfFile)}><Download size={19} />{copy.finish.printPdf}</button>
             {exportBundle.pngFiles.map((file, index) => (
               <button type="button" onClick={() => downloadBlob(file)} key={file.fileName}>
-                <Download size={19} />A4 PNG {index + 1}
+                <Download size={19} />{copy.finish.a4Png} {index + 1}
               </button>
             ))}
-            <button type="button" onClick={() => downloadBlob(exportBundle.previewFile)}><Download size={19} />Preview JPG</button>
-            <button type="button" onClick={() => downloadBlob(exportBundle.jsonFile)}><Download size={19} />Order info</button>
+            <button type="button" onClick={() => downloadBlob(exportBundle.previewFile)}><Download size={19} />{copy.finish.previewJpg}</button>
+            <button type="button" onClick={() => downloadBlob(exportBundle.jsonFile)}><Download size={19} />{copy.finish.orderInfo}</button>
           </div>
         )}
 
@@ -587,29 +611,29 @@ const BadgeStudioPage = () => {
           <div className="badge-submission-progress">
             <div><span style={{ width: `${progress}%` }} /></div>
             <p>{submission.message}</p>
-            <button type="button" onClick={() => abortRef.current?.abort()}>Cancel upload</button>
+            <button type="button" onClick={() => abortRef.current?.abort()}>{copy.finish.cancelUpload}</button>
           </div>
         )}
         {submission.status === 'error' && (
           <div className="badge-submit-error">
             <AlertCircle size={20} />
-            <div><strong>Automatic upload did not finish.</strong><p>{submission.message}</p></div>
+            <div><strong>{copy.finish.uploadFailedTitle}</strong><p>{submission.message}</p></div>
           </div>
         )}
 
         <div className="badge-finish-actions">
           {endpoint && submission.status !== 'complete' && submission.status !== 'working' && (
             <button type="button" className="badge-primary-button" onClick={submitOrder}>
-              <Upload size={19} />{submission.status === 'error' ? 'Retry Drive upload' : 'Submit to Ashlife'}
+              <Upload size={19} />{submission.status === 'error' ? copy.finish.retryUpload : copy.finish.submit}
             </button>
           )}
           {!endpoint && (
             <p className="badge-endpoint-note">
-              Automatic Drive submission is not configured yet. Download the PDF and send it through WhatsApp.
+              {copy.finish.endpointMissing}
             </p>
           )}
           <a className="badge-whatsapp-button" href={whatsappHref} target="_blank" rel="noopener noreferrer">
-            <MessageCircle size={20} />Contact Ashlife on WhatsApp
+            <MessageCircle size={20} />{copy.finish.contactWhatsapp}
           </a>
         </div>
       </section>
@@ -621,7 +645,7 @@ const BadgeStudioPage = () => {
   if (isRestoring) {
     return (
       <main className="page badge-studio-page">
-        <div className="badge-studio-loading"><LoaderCircle size={30} />Opening your craft table…</div>
+        <div className="badge-studio-loading"><LoaderCircle size={30} />{copy.loading}</div>
       </main>
     );
   }
@@ -630,15 +654,15 @@ const BadgeStudioPage = () => {
     <main className="page badge-studio-page animate-fade-in">
       <div className="badge-studio-shell">
         <header className="badge-studio-header">
-          <Link to="/play/" className="badge-back-link"><ArrowLeft size={18} />Back to Playroom</Link>
+          <Link to="/play/" className="badge-back-link"><ArrowLeft size={18} />{copy.backToPlayroom}</Link>
           <div>
-            <h1>Badge Studio</h1>
-            <p>Design your own 58 mm badges, then build a print-ready A4 sheet.</p>
+            <h1>{copy.title}</h1>
+            <p>{copy.subtitle}</p>
           </div>
-          <span className="badge-draft-status"><CheckCircle2 size={17} />{draftStatus}</span>
+          <span className="badge-draft-status"><CheckCircle2 size={17} />{copy.draft[draftStatus]}</span>
         </header>
 
-        <nav className="badge-step-rail" aria-label="Badge Studio progress">
+        <nav className="badge-step-rail" aria-label={copy.progressAria}>
           {studioSteps.map((step, index) => (
             <button
               type="button"
@@ -650,7 +674,7 @@ const BadgeStudioPage = () => {
               aria-current={index === stepIndex ? 'step' : undefined}
             >
               <span>{index < stepIndex ? <Check size={16} /> : index + 1}</span>
-              {step.label}
+              {copy.steps[index]}
             </button>
           ))}
         </nav>
@@ -666,14 +690,18 @@ const BadgeStudioPage = () => {
               onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
               disabled={stepIndex === 0}
             >
-              <ArrowLeft size={18} />Back
+              <ArrowLeft size={18} />{copy.action.back}
             </button>
             <div className="badge-action-summary">
-              <strong>{totalQuantity} badge{totalQuantity === 1 ? '' : 's'}</strong>
-              <span>{Math.max(1, pages.length)} A4 sheet{pages.length === 1 ? '' : 's'}</span>
+              <strong>
+                {totalQuantity} {totalQuantity === 1 ? copy.action.badge : copy.action.badges}
+              </strong>
+              <span>
+                {Math.max(1, pages.length)} {pages.length === 1 ? copy.action.sheet : copy.action.sheets}
+              </span>
             </div>
             <button type="button" className="badge-primary-button" onClick={goForward}>
-              {stepIndex === 3 ? 'Prepare print files' : studioSteps[stepIndex + 1].label}
+              {stepIndex === 3 ? copy.action.prepare : copy.steps[stepIndex + 1]}
               <ArrowRight size={18} />
             </button>
           </footer>

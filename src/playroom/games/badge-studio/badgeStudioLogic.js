@@ -86,15 +86,15 @@ export const sanitizeFileName = (value) => {
   return raw || 'file';
 };
 
-export const validateImageFile = (file) => {
+export const validateImageFile = (file, messages = {}) => {
   const extension = String(file?.name || '').split('.').pop().toLowerCase();
   const validExtensions = allowedImageTypes[file?.type] || [];
 
   if (!validExtensions.includes(extension)) {
-    return { valid: false, error: 'Use a JPG, PNG, or WebP image.' };
+    return { valid: false, error: messages.unsupportedType || 'Use a JPG, PNG, or WebP image.' };
   }
   if (Number(file?.size) > badgeConfig.maxImageBytes) {
-    return { valid: false, error: 'This image is larger than 15 MB.' };
+    return { valid: false, error: messages.tooLarge || 'This image is larger than 15 MB.' };
   }
   return { valid: true, error: '' };
 };
@@ -106,13 +106,18 @@ export const normalizeMalaysianPhone = (value) => {
   return digits;
 };
 
-export const validateOrderDetails = (details, { hasLowResolution = false } = {}) => {
+export const validateOrderDetails = (details, { hasLowResolution = false, messages = {} } = {}) => {
   const errors = {};
-  if (!String(details?.name || '').trim()) errors.name = 'Enter your name.';
-  if (!normalizeMalaysianPhone(details?.whatsapp)) errors.whatsapp = 'Enter a valid WhatsApp number.';
-  if (!details?.designChecked) errors.designChecked = 'Confirm that you checked the design.';
+  if (!String(details?.name || '').trim()) errors.name = messages.name || 'Enter your name.';
+  if (!normalizeMalaysianPhone(details?.whatsapp)) {
+    errors.whatsapp = messages.whatsapp || 'Enter a valid WhatsApp number.';
+  }
+  if (!details?.designChecked) {
+    errors.designChecked = messages.designChecked || 'Confirm that you checked the design.';
+  }
   if (hasLowResolution && !details?.lowResolutionAccepted) {
-    errors.lowResolutionAccepted = 'Accept the low-resolution warning to continue.';
+    errors.lowResolutionAccepted =
+      messages.lowResolutionAccepted || 'Accept the low-resolution warning to continue.';
   }
   return errors;
 };

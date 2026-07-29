@@ -22,6 +22,7 @@ import { stickers } from '../data/stickers';
 import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
 import { useLanguage } from '../../context/LanguageContext';
+import { getPlayroomClawFeatureCopy } from './playroomClawFeatureCopy';
 import { useMemoryGame } from '../hooks/useMemoryGame';
 import { usePlayroomProgress } from '../hooks/usePlayroomProgress';
 import { usePlayroomSound } from '../hooks/usePlayroomSound';
@@ -47,11 +48,6 @@ const playroomCopy = {
     viewAlbum: 'View Album',
     firstGame: 'First game',
     memoryTitle: 'Product Memory Match',
-    clawTitle: 'Ashlife Swing & Win',
-    clawDescription: 'Grab a prize, build momentum and swing it into the prize hole!',
-    clawButton: 'Play Now',
-    clawDifficulty: 'Skill-based',
-    clawReward: 'Joy Coins and collectible stickers',
     badgeStudioPill: 'Create and print',
     badgeStudioTitle: 'Badge Studio',
     badgeStudioDescription: 'Upload your photos, design 58 mm badges and build a print-ready A4 sheet.',
@@ -189,11 +185,6 @@ const playroomCopy = {
     viewAlbum: '查看图鉴',
     firstGame: '第一个游戏',
     memoryTitle: '商品记忆配对',
-    clawTitle: 'Ashlife Swing & Win',
-    clawDescription: 'Grab a prize, build momentum and swing it into the prize hole!',
-    clawButton: 'Play Now',
-    clawDifficulty: 'Skill-based',
-    clawReward: 'Joy Coins and collectible stickers',
     badgeStudioPill: '创作与打印',
     badgeStudioTitle: '徽章设计室',
     badgeStudioDescription: '上传照片，设计 58 毫米徽章，并自动排版成可打印的 A4 文件。',
@@ -335,6 +326,7 @@ const DifficultySelector = ({ selected, labels, onSelect }) => (
 const PlayroomPage = () => {
   const { language } = useLanguage();
   const labels = playroomCopy[language] || playroomCopy.en;
+  const clawLabels = getPlayroomClawFeatureCopy(language);
   const progressActions = usePlayroomProgress();
   const { progress, summary, resetProgress, updateSettings } = progressActions;
   const [view, setView] = useState('landing');
@@ -448,30 +440,30 @@ const PlayroomPage = () => {
             <section className="playroom-games-section">
               <div className="playroom-section-heading">
                 <span className="playroom-pill">{labels.firstGame}</span>
-                <h2>{labels.clawTitle}</h2>
-                <p>{labels.clawDescription}</p>
+                <h2>{clawLabels.title}</h2>
+                <p>{clawLabels.description}</p>
               </div>
 
               <article className="claw-feature-card">
                 <div className="claw-feature-preview">
                   <img
                     src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
-                    alt="Pastel ASHLIFE claw machine filled with cute plush prizes"
+                    alt={clawLabels.imageAlt}
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
                 <div className="memory-game-copy">
                   <Gamepad2 size={28} />
-                  <h3>{labels.clawTitle}</h3>
-                  <p>{labels.clawDescription}</p>
+                  <h3>{clawLabels.title}</h3>
+                  <p>{clawLabels.description}</p>
                   <div className="claw-card-meta">
-                    <span>{labels.clawDifficulty}</span>
-                    <span>{labels.clawReward}</span>
+                    <span>{clawLabels.difficulty}</span>
+                    <span>{clawLabels.reward}</span>
                   </div>
                   <Link className="playroom-button primary" to="/play/claw-machine/">
                     <Sparkles size={18} />
-                    {labels.clawButton}
+                    {clawLabels.button}
                   </Link>
                 </div>
               </article>

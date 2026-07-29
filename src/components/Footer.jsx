@@ -1,26 +1,29 @@
 import React from 'react';
 import { Facebook, MapPin, MessageCircle, ShoppingBag } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import './Footer.css';
 
 const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.webp`;
 const shopeeUrl = import.meta.env.VITE_SHOPEE_URL || 'https://shopee.com.my/ashleylife';
 const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
-const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hello ASHLIFE, I would like to ask about your products.')}`;
 
 const Footer = () => {
+  const { t } = useLanguage();
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(t('footer_whatsapp_message'))}`;
+
   return (
     <footer className="footer">
       <div className="container footer-container">
         <div className="footer-brand">
           <img src={logoSrc} alt="ASHLIFE Solutions" className="footer-logo" />
-          <p>Ready-stock practical daily needs and creative corners for Malaysia customers.</p>
+          <p>{t('footer_description')}</p>
           <div className="footer-area">
             <MapPin size={16} />
-            <span>Malaysia / Seri Kembangan / Serdang</span>
+            <span>{t('footer_location')}</span>
           </div>
         </div>
         <div className="footer-socials">
-          <h4>Connect with us</h4>
+          <h4>{t('footer_connect')}</h4>
           <div className="social-links">
             <a href="https://www.facebook.com/ashlife205" target="_blank" rel="noopener noreferrer" className="social-link facebook-link">
               <Facebook size={20} />
@@ -38,7 +41,7 @@ const Footer = () => {
         </div>
       </div>
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} ASHLIFE. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} ASHLIFE. {t('footer_rights')}</p>
       </div>
     </footer>
   );

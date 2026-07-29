@@ -135,3 +135,30 @@ test('order details require identity, design review, and low-quality acknowledge
     {}
   );
 });
+
+test('badge validation returns caller-provided localized messages', () => {
+  const image = validateImageFile(
+    { name: 'photo.gif', type: 'image/gif', size: 100 },
+    { unsupportedType: '请使用 JPG、PNG 或 WebP 图片。' }
+  );
+  const details = validateOrderDetails(
+    { name: '', whatsapp: '', designChecked: false, lowResolutionAccepted: false },
+    {
+      hasLowResolution: true,
+      messages: {
+        name: '请输入姓名。',
+        whatsapp: '请输入有效的 WhatsApp 号码。',
+        designChecked: '请确认您已经检查设计。',
+        lowResolutionAccepted: '请接受低清晰度提示。',
+      },
+    }
+  );
+
+  assert.equal(image.error, '请使用 JPG、PNG 或 WebP 图片。');
+  assert.deepEqual(details, {
+    name: '请输入姓名。',
+    whatsapp: '请输入有效的 WhatsApp 号码。',
+    designChecked: '请确认您已经检查设计。',
+    lowResolutionAccepted: '请接受低清晰度提示。',
+  });
+});

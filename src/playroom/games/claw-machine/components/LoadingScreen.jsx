@@ -1,9 +1,9 @@
 import React from 'react';
 
-const LoadingScreen = ({ error }) => (
+const LoadingScreen = ({ error, copy }) => (
   <div className="claw-loading-screen" role="status">
-    <strong>{error ? 'The machine needs a quick reset.' : 'Loading Ashlife Swing & Win...'}</strong>
-    <span>{error || 'Preparing prizes, cable and cozy cafe lights.'}</span>
+    <strong>{error ? copy.reset : copy.loading}</strong>
+    <span>{error || copy.preparing}</span>
   </div>
 );
 

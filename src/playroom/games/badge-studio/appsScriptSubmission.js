@@ -54,6 +54,7 @@ export const submitBadgeOrder = async ({
     onProgress({
       stage: 'uploading',
       message: `Uploading ${file.fileName}`,
+      fileName: file.fileName,
       completed: index + 1,
       total: files.length + 2,
     });

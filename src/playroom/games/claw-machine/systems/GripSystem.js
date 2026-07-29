@@ -8,7 +8,7 @@ export const gripLabels = {
   hooked: 'Hooked!',
 };
 
-export const getGripLabel = (state) => gripLabels[state] || gripLabels.missed;
+export const getGripLabel = (state, labels = gripLabels) => labels[state] || labels.missed;
 
 export const evaluateGripQuality = ({ claw, prize, contactPoints = 0 }) => {
   if (!claw || !prize) {

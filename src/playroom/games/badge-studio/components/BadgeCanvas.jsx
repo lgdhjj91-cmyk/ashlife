@@ -11,18 +11,17 @@ import BadgeArtwork from './BadgeArtwork';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-const qualityCopy = {
-  good: { label: 'Good quality', icon: CheckCircle2 },
-  acceptable: { label: 'Acceptable quality', icon: CheckCircle2 },
-  low: { label: 'Low resolution', icon: AlertTriangle },
+const qualityIcons = {
+  good: CheckCircle2,
+  acceptable: CheckCircle2,
+  low: AlertTriangle,
 };
 
-const BadgeCanvas = ({ design, onTransform, onReset, onReplace }) => {
+const BadgeCanvas = ({ design, onTransform, onReset, onReplace, copy }) => {
   const stageRef = useRef(null);
   const pointersRef = useRef(new Map());
   const gestureRef = useRef(null);
-  const quality = qualityCopy[design.quality] || qualityCopy.low;
-  const QualityIcon = quality.icon;
+  const QualityIcon = qualityIcons[design.quality] || qualityIcons.low;
 
   const patchTransform = (patch) => onTransform({ ...design.transform, ...patch });
 
@@ -80,10 +79,10 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace }) => {
   return (
     <section className="badge-editor-panel">
       <div className="badge-editor-intro">
-        <p>Move and zoom until the important part stays inside the safe circle.</p>
+        <p>{copy.instruction}</p>
         <span className={`badge-quality ${design.quality}`}>
           <QualityIcon size={18} />
-          {quality.label}
+          {copy.quality[design.quality] || copy.quality.low}
         </span>
       </div>
 
@@ -99,19 +98,19 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace }) => {
           patchTransform({ zoom: clamp(design.transform.zoom + (event.deltaY > 0 ? -0.08 : 0.08), 1, 4) });
         }}
         role="application"
-        aria-label="Badge photo editor. Drag the photo to reposition it."
+        aria-label={copy.editorAria}
       >
         <BadgeArtwork design={design} showGuides />
       </div>
 
-      <div className="badge-guide-legend" aria-label="Badge guide legend">
-        <span><i className="solid" />Artwork edge 70 mm</span>
-        <span><i className="dashed" />Safe area 54 mm</span>
+      <div className="badge-guide-legend" aria-label={copy.legendAria}>
+        <span><i className="solid" />{copy.artworkEdge}</span>
+        <span><i className="dashed" />{copy.safeArea}</span>
       </div>
 
       <div className="badge-slider-grid">
         <label>
-          <span>Zoom <output>{Math.round(design.transform.zoom * 100)}%</output></span>
+          <span>{copy.zoom} <output>{Math.round(design.transform.zoom * 100)}%</output></span>
           <input
             type="range"
             min="1"
@@ -122,7 +121,7 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace }) => {
           />
         </label>
         <label>
-          <span>Rotation <output>{Math.round(design.transform.rotation)}°</output></span>
+          <span>{copy.rotation} <output>{Math.round(design.transform.rotation)}°</output></span>
           <input
             type="range"
             min="-180"
@@ -136,16 +135,16 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace }) => {
 
       <div className="badge-editor-toolbar">
         <button type="button" onClick={() => patchTransform({ rotation: design.transform.rotation - 15 })}>
-          <RotateCcw size={19} />Rotate left
+          <RotateCcw size={19} />{copy.rotateLeft}
         </button>
         <button type="button" onClick={() => patchTransform({ rotation: design.transform.rotation + 15 })}>
-          <RotateCw size={19} />Rotate right
+          <RotateCw size={19} />{copy.rotateRight}
         </button>
         <button type="button" onClick={onReset}>
-          <RefreshCcw size={19} />Reset
+          <RefreshCcw size={19} />{copy.reset}
         </button>
         <button type="button" className="replace" onClick={onReplace}>
-          <ImagePlus size={19} />Replace photo
+          <ImagePlus size={19} />{copy.replacePhoto}
         </button>
       </div>
     </section>

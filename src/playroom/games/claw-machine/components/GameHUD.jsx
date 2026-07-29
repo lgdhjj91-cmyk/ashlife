@@ -11,38 +11,38 @@ const StatPill = ({ icon, label, value }) => (
   </span>
 );
 
-const GameHUD = ({ status, coins, onRestart, restartDisabled = false }) => (
-  <section className="claw-hud" aria-label="Ashlife Swing & Win status">
-    <StatPill icon={<Coins size={18} />} label="Joy Coins" value={coins} />
+const GameHUD = ({ status, coins, onRestart, restartDisabled = false, copy }) => (
+  <section className="claw-hud" aria-label={copy.aria}>
+    <StatPill icon={<Coins size={18} />} label={copy.joyCoins} value={coins} />
     <button
       className="claw-mini-button"
       type="button"
       onClick={onRestart}
       disabled={restartDisabled}
-      title={restartDisabled ? 'Classic sessions cannot be restarted after the first try.' : undefined}
+      title={restartDisabled ? copy.restartLocked : undefined}
     >
       <RotateCcw size={18} />
-      Restart
+      {copy.restart}
     </button>
     <div className="claw-mobile-live-status">
-      <LiveGameStats status={status} />
+      <LiveGameStats status={status} copy={copy} />
     </div>
   </section>
 );
 
-export const LiveGameStats = ({ status }) => (
-  <section className="claw-live-status-card" aria-label="Live game status">
-    <span className="claw-session-kicker">Live status</span>
+export const LiveGameStats = ({ status, copy }) => (
+  <section className="claw-live-status-card" aria-label={copy.liveAria}>
+    <span className="claw-session-kicker">{copy.live}</span>
     <div className="claw-live-stats">
-      <StatPill icon={<Trophy size={18} />} label="Tries" value={status.attemptsRemaining} />
+      <StatPill icon={<Trophy size={18} />} label={copy.tries} value={status.attemptsRemaining} />
       <StatPill
         icon={<Timer size={18} />}
-        label="Time left"
+        label={copy.timeLeft}
         value={`${status.turnSecondsRemaining ?? 10}s`}
       />
-      <StatPill icon={<Gauge size={18} />} label="Swing" value={`${status.swingPower || 0}%`} />
+      <StatPill icon={<Gauge size={18} />} label={copy.swing} value={`${status.swingPower || 0}%`} />
     </div>
-    <div className="claw-swing-meter" aria-label={`Swing power ${status.swingPower || 0}%`}>
+    <div className="claw-swing-meter" aria-label={copy.swingPower(status.swingPower || 0)}>
       <span style={{ width: `${Math.min(100, status.swingPower || 0)}%` }} />
     </div>
     <p className="claw-status-message" aria-live="polite">

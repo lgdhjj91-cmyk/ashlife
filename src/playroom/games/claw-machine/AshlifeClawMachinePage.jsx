@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, Pause, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { useLanguage } from '../../../context/LanguageContext';
 import { usePlayroomProgress } from '../../hooks/usePlayroomProgress';
 import { getLocalDateKey } from '../../utils/dateKey';
 import {
@@ -19,33 +20,33 @@ import {
   getSessionControlLocks,
   summarizeSession,
 } from './systems/SessionFlow';
+import { getClawMachineCopy } from './clawMachineCopy';
 import './styles/claw-machine.css';
 
-const modeOptions = [
-  { key: 'practice', label: 'Practice', note: 'Unlimited tries' },
-  { key: 'classic', label: 'Classic', note: 'Rewards enabled' },
-];
-
-const difficultyOptions = [
-  { key: 'easy', label: 'Easy' },
-  { key: 'normal', label: 'Normal' },
-  { key: 'hard', label: 'Hard' },
-];
-
-const defaultStatus = {
+const createDefaultStatus = (copy) => ({
   state: 'READY',
-  statusMessage: 'Move the claw',
+  statusMessage: copy.status.READY,
   gripStatus: '',
   swingPower: 0,
-  attemptsRemaining: 'Unlimited',
+  attemptsRemaining: copy.unlimited,
   attemptsUsed: 0,
   score: 0,
   elapsedSeconds: 0,
   turnSecondsRemaining: 10,
   classicSessionEnded: false,
-};
+});
 
 const AshlifeClawMachinePage = () => {
+  const { language } = useLanguage();
+  const copy = useMemo(() => getClawMachineCopy(language), [language]);
+  const modeOptions = useMemo(
+    () => ['practice', 'classic'].map((key) => ({ key, ...copy.modes[key] })),
+    [copy]
+  );
+  const difficultyOptions = useMemo(
+    () => ['easy', 'normal', 'hard'].map((key) => ({ key, label: copy.difficulties[key] })),
+    [copy]
+  );
   const navigate = useNavigate();
   const progressActions = usePlayroomProgress();
   const { progress, summary, updateProgress, updateSettings } = progressActions;
@@ -61,7 +62,7 @@ const AshlifeClawMachinePage = () => {
   const [controlLayout, setControlLayout] = useState(progress.clawMachine.controlLayout || 'right');
   const [soundEnabled, setSoundEnabled] = useState(progress.clawMachine.soundEnabled || progress.settings.soundEnabled);
   const [showTutorial, setShowTutorial] = useState(!progress.clawMachine.tutorialCompleted);
-  const [status, setStatus] = useState(defaultStatus);
+  const [status, setStatus] = useState(() => createDefaultStatus(copy));
   const [controls, setControls] = useState(null);
   const [sessionEntries, setSessionEntries] = useState([]);
   const sessionEntriesRef = useRef([]);
@@ -229,20 +230,20 @@ const AshlifeClawMachinePage = () => {
         <header className="claw-topbar">
           <Link className="playroom-back-link" to="/play/">
             <ArrowLeft size={18} />
-            Back to Playroom
+            {copy.backToPlayroom}
           </Link>
           <div className="claw-topbar-actions">
             <Link className="playroom-button quiet" to="/">
               <Home size={18} />
-              Back to Shop
+              {copy.backToShop}
             </Link>
             <button className="playroom-button quiet" type="button" onClick={() => setShowTutorial(true)}>
-              How to Play
+              {copy.howToPlay}
             </button>
-            <button className="playroom-icon-button" type="button" onClick={toggleSound} aria-label="Toggle sound">
+            <button className="playroom-icon-button" type="button" onClick={toggleSound} aria-label={copy.toggleSound}>
               {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>
-            <button className="playroom-icon-button" type="button" onClick={togglePause} aria-label={paused ? 'Resume game' : 'Pause game'}>
+            <button className="playroom-icon-button" type="button" onClick={togglePause} aria-label={paused ? copy.resumeGame : copy.pauseGame}>
               {paused ? <Play size={20} /> : <Pause size={20} />}
             </button>
           </div>
@@ -250,10 +251,10 @@ const AshlifeClawMachinePage = () => {
 
         <section className="claw-intro">
           <div>
-            <h1>Ashlife Swing & Win</h1>
-            <p>Position, drop, grab, build momentum, then release at the perfect moment.</p>
+            <h1>{copy.title}</h1>
+            <p>{copy.description}</p>
           </div>
-          <div className="claw-mode-panel" aria-label="Game mode and difficulty">
+          <div className="claw-mode-panel" aria-label={copy.modePanelAria}>
             <div className="claw-segmented">
               {modeOptions.map((option) => (
                 <button
@@ -269,7 +270,7 @@ const AshlifeClawMachinePage = () => {
                   <strong>{option.label}</strong>
                   <span>
                     {option.key === 'classic' && !classicAvailable
-                      ? 'Completed today'
+                      ? copy.completedToday
                       : option.note}
                   </span>
                 </button>
@@ -296,12 +297,15 @@ const AshlifeClawMachinePage = () => {
           coins={summary.coins}
           onRestart={controlApi.onRestart}
           restartDisabled={controlLocks.restart}
+          copy={copy.hud}
         />
 
         <section className="claw-game-layout">
           <ClawMachineGame
             mode={mode}
             difficulty={difficulty}
+            language={language}
+            copy={copy}
             testMode={testMode}
             onEvent={handleEvent}
             registerControls={setControls}
@@ -311,44 +315,47 @@ const AshlifeClawMachinePage = () => {
             onMove={controlApi.onMove}
             onDropGrab={controlApi.onDropGrab}
             onRelease={controlApi.onRelease}
+            copy={copy.mobile}
           />
           <aside className="claw-side-panel">
-            <LiveGameStats status={status} />
-            <SessionCard mode={mode} entries={sessionEntries} />
-            <h2>Controls</h2>
+            <LiveGameStats status={status} copy={copy.hud} />
+            <SessionCard mode={mode} entries={sessionEntries} copy={copy.session} prizeNames={copy.prizes} />
+            <h2>{copy.controlsTitle}</h2>
             <dl>
               <div>
-                <dt>Move</dt>
-                <dd>Arrow keys or A / D</dd>
+                <dt>{copy.controls.move}</dt>
+                <dd>{copy.controls.moveKeys}</dd>
               </div>
               <div>
-                <dt>Drop / Grab</dt>
-                <dd>Space</dd>
+                <dt>{copy.controls.dropGrab}</dt>
+                <dd>{copy.controls.dropGrabKey}</dd>
               </div>
               <div>
-                <dt>Release</dt>
-                <dd>R</dd>
+                <dt>{copy.controls.release}</dt>
+                <dd>{copy.controls.releaseKey}</dd>
               </div>
               <div>
-                <dt>Pause</dt>
-                <dd>Esc or P</dd>
+                <dt>{copy.controls.pause}</dt>
+                <dd>{copy.controls.pauseKey}</dd>
               </div>
             </dl>
             <button className="playroom-button secondary" type="button" onClick={handleControlLayoutChange}>
-              {controlLayout === 'right' ? 'Right-handed controls' : 'Left-handed controls'}
+              {controlLayout === 'right' ? copy.controls.rightHanded : copy.controls.leftHanded}
             </button>
             <button className="playroom-button quiet" type="button" onClick={() => navigate('/shop')}>
-              Explore Related Products
+              {copy.controls.explore}
             </button>
           </aside>
         </section>
       </div>
 
-      <TutorialOverlay open={showTutorial} onClose={closeTutorial} />
+      <TutorialOverlay open={showTutorial} onClose={closeTutorial} copy={copy.tutorial} />
       <SessionSummaryModal
         summary={sessionSummary}
         onPlayPractice={playPractice}
         onBackToPlayroom={() => navigate('/play/')}
+        copy={copy.summary}
+        prizeNames={copy.prizes}
       />
     </main>
   );

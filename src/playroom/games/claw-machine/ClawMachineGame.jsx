@@ -4,16 +4,16 @@ import LoadingScreen from './components/LoadingScreen';
 import { shouldIgnoreDocumentGameplayKey } from './systems/KeyboardControls';
 import { createEventBridge } from './systems/EventBridge';
 
-const initialStatus = {
+const createInitialStatus = (copy) => ({
   state: 'READY',
-  statusMessage: 'Move the claw',
+  statusMessage: copy.status.READY,
   gripStatus: '',
   swingPower: 0,
-  attemptsRemaining: 'Unlimited',
+  attemptsRemaining: copy.unlimited,
   attemptsUsed: 0,
   score: 0,
   elapsedSeconds: 0,
-};
+});
 
 const gameplayKeys = new Set(['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'Space', 'KeyR', 'Escape', 'KeyP']);
 
@@ -24,14 +24,22 @@ const clearMount = (mount) => {
   }
 };
 
-const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, registerControls }) => {
+const ClawMachineGame = ({
+  mode,
+  difficulty,
+  language,
+  copy,
+  testMode = false,
+  onEvent,
+  registerControls,
+}) => {
   const shellRef = useRef(null);
   const mountRef = useRef(null);
   const bridgeRef = useRef(null);
   const modeRef = useRef(mode);
   const difficultyRef = useRef(difficulty);
   const [eventBridge] = useState(() => createEventBridge(onEvent));
-  const [status, setStatus] = useState(initialStatus);
+  const [status, setStatus] = useState(() => createInitialStatus(copy));
   const [loadError, setLoadError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,6 +74,7 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
           settings: {
             mode: modeRef.current,
             difficulty: difficultyRef.current,
+            language,
             testMode,
           },
           events: emit,
@@ -81,7 +90,7 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
         setIsLoading(false);
       } catch (error) {
         console.error('Unable to start Ashlife Swing & Win.', error);
-        setLoadError('Phaser could not initialize. Please refresh the game route.');
+        setLoadError(copy.loading.error);
         setIsLoading(false);
       }
     };
@@ -95,7 +104,7 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
       clearMount(mountNode);
       bridgeRef.current = null;
     };
-  }, [emit, registerControls, testMode]);
+  }, [copy, emit, language, registerControls, testMode]);
 
   useEffect(() => {
     bridgeRef.current?.setMode(mode);
@@ -153,11 +162,11 @@ const ClawMachineGame = ({ mode, difficulty, testMode = false, onEvent, register
       className="claw-canvas-shell"
       tabIndex={0}
       role="application"
-      aria-label="Ashlife Swing and Win game canvas"
+      aria-label={copy.loading.canvasAria}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
     >
-      {(loadError || isLoading) && <LoadingScreen error={loadError} />}
+      {(loadError || isLoading) && <LoadingScreen error={loadError} copy={copy.loading} />}
       <div className="claw-phaser-mount" ref={mountRef} />
       <p className="sr-only" aria-live="polite">
         {status.statusMessage}

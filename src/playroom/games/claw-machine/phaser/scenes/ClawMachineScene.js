@@ -41,21 +41,7 @@ import {
   shouldEndClassicSession,
   TURN_DURATION_MS,
 } from '../../systems/SessionFlow';
-
-const stateMessages = {
-  READY: 'Move the claw',
-  AIMING: 'Press Drop',
-  DROPPING: 'Close the claw',
-  GRABBING: 'Checking grip',
-  CLOSING: 'Closing claw',
-  LIFTING: 'Lifting',
-  SWINGING: 'Build momentum!',
-  RELEASED: 'Prize released',
-  RESOLVING: 'So close!',
-  SUCCESS: 'Prize won!',
-  FAILED: 'Try again',
-  PAUSED: 'Paused',
-};
+import { getClawMachineCopy } from '../../clawMachineCopy';
 
 const clawMachineAsset = (filename) => `${import.meta.env.BASE_URL}assets/playroom/claw-machine/${filename}`;
 
@@ -80,6 +66,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       super('ClawMachineScene');
       this.bridge = events;
       this.externalSettings = settings;
+      this.copy = getClawMachineCopy(settings.language);
       this.controlState = controlState;
       this.gameState = 'READY';
       this.mode = settings.mode || 'practice';
@@ -200,10 +187,10 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       const elapsedSeconds = this.startedAt ? Math.floor((this.time.now - this.startedAt) / 1000) : 0;
       return {
         state: this.gameState,
-        statusMessage: this.gripLabel || stateMessages[this.gameState],
+        statusMessage: this.gripLabel || this.copy.status[this.gameState],
         gripStatus: this.gripLabel || '',
         swingPower: Math.round(this.swingPower || 0),
-        attemptsRemaining: formatAttemptsRemaining(this.attemptsRemaining),
+        attemptsRemaining: formatAttemptsRemaining(this.attemptsRemaining, this.copy.unlimited),
         attemptsUsed: this.attemptsUsed,
         score: this.score || 0,
         elapsedSeconds,
@@ -428,7 +415,24 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     createDecorations() {
-      this.add.text(500, 728, 'Swing, release, drop it in!', {
+      if (this.externalSettings.language === 'zh') {
+        this.add
+          .rectangle(850, 481, 76, 60, canvasColors.cream)
+          .setStrokeStyle(2, canvasColors.deepPink)
+          .setDepth(3);
+        this.add
+          .text(850, 481, this.copy.scene.dropHere, {
+            fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif',
+            fontSize: '18px',
+            fontStyle: 'bold',
+            align: 'center',
+            color: '#e86f9a',
+            lineSpacing: -2,
+          })
+          .setOrigin(0.5)
+          .setDepth(4);
+      }
+      this.add.text(500, 728, this.copy.scene.instruction, {
         fontSize: '22px',
         fontStyle: 'bold',
         color: '#ffffff',
@@ -436,7 +440,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         strokeThickness: 4,
       }).setOrigin(0.5).setDepth(25);
       this.wonShelfLabel = this.add
-        .text(520, 644, 'WON PRIZES', {
+        .text(520, 644, this.copy.scene.wonPrizes, {
           fontSize: '14px',
           fontStyle: 'bold',
           color: '#8d3d75',
@@ -499,7 +503,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         .sort((a, b) => b.grip.score - a.grip.score || a.distance - b.distance);
 
       const best = candidates[0];
-      this.gripLabel = getGripLabel(best?.grip.state);
+      this.gripLabel = getGripLabel(best?.grip.state, this.copy.grip);
       emit(this.bridge, 'grip-changed', { ...this.getUiPayload(), gripStatus: this.gripLabel });
 
       if (best && best.grip.state !== 'missed') {
@@ -637,7 +641,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       };
       emit(this.bridge, 'attempt-updated', {
         ...this.getUiPayload(),
-        statusMessage: `${prize.name} collected!`,
+        statusMessage: this.copy.status.prizeCollected(this.copy.prizes[prize.id] || prize.name),
       });
       emit(this.bridge, 'prize-collected', winPayload);
       const transition = getWonPrizeTransition({
@@ -785,7 +789,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
             this.setGameState('SWINGING');
           } else {
             emit(this.bridge, 'attempt-failed', this.getUiPayload());
-            this.finishAttempt('Try again');
+        this.finishAttempt(this.copy.status.FAILED);
           }
         }
       }
@@ -813,7 +817,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         this.releasedPrize = this.capturedPrize;
         this.capturedPrize = null;
         this.releaseStartedAt = this.time.now;
-        this.setGameState('RESOLVING', { statusMessage: 'Prize slipping!' });
+        this.setGameState('RESOLVING', { statusMessage: this.copy.status.slipping });
       }
     }
 
@@ -831,7 +835,9 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       const timedOut = this.time.now - this.releaseStartedAt > 5200;
       if (settled || timedOut) {
         emit(this.bridge, 'attempt-failed', this.getUiPayload());
-        this.finishAttempt(this.collectedDuringAttempt ? 'Prize collected!' : 'So close!');
+        this.finishAttempt(
+          this.collectedDuringAttempt ? this.copy.status.collected : this.copy.status.RESOLVING
+        );
       }
     }
 
@@ -861,7 +867,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.releasedPrize = null;
       this.capturedPrize = null;
       this.gripLabel = '';
-      this.setGameState('FAILED', { statusMessage: 'Classic complete!' });
+      this.setGameState('FAILED', { statusMessage: this.copy.status.classicComplete });
       emit(this.bridge, 'classic-session-ended', this.getUiPayload());
     }
 

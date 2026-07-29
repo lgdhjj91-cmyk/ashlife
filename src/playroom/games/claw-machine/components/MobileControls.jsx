@@ -30,13 +30,13 @@ const bindHold = (onChange) => ({
   onTouchCancel: () => onChange(false),
 });
 
-const MobileControls = ({ layout, onMove, onDropGrab, onRelease }) => {
+const MobileControls = ({ layout, onMove, onDropGrab, onRelease, copy }) => {
   const moveButtons = (
     <div className="claw-touch-row">
-      <button className="claw-touch-button" type="button" aria-label="Move left" {...bindHold((pressed) => onMove('left', pressed))}>
+      <button className="claw-touch-button" type="button" aria-label={copy.moveLeft} {...bindHold((pressed) => onMove('left', pressed))}>
         <ArrowLeft size={30} />
       </button>
-      <button className="claw-touch-button" type="button" aria-label="Move right" {...bindHold((pressed) => onMove('right', pressed))}>
+      <button className="claw-touch-button" type="button" aria-label={copy.moveRight} {...bindHold((pressed) => onMove('right', pressed))}>
         <ArrowRight size={30} />
       </button>
     </div>
@@ -46,17 +46,17 @@ const MobileControls = ({ layout, onMove, onDropGrab, onRelease }) => {
     <div className="claw-touch-row">
       <button className="claw-touch-button action" type="button" onClick={onDropGrab}>
         <ArrowDown size={24} />
-        Drop / Grab
+        {copy.dropGrab}
       </button>
       <button className="claw-touch-button action" type="button" onClick={onRelease}>
         <Hand size={24} />
-        Release
+        {copy.release}
       </button>
     </div>
   );
 
   return (
-    <section className={`claw-mobile-controls ${layout === 'left' ? 'left-layout' : ''}`} aria-label="Touch controls">
+    <section className={`claw-mobile-controls ${layout === 'left' ? 'left-layout' : ''}`} aria-label={copy.aria}>
       {layout === 'left' ? actionButtons : moveButtons}
       {layout === 'left' ? moveButtons : actionButtons}
     </section>

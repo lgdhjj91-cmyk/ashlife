@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { a4Config, badgeConfig } from '../badgeStudioConfig';
 import BadgeArtwork from './BadgeArtwork';
 
-const A4SheetPreview = ({ page, pageIndex, pageCount, designs, onMove, globalOffset }) => {
+const A4SheetPreview = ({ page, pageIndex, pageCount, designs, onMove, globalOffset, copy }) => {
   const designMap = new Map(designs.map((design) => [design.id, design]));
   const diameterPercent = (badgeConfig.artworkDiameterMm / a4Config.widthMm) * 100;
 
@@ -11,13 +11,13 @@ const A4SheetPreview = ({ page, pageIndex, pageCount, designs, onMove, globalOff
     <section className="a4-preview-panel">
       <div className="a4-preview-heading">
         <div>
-          <h2>Sheet {pageIndex + 1}</h2>
-          <p>{page.length} badge{page.length === 1 ? '' : 's'} · {a4Config.slotsPerSheet - page.length} empty slots</p>
+          <h2>{copy.sheetLabel} {pageIndex + 1}</h2>
+          <p>{page.length} {copy.badges} · {a4Config.slotsPerSheet - page.length} {copy.emptySlots}</p>
         </div>
         <span>{pageIndex + 1} / {pageCount}</span>
       </div>
 
-      <div className="a4-paper" aria-label={`A4 print sheet ${pageIndex + 1}`}>
+      <div className="a4-paper" aria-label={copy.printSheetAria(pageIndex + 1)}>
         {a4Config.slots.map((slot, slotIndex) => {
           const entry = page[slotIndex];
           const design = entry ? designMap.get(entry.designId) : null;
@@ -36,17 +36,17 @@ const A4SheetPreview = ({ page, pageIndex, pageCount, designs, onMove, globalOff
                 <>
                   <BadgeArtwork design={design} />
                   <div className="a4-slot-actions">
-                    <button type="button" onClick={() => onMove(globalIndex, -1)} aria-label="Move badge left">
+                    <button type="button" onClick={() => onMove(globalIndex, -1)} aria-label={copy.moveLeft}>
                       <ArrowLeft size={14} />
                     </button>
                     <span>{globalIndex + 1}</span>
-                    <button type="button" onClick={() => onMove(globalIndex, 1)} aria-label="Move badge right">
+                    <button type="button" onClick={() => onMove(globalIndex, 1)} aria-label={copy.moveRight}>
                       <ArrowRight size={14} />
                     </button>
                   </div>
                 </>
               ) : (
-                <span className="a4-empty-slot">Empty</span>
+                <span className="a4-empty-slot">{copy.empty}</span>
               )}
             </div>
           );

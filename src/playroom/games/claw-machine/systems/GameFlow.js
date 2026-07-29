@@ -1,5 +1,5 @@
-export const formatAttemptsRemaining = (attemptsRemaining) =>
-  Number.isFinite(attemptsRemaining) ? attemptsRemaining : 'Unlimited';
+export const formatAttemptsRemaining = (attemptsRemaining, unlimitedLabel = 'Unlimited') =>
+  Number.isFinite(attemptsRemaining) ? attemptsRemaining : unlimitedLabel;
 
 export const getLiftOutcomeState = ({ capturedPrize, attemptsRemaining }) => {
   if (capturedPrize) return 'SWINGING';
