@@ -42,9 +42,17 @@ const Home = () => {
 
   return (
     <div className="page animate-fade-in home-page">
-      <section className="home-hero">
-        <div className="container home-hero-grid">
-          <div className="home-hero-copy">
+      <section
+        className="home-hero"
+        style={{
+          '--home-hero-image': `url(${asset('/brand/ashlife-hero-wide-v2.webp')})`,
+        }}
+      >
+        <div className="container home-hero-overlay">
+          <div
+            className="home-hero-copy"
+            lang={language === 'zh' ? 'zh-CN' : 'en'}
+          >
             <p className="home-eyebrow">{text.hero.eyebrow}</p>
             <h1>{text.hero.title}</h1>
             <p className="home-hero-subtitle">{text.hero.subtitle}</p>
@@ -63,14 +71,6 @@ const Home = () => {
                 {text.hero.secondaryAction}
               </a>
             </div>
-          </div>
-
-          <div className="home-hero-visual">
-            <img
-              src={asset('/brand/ashlife-hero-wide-v2.webp')}
-              alt="ASHLIFE home, work and DIY essentials"
-              fetchPriority="high"
-            />
           </div>
         </div>
       </section>
