@@ -1,0 +1,307 @@
+.joy-rewards-panel {
+  margin: 1.5rem 0;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid rgba(222, 91, 139, 0.18);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 222, 126, 0.28), transparent 30%),
+    linear-gradient(145deg, #fffafd, #fff6f2);
+  box-shadow: 0 18px 48px rgba(111, 56, 100, 0.09);
+}
+
+.joy-rewards-heading,
+.joy-rewards-heading > div,
+.joy-wallet-balance,
+.joy-tier-card,
+.joy-voucher-ticket,
+.joy-voucher-ticket > div,
+.joy-voucher-actions,
+.joy-account-copy,
+.joy-account-signed-in {
+  display: flex;
+}
+
+.joy-rewards-heading {
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.joy-rewards-heading > div:first-child {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.joy-rewards-heading h2,
+.joy-wallet-section h3,
+.joy-account-section h3 {
+  margin: 0.45rem 0 0;
+  color: #61325f;
+}
+
+.joy-rewards-heading p,
+.joy-account-section p {
+  margin: 0.45rem 0 0;
+  color: #765f72;
+  line-height: 1.6;
+}
+
+.joy-wallet-balance {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #f1cb5d;
+  border-radius: 18px;
+  color: #724512;
+  background: #fff3c4;
+}
+
+.joy-wallet-balance strong {
+  font-size: 1.45rem;
+}
+
+.joy-wallet-balance span {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.joy-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.3rem;
+}
+
+.joy-tier-card {
+  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem;
+  border: 1px solid #f3d7e2;
+  border-radius: 22px;
+  color: #683660;
+  background: rgba(255, 255, 255, 0.86);
+  text-align: center;
+}
+
+.joy-tier-card > strong {
+  font-size: 1.7rem;
+}
+
+.joy-tier-card > span {
+  color: #b34872;
+  font-weight: 900;
+}
+
+.joy-tier-card small {
+  min-height: 2.4em;
+  color: #806b7a;
+}
+
+.joy-tier-card button,
+.joy-voucher-actions button,
+.joy-account-tabs button,
+.joy-account-form button,
+.joy-account-signed-in button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.joy-tier-card button {
+  width: 100%;
+  margin-top: 0.45rem;
+  padding: 0.6rem 0.7rem;
+  color: white;
+  background: #e45489;
+}
+
+.joy-tier-card button:disabled {
+  color: #8d7b86;
+  background: #efe8ec;
+  cursor: not-allowed;
+}
+
+.joy-wallet-section,
+.joy-account-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(171, 93, 136, 0.14);
+}
+
+.joy-voucher-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.joy-voucher-ticket {
+  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed #e89ab7;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.joy-voucher-ticket::before,
+.joy-voucher-ticket::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff7f5;
+  transform: translateY(-50%);
+}
+
+.joy-voucher-ticket::before { left: -8px; }
+.joy-voucher-ticket::after { right: -8px; }
+
+.joy-voucher-ticket > div:first-child {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.joy-voucher-ticket code {
+  color: #9b3d66;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.joy-voucher-ticket.status-used {
+  filter: grayscale(0.65);
+  opacity: 0.7;
+}
+
+.joy-voucher-actions {
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.joy-voucher-status {
+  color: #806b7a;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.joy-voucher-actions button,
+.joy-account-signed-in button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  color: #9b3d66;
+  background: #fff0f5;
+}
+
+.joy-wallet-empty,
+.joy-account-note,
+.joy-rewards-notice {
+  color: #806b7a;
+  line-height: 1.55;
+}
+
+.joy-account-copy {
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.joy-account-copy svg {
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+  color: #cf4f7e;
+}
+
+.joy-account-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.joy-account-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  color: #765f72;
+  background: #f5edf1;
+}
+
+.joy-account-tabs button.active {
+  color: white;
+  background: #8d4b7f;
+}
+
+.joy-account-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.joy-account-form input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e5d3dd;
+  border-radius: 13px;
+  font: inherit;
+  background: white;
+}
+
+.joy-account-form button {
+  padding: 0.6rem 1rem;
+  color: white;
+  background: #8d4b7f;
+}
+
+.joy-account-signed-in {
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.joy-rewards-notice {
+  margin: 0.8rem 0 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  color: #7c3d58;
+  background: #fff0f4;
+}
+
+@media (max-width: 760px) {
+  .joy-rewards-heading,
+  .joy-voucher-ticket,
+  .joy-account-signed-in {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .joy-wallet-balance {
+    align-self: flex-start;
+  }
+
+  .joy-tier-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .joy-voucher-actions {
+    align-items: flex-start;
+  }
+
+  .joy-account-form {
+    grid-template-columns: 1fr;
+  }
+}

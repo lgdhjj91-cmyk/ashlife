@@ -1,0 +1,160 @@
+.joy-checkout-card {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #efd4df;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffafd, #fff7ee);
+}
+
+.joy-checkout-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.joy-checkout-heading > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #773a68;
+  font-weight: 900;
+}
+
+.joy-checkout-heading small,
+.joy-online-note,
+.joy-no-voucher {
+  color: #806b7a;
+  line-height: 1.45;
+}
+
+.joy-applied-voucher {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+  padding: 0.8rem;
+  border: 1px dashed #df7fa5;
+  border-radius: 15px;
+  color: #9d3b67;
+  background: white;
+}
+
+.joy-applied-voucher > div {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.joy-applied-voucher code {
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.joy-applied-voucher span {
+  color: #806b7a;
+  font-size: 0.76rem;
+}
+
+.joy-applied-voucher button,
+.joy-kept-message button,
+.joy-code-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.joy-applied-voucher button,
+.joy-kept-message button {
+  color: #944061;
+  background: #fff0f5;
+}
+
+.joy-kept-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  color: #806b7a;
+}
+
+.joy-voucher-select,
+.joy-code-form {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  color: #674c61;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.joy-voucher-select select,
+.joy-code-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e5d4dd;
+  border-radius: 11px;
+  font: inherit;
+  background: white;
+}
+
+.joy-code-form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.joy-code-form button {
+  color: white;
+  background: #8d4b7f;
+}
+
+.joy-code-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.joy-code-message {
+  margin: 0.6rem 0 0;
+  color: #9d3b67;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.joy-online-note {
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .joy-checkout-heading,
+  .joy-kept-message {
+    flex-direction: column;
+  }
+
+  .joy-applied-voucher {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .joy-applied-voucher button {
+    grid-column: 1 / -1;
+  }
+
+  .joy-code-form > div {
+    grid-template-columns: 1fr;
+  }
+}

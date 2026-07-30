@@ -10,6 +10,7 @@ import {
   FileImage,
   LoaderCircle,
   MessageCircle,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   Upload,
@@ -19,6 +20,7 @@ import A4SheetPreview from './components/A4SheetPreview';
 import BadgeArtwork from './components/BadgeArtwork';
 import BadgeCanvas from './components/BadgeCanvas';
 import DesignCollection from './components/DesignCollection';
+import ResetProjectDialog from './components/ResetProjectDialog';
 import { submitBadgeOrder } from './appsScriptSubmission';
 import { downloadBlob, exportBadgeOrder } from './badgeExportService';
 import { a4Config, badgeConfig, studioSteps } from './badgeStudioConfig';
@@ -34,6 +36,7 @@ import {
 } from './badgeStudioLogic';
 import { clearBadgeDraft, loadBadgeDraft, saveBadgeDraft } from './draftStorage';
 import { getBadgeStudioCopy } from './badgeStudioCopy';
+import { clearBadgeStudioProject } from './badgeStudioReset';
 import './badge-studio.css';
 
 const EMPTY_DETAILS = {
@@ -111,11 +114,14 @@ const BadgeStudioPage = () => {
   const [exportBundle, setExportBundle] = useState(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const [submission, setSubmission] = useState({ status: 'idle', message: '', completed: 0, total: 1 });
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const fileInputRef = useRef(null);
   const replaceInputRef = useRef(null);
   const replaceIdRef = useRef('');
   const designsRef = useRef(designs);
   const abortRef = useRef(null);
+  const autosaveTimerRef = useRef(null);
 
   designsRef.current = designs;
 
@@ -185,7 +191,8 @@ const BadgeStudioPage = () => {
   useEffect(() => {
     if (isRestoring || designs.length === 0) return undefined;
     setDraftStatus('saving');
-    const timer = window.setTimeout(() => {
+    autosaveTimerRef.current = window.setTimeout(() => {
+      autosaveTimerRef.current = null;
       saveBadgeDraft({
         designs,
         activeId,
@@ -197,7 +204,12 @@ const BadgeStudioPage = () => {
         .then(() => setDraftStatus('saved'))
         .catch(() => setDraftStatus('unavailable'));
     }, 500);
-    return () => window.clearTimeout(timer);
+    return () => {
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
   }, [activeId, arrangedEntries, designs, details, isRestoring, orderId, stepIndex]);
 
   useEffect(() => {
@@ -314,6 +326,42 @@ const BadgeStudioPage = () => {
     setActiveId(next[0]?.id || '');
     setStepIndex(next.length ? stepIndex : 0);
     setExportBundle(null);
+  };
+
+  const resetProject = async () => {
+    setIsResetting(true);
+    setNotice('');
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    try {
+      await clearBadgeStudioProject({
+        designs,
+        clearDraft: clearBadgeDraft,
+        revokeObjectUrl: URL.revokeObjectURL,
+      });
+      setStepIndex(0);
+      setDesigns([]);
+      setActiveId('');
+      setArrangedEntries([]);
+      setSheetIndex(0);
+      setDetails(EMPTY_DETAILS);
+      setFormErrors({});
+      setDraftStatus('new');
+      setOrderId('');
+      setExportBundle(null);
+      setSubmission({ status: 'idle', message: '', completed: 0, total: 1 });
+      replaceIdRef.current = '';
+      abortRef.current = null;
+      setShowResetConfirm(false);
+    } catch {
+      setNotice(copy.reset.failed);
+      setShowResetConfirm(false);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const prepareExports = async () => {
@@ -659,7 +707,19 @@ const BadgeStudioPage = () => {
             <h1>{copy.title}</h1>
             <p>{copy.subtitle}</p>
           </div>
-          <span className="badge-draft-status"><CheckCircle2 size={17} />{copy.draft[draftStatus]}</span>
+          <aside className="badge-header-actions">
+            <span className="badge-draft-status"><CheckCircle2 size={17} />{copy.draft[draftStatus]}</span>
+            {designs.length > 0 && submission.status !== 'working' && !isPreparing && (
+              <button
+                type="button"
+                className="badge-reset-button"
+                onClick={() => setShowResetConfirm(true)}
+              >
+                <RotateCcw size={17} />
+                {copy.reset.button}
+              </button>
+            )}
+          </aside>
         </header>
 
         <nav className="badge-step-rail" aria-label={copy.progressAria}>
@@ -728,6 +788,14 @@ const BadgeStudioPage = () => {
             event.target.value = '';
           }}
         />
+        {showResetConfirm && (
+          <ResetProjectDialog
+            copy={copy.reset}
+            isResetting={isResetting}
+            onCancel={() => setShowResetConfirm(false)}
+            onConfirm={resetProject}
+          />
+        )}
       </div>
     </main>
   );

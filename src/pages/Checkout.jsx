@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,18 +6,36 @@ import { useOrders } from '../context/OrderContext';
 import { AlertCircle, CheckCircle, Upload, ArrowLeft, Loader, Image as ImageIcon, MessageCircle } from 'lucide-react';
 import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
+import JoyVoucherCard from '../components/JoyVoucherCard';
+import { useJoyWallet } from '../context/JoyWalletContext';
+import { calculateVoucherTotals, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { buildOrderVoucherSnapshot, createCheckoutOrderId } from '../joy/orderVoucher';
 import './Checkout.css';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { t, language } = useLanguage();
   const { createOrder, paymentSettings } = useOrders();
+  const {
+    selectedVoucher,
+    reserveVoucher,
+    releaseVoucher,
+    clearVoucherSelection,
+  } = useJoyWallet();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState(null);
-  const [submittedOrder, setSubmittedOrder] = useState({ items: [], total: 0 });
+  const [submittedOrder, setSubmittedOrder] = useState({
+    items: [],
+    total: 0,
+    discount: 0,
+    voucher: null,
+  });
+  const [checkoutOrderId] = useState(() => createCheckoutOrderId());
+  const [voucherReservation, setVoucherReservation] = useState(null);
+  const orderSubmittedRef = useRef(false);
 
   // Form State
   const [customerInfo, setCustomerInfo] = useState({
@@ -60,15 +78,42 @@ const Checkout = () => {
     }
   };
 
-  const calculateTotal = () => {
-    if (customerInfo.deliveryMethod === 'delivery') {
-      return cartTotal + (paymentSettings.delivery_fee || 8);
-    }
-    return cartTotal;
-  };
+  const deliveryFee = customerInfo.deliveryMethod === 'delivery' ? (paymentSettings.delivery_fee || 8) : 0;
+  const checkoutTotals = calculateVoucherTotals({
+    subtotalSen: rmToSen(cartTotal),
+    deliveryFeeSen: rmToSen(deliveryFee),
+    voucher: selectedVoucher,
+  });
 
-  const handleNextStep = (e) => {
+  const calculateTotal = () => senToRm(checkoutTotals.totalSen);
+
+  const handleNextStep = async (e) => {
     e.preventDefault();
+    if (step === 2) {
+      const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
+      let activeReservation = voucherReservation;
+
+      if (activeReservation && activeReservation.voucher.code !== voucherSnapshot?.code) {
+        await releaseVoucher({ code: activeReservation.voucher.code, orderId: checkoutOrderId });
+        activeReservation = null;
+        setVoucherReservation(null);
+      }
+
+      if (voucherSnapshot && !activeReservation) {
+        setLoading(true);
+        const result = await reserveVoucher({
+          code: voucherSnapshot.code,
+          orderId: checkoutOrderId,
+          subtotalSen: rmToSen(cartTotal),
+        });
+        setLoading(false);
+        if (!result.success) {
+          alert(`Joy voucher could not be reserved: ${result.error}`);
+          return;
+        }
+        setVoucherReservation({ voucher: result.voucher, orderId: checkoutOrderId });
+      }
+    }
     setStep((prev) => Math.min(prev + 1, 4));
     window.scrollTo(0, 0);
   };
@@ -77,6 +122,17 @@ const Checkout = () => {
     setStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    return () => {
+      if (voucherReservation && !orderSubmittedRef.current) {
+        void releaseVoucher({
+          code: voucherReservation.voucher.code,
+          orderId: voucherReservation.orderId,
+        });
+      }
+    };
+  }, [releaseVoucher, voucherReservation]);
 
   const handleSubmitOrder = async () => {
     if (!hasSelectedQr) {
@@ -88,8 +144,6 @@ const Checkout = () => {
       alert('Please upload a payment screenshot.');
       return;
     }
-
-    setLoading(true);
 
     const orderItems = cartItems.map((item) => ({
       id: item.id,
@@ -105,15 +159,27 @@ const Checkout = () => {
       variantName_zh: item.variantName_zh || '',
     }));
     const orderTotal = calculateTotal();
+    const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
+
+    if (voucherSnapshot && voucherReservation?.voucher.code !== voucherSnapshot.code) {
+      alert('Please return to order review so your Joy voucher can be reserved before payment.');
+      return;
+    }
+
+    setLoading(true);
 
     const orderData = {
+      orderId: checkoutOrderId,
       customerName: customerInfo.name,
       customerPhone: customerInfo.phone,
       deliveryMethod: customerInfo.deliveryMethod,
       address: customerInfo.deliveryMethod === 'delivery' ? customerInfo.address : '',
       items: orderItems,
       subtotal: cartTotal,
-      deliveryFee: customerInfo.deliveryMethod === 'delivery' ? (paymentSettings.delivery_fee || 8) : 0,
+      discount: senToRm(checkoutTotals.discountSen),
+      discountSen: checkoutTotals.discountSen,
+      voucher: voucherSnapshot,
+      deliveryFee,
       total: orderTotal,
       paymentMethod: paymentInfo.method,
     };
@@ -122,12 +188,26 @@ const Checkout = () => {
     setLoading(false);
 
     if (result.success) {
+      orderSubmittedRef.current = true;
       setCreatedOrderId(result.orderId);
-      setSubmittedOrder({ items: orderItems, total: orderTotal });
+      setSubmittedOrder({
+        items: orderItems,
+        total: orderTotal,
+        discount: senToRm(checkoutTotals.discountSen),
+        voucher: voucherSnapshot,
+      });
       clearCart();
+      clearVoucherSelection();
       setStep(4);
       window.scrollTo(0, 0);
     } else {
+      if (voucherReservation) {
+        await releaseVoucher({
+          code: voucherReservation.voucher.code,
+          orderId: voucherReservation.orderId,
+        });
+        setVoucherReservation(null);
+      }
       alert(`Error creating order: ${result.error}`);
     }
   };
@@ -156,6 +236,10 @@ const Checkout = () => {
     });
 
     message += `\n*Total:* RM ${(submittedOrder.total || calculateTotal()).toFixed(2)}\n`;
+    if (submittedOrder.voucher) {
+      message += `*Joy voucher:* ${submittedOrder.voucher.code}\n`;
+      message += `*Discount:* -RM ${Number(submittedOrder.discount || 0).toFixed(2)}\n`;
+    }
     message += `*Payment status:* Receipt uploaded, pending manual verification\n`;
     message += `*Payment method:* ${paymentInfo.method.toUpperCase()}\n\n`;
     message += `Please confirm my order. Thank you!`;
@@ -338,6 +422,8 @@ const Checkout = () => {
               ))}
             </div>
 
+            <JoyVoucherCard subtotalSen={rmToSen(cartTotal)} />
+
             <div className="review-summary">
               <div className="review-summary-row">
                 <span>{t('subtotal')}</span>
@@ -351,6 +437,12 @@ const Checkout = () => {
                     : 'Free'}
                 </span>
               </div>
+              {checkoutTotals.discountSen > 0 && selectedVoucher && (
+                <div className="review-summary-row joy-review-discount">
+                  <span>Joy voucher · {selectedVoucher.code}</span>
+                  <span>-RM {senToRm(checkoutTotals.discountSen).toFixed(2)}</span>
+                </div>
+              )}
               <div className="review-summary-total">
                 <span>{t('checkout_total')}</span>
                 <span>RM {calculateTotal().toFixed(2)}</span>
@@ -361,8 +453,9 @@ const Checkout = () => {
               <button type="button" className="btn btn-secondary" onClick={handlePrevStep}>
                 Go Back
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleNextStep}>
-                {t('checkout_next_payment')}
+              <button type="button" className="btn btn-primary" onClick={handleNextStep} disabled={loading}>
+                {loading ? <Loader className="spin" size={18} /> : null}
+                {loading ? 'Reserving voucher…' : t('checkout_next_payment')}
               </button>
             </div>
           </div>
@@ -476,6 +569,12 @@ const Checkout = () => {
               <div className="order-status-badge pending">
                 {t('checkout_status')}
               </div>
+              {submittedOrder.voucher && (
+                <div className="order-voucher-result">
+                  <strong>{submittedOrder.voucher.code}</strong>
+                  <span>-RM {Number(submittedOrder.discount || 0).toFixed(2)} Joy voucher</span>
+                </div>
+              )}
             </div>
 
             <p className="success-note">{t('checkout_confirm_note')}</p>

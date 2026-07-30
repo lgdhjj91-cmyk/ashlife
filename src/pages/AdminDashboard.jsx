@@ -44,12 +44,13 @@ import {
 } from 'lucide-react';
 import './Admin.css';
 
-const STATUS_OPTIONS = ['pending_verification', 'confirmed', 'rejected', 'completed'];
+const STATUS_OPTIONS = ['pending_verification', 'confirmed', 'rejected', 'cancelled', 'completed'];
 
 const STATUS_META = {
   pending_verification: { label: 'Pending', emoji: '🟡', cls: 'status-pending' },
   confirmed: { label: 'Confirmed', emoji: '🟢', cls: 'status-confirmed' },
   rejected: { label: 'Rejected', emoji: '🔴', cls: 'status-rejected' },
+  cancelled: { label: 'Cancelled', emoji: '⚪', cls: 'status-cancelled' },
   completed: { label: 'Completed', emoji: '✅', cls: 'status-completed' },
 };
 
@@ -1189,11 +1190,29 @@ const AdminDashboard = () => {
                             <span>RM {order.deliveryFee?.toFixed(2)}</span>
                           </div>
                         )}
+                        {order.discount > 0 && (
+                          <div className="order-total-row joy-order-discount">
+                            <span>Joy voucher {order.voucher?.code ? `(${order.voucher.code})` : ''}</span>
+                            <span>-RM {Number(order.discount).toFixed(2)}</span>
+                          </div>
+                        )}
                         <div className="order-total-row total">
                           <strong>Total</strong>
                           <strong>RM {order.total?.toFixed(2)}</strong>
                         </div>
                       </div>
+
+                      {order.voucher?.code && (
+                        <div className="order-voucher-admin">
+                          <p className="order-detail-label">Joy Voucher</p>
+                          <p className="order-detail-value">
+                            {order.voucher.code} · RM {Number(order.discount || 0).toFixed(2)} off · {order.voucher.status || 'reserved'}
+                          </p>
+                          <p className="order-detail-value">
+                            Confirmed/completed consumes it; rejected/cancelled restores it automatically.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Payment Screenshot */}
                       {order.paymentScreenshot && (

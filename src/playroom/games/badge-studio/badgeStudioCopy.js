@@ -11,6 +11,16 @@ const english = {
     saving: 'Saving…',
     saved: 'Draft saved',
   },
+  reset: {
+    button: 'Reset all',
+    dialogAria: 'Reset badge project',
+    title: 'Reset this badge project?',
+    description: 'All photos, badge designs, quantities, order details, and generated files saved on this device will be removed. This cannot be undone.',
+    cancel: 'No, keep it',
+    confirm: 'Yes, reset all',
+    working: 'Resetting…',
+    failed: 'Your project could not be reset. Your work is still safe.',
+  },
   notices: {
     maxPhotos: (count) => `You can use up to ${count} photos in one project.`,
     maxBadges: (count) => `One project can contain up to ${count} badges.`,
@@ -151,6 +161,16 @@ const chinese = {
     unavailable: '无法保存草稿',
     saving: '正在保存…',
     saved: '草稿已保存',
+  },
+  reset: {
+    button: '全部重置',
+    dialogAria: '重置徽章设计',
+    title: '要重置这个徽章设计吗？',
+    description: '此设备上保存的所有照片、徽章设计、数量、订单资料和生成文件都会被删除。此操作无法撤销。',
+    cancel: '否，保留设计',
+    confirm: '是，全部重置',
+    working: '正在重置…',
+    failed: '无法重置此设计。您的内容仍然安全保留。',
   },
   notices: {
     maxPhotos: (count) => `每个设计最多可使用 ${count} 张照片。`,

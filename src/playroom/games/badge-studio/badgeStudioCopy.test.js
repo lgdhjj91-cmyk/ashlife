@@ -16,6 +16,19 @@ test('badge studio selects a complete Chinese interface without changing the Eng
   assert.equal(chinese.arrange.empty, '空白');
   assert.equal(chinese.details.name, '姓名 *');
   assert.equal(chinese.finish.contactWhatsapp, '通过 WhatsApp 联系 Ashlife');
+  assert.deepEqual(chinese.reset, {
+    button: '全部重置',
+    dialogAria: '重置徽章设计',
+    title: '要重置这个徽章设计吗？',
+    description: '此设备上保存的所有照片、徽章设计、数量、订单资料和生成文件都会被删除。此操作无法撤销。',
+    cancel: '否，保留设计',
+    confirm: '是，全部重置',
+    working: '正在重置…',
+    failed: '无法重置此设计。您的内容仍然安全保留。',
+  });
+  assert.equal(english.reset.button, 'Reset all');
+  assert.equal(english.reset.cancel, 'No, keep it');
+  assert.equal(english.reset.confirm, 'Yes, reset all');
 });
 
 test('badge studio falls back to English for an unsupported language', () => {

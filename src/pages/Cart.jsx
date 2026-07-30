@@ -5,23 +5,43 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
+import JoyVoucherCard from '../components/JoyVoucherCard';
+import { useJoyWallet } from '../context/JoyWalletContext';
+import { calculateVoucherTotals, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { buildOrderVoucherSnapshot, createCheckoutOrderId } from '../joy/orderVoucher';
+import { useOrders } from '../context/OrderContext';
 import './Cart.css';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, getAvailableStock } = useCart();
   const { t, language } = useLanguage();
+  const {
+    selectedVoucher,
+    reserveVoucher,
+    releaseVoucher,
+    clearVoucherSelection,
+  } = useJoyWallet();
+  const { createOrder } = useOrders();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [deliveryOption, setDeliveryOption] = useState('pickup');
+  const [waSubmitting, setWaSubmitting] = useState(false);
+  const voucherTotals = calculateVoucherTotals({
+    subtotalSen: rmToSen(cartTotal),
+    voucher: selectedVoucher,
+  });
+  const discountTotal = senToRm(voucherTotals.discountSen);
+  const cartTotalAfterDiscount = senToRm(voucherTotals.totalSen);
 
   const isCartValid = cartItems.every(item => {
     const availableStock = getAvailableStock(item.productId || item.id, item.variantId);
     return availableStock > 0 && item.quantity <= availableStock;
   });
 
-  const generateWhatsAppMessage = () => {
+  const generateWhatsAppMessage = (orderId = '') => {
     let message = `${t('wa_greeting')}\n\n`;
     message += `*ASHLIFE Order Summary*\n`;
+    if (orderId) message += `Order ID: ${orderId}\n`;
     message += `${t('wa_name')}: ${name}\n`;
     message += `${t('wa_phone')}: ${phone}\n`;
     message += `Delivery/Pickup: ${deliveryOption === 'delivery' ? 'Delivery - fee to confirm' : 'Self pickup - Seri Kembangan / Serdang'}\n`;
@@ -37,18 +57,83 @@ const Cart = () => {
       message += `   Subtotal: RM ${(item.price * item.quantity).toFixed(2)}\n`;
     });
 
-    message += `\n${t('wa_total')}: RM ${cartTotal.toFixed(2)}\n\n`;
+    if (voucherTotals.discountSen > 0 && selectedVoucher) {
+      message += `\nJoy voucher: ${selectedVoucher.code}\n`;
+      message += `Discount: -RM ${discountTotal.toFixed(2)} (subject to confirmation)\n`;
+    }
+    message += `\n${t('wa_total')}: RM ${cartTotalAfterDiscount.toFixed(2)}\n\n`;
     message += `Notes: Payment is verified manually. Delivery fee will be confirmed before shipment.\n\n`;
     message += t('wa_closing');
     return message;
   };
 
-  const handleCheckout = (e) => {
+  const handleCheckout = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
+    const popup = window.open('', '_blank');
+    const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
+    let orderId = '';
+
+    if (voucherSnapshot) {
+      setWaSubmitting(true);
+      orderId = createCheckoutOrderId();
+      const reservation = await reserveVoucher({
+        code: voucherSnapshot.code,
+        orderId,
+        subtotalSen: rmToSen(cartTotal),
+      });
+      if (!reservation.success) {
+        setWaSubmitting(false);
+        popup?.close();
+        alert(`Joy voucher could not be reserved: ${reservation.error}`);
+        return;
+      }
+
+      const orderItems = cartItems.map((item) => ({
+        id: item.id,
+        productId: item.productId || item.id,
+        cartKey: getCartItemKey(item),
+        name: item.name,
+        name_zh: item.name_zh || '',
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+        variantId: item.variantId || '',
+        variantName: item.variantName || '',
+        variantName_zh: item.variantName_zh || '',
+      }));
+      const result = await createOrder({
+        orderId,
+        customerName: name,
+        customerPhone: phone,
+        deliveryMethod: deliveryOption,
+        address: '',
+        items: orderItems,
+        subtotal: cartTotal,
+        discount: discountTotal,
+        discountSen: voucherTotals.discountSen,
+        voucher: voucherSnapshot,
+        deliveryFee: 0,
+        total: cartTotalAfterDiscount,
+        paymentMethod: 'whatsapp',
+      });
+
+      if (!result.success) {
+        await releaseVoucher({ code: voucherSnapshot.code, orderId });
+        setWaSubmitting(false);
+        popup?.close();
+        alert(`Order could not be created: ${result.error}`);
+        return;
+      }
+      clearVoucherSelection();
+      setWaSubmitting(false);
+    }
+
     const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
-    const message = encodeURIComponent(generateWhatsAppMessage());
-    window.open(`https://wa.me/${shopWhatsApp}?text=${message}`, '_blank');
+    const message = encodeURIComponent(generateWhatsAppMessage(orderId));
+    const whatsappUrl = `https://wa.me/${shopWhatsApp}?text=${message}`;
+    if (popup) popup.location.href = whatsappUrl;
+    else window.open(whatsappUrl, '_self');
   };
 
   if (cartItems.length === 0) {
@@ -145,9 +230,18 @@ const Cart = () => {
               <span>{t('shipping_note')}</span>
             </div>
 
+            <JoyVoucherCard subtotalSen={rmToSen(cartTotal)} />
+
+            {voucherTotals.discountSen > 0 && (
+              <div className="summary-row joy-discount-summary">
+                <span>Joy voucher</span>
+                <span>-RM {discountTotal.toFixed(2)}</span>
+              </div>
+            )}
+
             <div className="summary-total">
               <span>{t('total_estim')}</span>
-              <span>RM {cartTotal.toFixed(2)}</span>
+              <span>RM {cartTotalAfterDiscount.toFixed(2)}</span>
             </div>
 
             <div className="checkout-options-box">
@@ -237,8 +331,8 @@ const Cart = () => {
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-full confirm-order-btn" disabled={!isCartValid}>
-                  <MessageCircle size={18} /> {t('confirm_order')}
+                <button type="submit" className="btn btn-primary w-full confirm-order-btn" disabled={!isCartValid || waSubmitting}>
+                  <MessageCircle size={18} /> {waSubmitting ? 'Reserving voucher…' : t('confirm_order')}
                 </button>
 
                 <p className="checkout-note">

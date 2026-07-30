@@ -16,6 +16,16 @@
         ".write": "auth != null && auth.token.admin === true"
       }
     },
+    "joyWallets": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "joyVouchers": {
+      ".read": false,
+      ".write": false
+    },
     "orders": {
       ".read": "auth != null && auth.token.admin === true",
       "$orderId": {

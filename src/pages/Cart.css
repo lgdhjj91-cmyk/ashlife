@@ -338,3 +338,8 @@
   box-shadow: none;
   pointer-events: none;
 }
+
+.joy-discount-summary {
+  color: #a23d68;
+  font-weight: 800;
+}

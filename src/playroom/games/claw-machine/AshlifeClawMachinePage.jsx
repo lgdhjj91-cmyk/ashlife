@@ -49,7 +49,7 @@ const AshlifeClawMachinePage = () => {
   );
   const navigate = useNavigate();
   const progressActions = usePlayroomProgress();
-  const { progress, summary, updateProgress, updateSettings } = progressActions;
+  const { progress, summary, syncCoinReward, updateProgress, updateSettings } = progressActions;
   const progressRef = useRef(progress);
   const todayDateKey = useMemo(() => getLocalDateKey(), []);
   const [mode, setMode] = useState(() => {
@@ -160,6 +160,10 @@ const AshlifeClawMachinePage = () => {
         });
         progressRef.current = nextProgress;
         updateProgress(nextProgress);
+        void syncCoinReward(
+          reward.coins,
+          `claw-${mode}-${detail.prize.id}-${Date.now()}`
+        );
         const entry = {
           prize: detail.prize,
           reward,
@@ -180,7 +184,7 @@ const AshlifeClawMachinePage = () => {
         });
       }
     },
-    [difficulty, mode, todayDateKey, updateProgress]
+    [difficulty, mode, syncCoinReward, todayDateKey, updateProgress]
   );
 
   const toggleSound = () => {

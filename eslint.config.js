@@ -33,6 +33,15 @@ export default defineConfig([
     },
   },
   {
+    files: ['functions/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        sourceType: 'commonjs',
+      },
+    },
+  },
+  {
     files: ['vite.config.js'],
     languageOptions: {
       globals: globals.node,

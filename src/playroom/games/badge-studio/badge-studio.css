@@ -74,6 +74,142 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   font-size: 0.85rem;
 }
 
+.badge-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.badge-reset-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(180, 68, 97, 0.25);
+  border-radius: 999px;
+  color: #9d3455;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 20px rgba(112, 67, 106, 0.07);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.badge-reset-button:hover {
+  border-color: rgba(180, 68, 97, 0.48);
+  background: #fff5f7;
+}
+
+.badge-reset-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(67, 42, 64, 0.48);
+  backdrop-filter: blur(5px);
+}
+
+.badge-reset-dialog {
+  position: relative;
+  width: min(100%, 480px);
+  padding: 2rem;
+  border: 1px solid rgba(180, 68, 97, 0.18);
+  border-radius: 26px;
+  background: #fffdfd;
+  box-shadow: 0 28px 80px rgba(67, 42, 64, 0.22);
+  text-align: center;
+}
+
+.badge-reset-dialog-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1rem;
+  border-radius: 18px;
+  color: #b44461;
+  background: #fff0f3;
+}
+
+.badge-reset-dialog h2 {
+  margin: 0;
+  color: #5b315b;
+  font-size: 1.55rem;
+}
+
+.badge-reset-dialog p {
+  margin: 0.75rem 0 1.5rem;
+  color: #755e71;
+  line-height: 1.65;
+}
+
+.badge-reset-dialog-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #755e71;
+  background: transparent;
+  cursor: pointer;
+}
+
+.badge-reset-dialog-close:hover {
+  background: #f7edf2;
+}
+
+.badge-reset-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.badge-reset-dialog-actions button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.badge-reset-dialog-actions button:disabled,
+.badge-reset-dialog-close:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.badge-reset-cancel {
+  border: 1px solid #eadce4;
+  color: #70436a;
+  background: #fff;
+}
+
+.badge-reset-confirm {
+  border: 1px solid #b44461;
+  color: #fff;
+  background: #b44461;
+  box-shadow: 0 10px 24px rgba(180, 68, 97, 0.2);
+}
+
+.badge-reset-spinner {
+  animation: badge-spin 0.8s linear infinite;
+}
+
 .badge-step-rail {
   width: min(760px, 100%);
   display: grid;
@@ -1160,7 +1296,7 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
     text-align: left;
   }
 
-  .badge-draft-status {
+  .badge-header-actions {
     grid-column: 1 / -1;
     justify-self: center;
   }
@@ -1224,6 +1360,12 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
 
   .badge-back-link svg {
     color: #70436a;
+  }
+
+  .badge-header-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .badge-step-rail {
@@ -1393,6 +1535,15 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   .badge-step-rail button > span {
     width: 30px;
     height: 30px;
+  }
+
+  .badge-reset-dialog {
+    padding: 1.5rem 1.1rem 1.1rem;
+    border-radius: 22px;
+  }
+
+  .badge-reset-dialog-actions {
+    grid-template-columns: 1fr;
   }
 
   .badge-step-rail button::before {

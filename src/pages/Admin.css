@@ -1412,3 +1412,21 @@
   display: block;
 }
 
+.status-cancelled {
+  color: #5f6672;
+  background: #edf0f3;
+  border: 1px solid #d9dee5;
+}
+
+.joy-order-discount {
+  color: #a23d68;
+}
+
+.order-voucher-admin {
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #efd4df;
+  border-radius: 14px;
+  background: #fff8fb;
+}
+

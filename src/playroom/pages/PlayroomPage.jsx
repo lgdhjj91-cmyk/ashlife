@@ -18,6 +18,7 @@ import GameHeader from '../components/GameHeader';
 import MemoryGrid from '../components/MemoryGrid';
 import StickerAlbum from '../components/StickerAlbum';
 import TutorialModal from '../components/TutorialModal';
+import JoyRewardsPanel from '../../components/JoyRewardsPanel';
 import { stickers } from '../data/stickers';
 import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
@@ -417,6 +418,8 @@ const PlayroomPage = () => {
               </div>
               <img src={mascotSrc} alt={labels.heroTitle} />
             </section>
+
+            <JoyRewardsPanel />
 
             <section className="playroom-dashboard-grid">
               <DailyChallengeCard challenge={dailyChallenge} progress={progress} labels={labels} />

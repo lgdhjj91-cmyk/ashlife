@@ -58,7 +58,8 @@ Use `/ashlife/` only for the GitHub Pages project URL. Use `/` for the final mai
 Required Firebase services:
 
 - Realtime Database for `products`, `orders`, and `settings`.
-- Firebase Authentication with Email/Password enabled for admin login.
+- Firebase Authentication with Anonymous and Email/Password enabled.
+- Cloud Functions in `asia-southeast1` for Joy Coin wallet and voucher operations.
 - Storage is configured, although QR/order images are currently stored as compressed base64 in the database.
 
 Admin login no longer uses frontend username/password environment variables. Create the owner/admin account in Firebase Authentication, then sign in at `/admin`.
@@ -69,6 +70,31 @@ Recommended admin security:
 - Add an `admin: true` custom claim to that Firebase Auth user for stricter rules.
 - Do not commit `.env.local`.
 - Do not expose admin credentials in frontend code or README files.
+
+### Joy Coin vouchers
+
+The Playroom now gives every visitor a private Firebase guest wallet without forcing registration. A guest can redeem Joy Coins for a global voucher code, copy that code to another browser or device, and use it at checkout without signing in. Linking an optional email/password account keeps the same wallet on future signed-in devices.
+
+Voucher tiers:
+
+- 100 Joy Coins = RM1 off, minimum item subtotal RM10.
+- 200 Joy Coins = RM2 off, minimum item subtotal RM15.
+- 500 Joy Coins = RM5 off, minimum item subtotal RM20.
+
+Only one Joy voucher can be used per order. Delivery is not discounted. Checkout automatically suggests the best eligible saved voucher, while the customer can keep it, choose another saved voucher, or enter a code manually. Pending orders reserve the voucher; confirmed/completed orders consume it; rejected/cancelled orders restore it.
+
+Before production use:
+
+1. In Firebase Console, enable **Authentication → Sign-in method → Anonymous**.
+2. Enable **Email/Password** as well if customers should be able to keep their wallet through an optional account.
+3. Install the function dependencies with `npm --prefix functions install`.
+4. Deploy the server operations and database rules:
+
+```bash
+npx firebase-tools deploy --only functions,database --project YOUR_FIREBASE_PROJECT_ID
+```
+
+The frontend function region defaults to `asia-southeast1` and can be changed with `VITE_FIREBASE_FUNCTIONS_REGION`.
 
 ## Product Data Structure
 
@@ -121,7 +147,7 @@ Example Realtime Database rules are in `firebase.database.rules.json`. For produ
 "isAdmin": "auth != null && auth.token.admin === true"
 ```
 
-If custom claims are not set yet, temporarily use `auth != null` for admin-only write sections while you finish setup, then tighten it before launch.
+Set the `admin: true` custom claim on the owner account before using the admin dashboard. Do not use `auth != null` as an admin rule because ordinary visitors use anonymous Firebase identities for Joy Rewards.
 
 ## SEO Checklist
 

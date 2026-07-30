@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { database } from '../firebase';
 import { auth } from '../firebase';
 import { ref, onValue, set, get, update } from 'firebase/database';
+import { hasAdminClaim } from './adminAuthRules';
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
@@ -21,13 +22,27 @@ export const OrderProvider = ({ children }) => {
   // Subscribe to orders only after Firebase Auth confirms an admin session.
   useEffect(() => {
     let unsubscribeOrders = null;
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (unsubscribeOrders) {
         unsubscribeOrders();
         unsubscribeOrders = null;
       }
 
       if (!user) {
+        setOrders([]);
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        const tokenResult = await user.getIdTokenResult();
+        if (!hasAdminClaim(tokenResult)) {
+          setOrders([]);
+          setLoadingOrders(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Admin order claim check failed:', error);
         setOrders([]);
         setLoadingOrders(false);
         return;
@@ -186,7 +201,7 @@ export const OrderProvider = ({ children }) => {
         // 3. Create the order. Stock is adjusted manually after payment/order verification.
         // This keeps public checkout from needing product write permission in Firebase rules.
         const updates = {};
-        const orderId = await generateOrderId();
+        const orderId = orderData.orderId || await generateOrderId();
         
         // Convert payment screenshot to base64 if provided
         let screenshotBase64 = '';

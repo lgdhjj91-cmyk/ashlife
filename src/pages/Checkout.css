@@ -706,3 +706,19 @@
     font-size: 1.2rem;
   }
 }
+
+.joy-review-discount {
+  color: #a23d68;
+  font-weight: 800;
+}
+
+.order-voucher-result {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(162, 61, 104, 0.16);
+  color: #8f3a61;
+}

@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { OrderProvider } from './context/OrderContext';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
+import { JoyWalletProvider } from './context/JoyWalletContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -30,8 +31,9 @@ function App() {
       <ProductProvider>
         <SiteContentProvider>
           <AdminAuthProvider>
-            <OrderProvider>
-              <CartProvider>
+            <JoyWalletProvider>
+              <OrderProvider>
+                <CartProvider>
                 <BrowserRouter basename={basename}>
                   <div className="app">
                     <ScrollToTop />
@@ -99,8 +101,9 @@ function App() {
                     <Footer />
                   </div>
                 </BrowserRouter>
-              </CartProvider>
-            </OrderProvider>
+                </CartProvider>
+              </OrderProvider>
+            </JoyWalletProvider>
           </AdminAuthProvider>
         </SiteContentProvider>
       </ProductProvider>

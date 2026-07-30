@@ -6,8 +6,16 @@ import {
   savePlayroomProgress,
 } from '../storage/playroomStorage';
 import { getLocalDateKey } from '../games/memory-match/dailyChallenge';
+import { useJoyWallet } from '../../context/JoyWalletContext';
+import { createJoyRequestId } from '../../joy/joyWalletState';
 
 export const usePlayroomProgress = () => {
+  const {
+    wallet,
+    loading: walletLoading,
+    awardCoins: awardWalletCoins,
+    resetCoins: resetWalletCoins,
+  } = useJoyWallet();
   const [progress, setProgress] = useState(() => loadPlayroomProgress());
 
   useEffect(() => {
@@ -15,17 +23,28 @@ export const usePlayroomProgress = () => {
   }, [progress]);
 
   const updateProgress = useCallback((updater) => {
-    setProgress((current) => normalizePlayroomProgress(typeof updater === 'function' ? updater(current) : updater));
-  }, []);
+    setProgress((current) => {
+      const base = walletLoading
+        ? current
+        : normalizePlayroomProgress({
+            ...current,
+            coins: wallet.coins,
+          });
+      return normalizePlayroomProgress(typeof updater === 'function' ? updater(base) : updater);
+    });
+  }, [wallet.coins, walletLoading]);
 
   const addCoins = useCallback(
     (amount) => {
+      const safeAmount = Math.max(0, Number(amount) || 0);
+      if (!safeAmount) return;
       updateProgress((current) => ({
         ...current,
-        coins: Math.max(0, current.coins + Math.max(0, amount)),
+        coins: Math.max(0, current.coins + safeAmount),
       }));
+      void awardWalletCoins(safeAmount, createJoyRequestId('game-reward'));
     },
-    [updateProgress]
+    [awardWalletCoins, updateProgress]
   );
 
   const unlockSticker = useCallback(
@@ -76,10 +95,8 @@ export const usePlayroomProgress = () => {
   const claimDailyReward = useCallback(
     ({ challenge, sticker, coins }) => {
       if (!challenge || !sticker) return false;
-      let claimed = false;
+      if (progress.dailyChallenge.lastClaimedDate === challenge.dateKey) return false;
       updateProgress((current) => {
-        if (current.dailyChallenge.lastClaimedDate === challenge.dateKey) return current;
-        claimed = true;
         const unlockedStickers = current.unlockedStickers.includes(sticker.id)
           ? current.unlockedStickers
           : [...current.unlockedStickers, sticker.id];
@@ -97,9 +114,13 @@ export const usePlayroomProgress = () => {
           },
         };
       });
-      return claimed;
+      void awardWalletCoins(
+        Math.max(0, Number(coins) || 0),
+        `daily-${challenge.id || challenge.dateKey}`
+      );
+      return true;
     },
-    [updateProgress]
+    [awardWalletCoins, progress.dailyChallenge.lastClaimedDate, updateProgress]
   );
 
   const updateSettings = useCallback(
@@ -117,25 +138,44 @@ export const usePlayroomProgress = () => {
 
   const resetProgress = useCallback(() => {
     setProgress(resetPlayroomProgress());
-  }, []);
+    void resetWalletCoins();
+  }, [resetWalletCoins]);
+
+  const syncCoinReward = useCallback(
+    (amount, claimId = createJoyRequestId('game-reward')) =>
+      awardWalletCoins(Math.max(0, Number(amount) || 0), claimId),
+    [awardWalletCoins]
+  );
+
+  const syncedProgress = useMemo(
+    () =>
+      walletLoading
+        ? progress
+        : normalizePlayroomProgress({
+            ...progress,
+            coins: wallet.coins,
+          }),
+    [progress, wallet.coins, walletLoading]
+  );
 
   const summary = useMemo(
     () => ({
-      unlockedCount: progress.unlockedStickers.length,
-      coins: progress.coins,
-      settings: progress.settings,
-      dailyChallenge: progress.dailyChallenge,
+      unlockedCount: syncedProgress.unlockedStickers.length,
+      coins: syncedProgress.coins,
+      settings: syncedProgress.settings,
+      dailyChallenge: syncedProgress.dailyChallenge,
     }),
-    [progress]
+    [syncedProgress]
   );
 
   return {
-    progress,
+    progress: syncedProgress,
     summary,
     addCoins,
     unlockSticker,
     recordGameResult,
     claimDailyReward,
+    syncCoinReward,
     updateProgress,
     updateSettings,
     resetProgress,
