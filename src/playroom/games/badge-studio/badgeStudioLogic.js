@@ -5,6 +5,23 @@ const ORDER_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 export const mmToPx = (millimetres, dpi = badgeConfig.printDpi) =>
   Math.round((Number(millimetres) / 25.4) * Number(dpi));
 
+export const getBadgeGuideGeometry = ({
+  artworkDiameterMm = badgeConfig.artworkDiameterMm,
+  productSizeMm = badgeConfig.productSizeMm,
+  safeAreaDiameterMm = badgeConfig.safeAreaDiameterMm,
+} = {}) => {
+  const artwork = Math.max(0.01, Number(artworkDiameterMm) || badgeConfig.artworkDiameterMm);
+  const front = Math.min(artwork, Math.max(0.01, Number(productSizeMm) || badgeConfig.productSizeMm));
+  const safe = Math.min(front, Math.max(0.01, Number(safeAreaDiameterMm) || badgeConfig.safeAreaDiameterMm));
+
+  return {
+    frontInsetPercent: ((artwork - front) / 2 / artwork) * 100,
+    safeInsetPercent: ((artwork - safe) / 2 / artwork) * 100,
+    frontScale: artwork / front,
+    wrapWidthMm: (artwork - front) / 2,
+  };
+};
+
 export const getCoverTransform = ({ imageWidth, imageHeight, frameSize }) => {
   const scale = Math.max(frameSize / imageWidth, frameSize / imageHeight);
   return {

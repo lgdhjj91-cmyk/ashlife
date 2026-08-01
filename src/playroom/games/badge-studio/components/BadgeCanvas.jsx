@@ -2,7 +2,9 @@ import React, { useRef } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  Eye,
   ImagePlus,
+  Info,
   RefreshCcw,
   RotateCcw,
   RotateCw,
@@ -104,8 +106,28 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace, copy }) => {
       </div>
 
       <div className="badge-guide-legend" aria-label={copy.legendAria}>
-        <span><i className="solid" />{copy.artworkEdge}</span>
-        <span><i className="dashed" />{copy.safeArea}</span>
+        <span><i className="cut" />{copy.cutEdge}</span>
+        <span><i className="front" />{copy.frontFace}</span>
+        <span><i className="safe" />{copy.safeArea}</span>
+      </div>
+
+      <div className="badge-production-guide">
+        <div className="badge-wrap-explanation">
+          <Info size={21} aria-hidden="true" />
+          <div>
+            <strong>{copy.wrapArea}</strong>
+            <p>{copy.wrapExplanation}</p>
+          </div>
+        </div>
+        <div className="badge-front-preview-card">
+          <div className="badge-front-preview-visual" aria-hidden="true">
+            <BadgeArtwork design={design} view="front" />
+          </div>
+          <div>
+            <strong><Eye size={18} aria-hidden="true" />{copy.frontPreviewTitle}</strong>
+            <p>{copy.frontPreviewDescription}</p>
+          </div>
+        </div>
       </div>
 
       <div className="badge-slider-grid">

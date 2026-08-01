@@ -532,22 +532,38 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   transform-origin: center;
 }
 
+.badge-wrap-guide,
 .badge-cut-guide,
+.badge-front-guide,
 .badge-safe-guide {
   position: absolute;
   z-index: 2;
-  inset: 0;
   border-radius: 50%;
   pointer-events: none;
 }
 
+.badge-wrap-guide {
+  z-index: 1;
+  inset: var(--badge-front-inset);
+  box-shadow: 0 0 0 999px rgba(241, 63, 121, 0.16);
+}
+
 .badge-cut-guide {
+  inset: 0;
   border: 3px solid #f13f79;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
 }
 
+.badge-front-guide {
+  inset: var(--badge-front-inset);
+  border: 3px solid #24a59b;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
 .badge-safe-guide {
-  inset: 11.43%;
+  inset: var(--badge-safe-inset);
   border: 3px dashed rgba(255, 255, 255, 0.94);
   filter: drop-shadow(0 1px 1px rgba(91, 49, 91, 0.56));
 }
@@ -571,12 +587,94 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
 
 .badge-guide-legend i {
   width: 24px;
-  border-top: 2px solid #f13f79;
+  border-top: 3px solid;
 }
 
-.badge-guide-legend i.dashed {
+.badge-guide-legend i.cut {
+  border-color: #f13f79;
+}
+
+.badge-guide-legend i.front {
+  border-color: #24a59b;
+}
+
+.badge-guide-legend i.safe {
   border-top-style: dashed;
   border-color: #7665a8;
+}
+
+.badge-production-guide {
+  width: min(100%, 660px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+  gap: 0.8rem;
+  margin: 0.25rem auto 1rem;
+}
+
+.badge-wrap-explanation,
+.badge-front-preview-card {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border-radius: 18px;
+}
+
+.badge-wrap-explanation {
+  align-items: flex-start;
+  color: #7d3b59;
+  background: #fff1f5;
+  border: 1px solid rgba(241, 63, 121, 0.2);
+}
+
+.badge-wrap-explanation > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.badge-wrap-explanation strong,
+.badge-front-preview-card strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #5b315b;
+  font-size: 0.85rem;
+}
+
+.badge-wrap-explanation p,
+.badge-front-preview-card p {
+  margin: 0.28rem 0 0;
+  color: #755e71;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.badge-front-preview-card {
+  color: #226d68;
+  background: #effbf9;
+  border: 1px solid rgba(36, 165, 155, 0.22);
+}
+
+.badge-front-preview-visual {
+  position: relative;
+  width: 76px;
+  aspect-ratio: 1;
+  flex: 0 0 76px;
+  overflow: hidden;
+  border: 3px solid #24a59b;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(36, 165, 155, 0.17);
+}
+
+.badge-artwork.is-front-preview {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--badge-front-scale) * 100%);
+  max-width: none;
+  transform: translate(-50%, -50%);
 }
 
 .badge-slider-grid {
@@ -1421,8 +1519,13 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   }
 
   .badge-cut-guide,
+  .badge-front-guide,
   .badge-safe-guide {
     border-width: 2px;
+  }
+
+  .badge-production-guide {
+    grid-template-columns: 1fr;
   }
 
   .badge-slider-grid {
@@ -1559,8 +1662,14 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   }
 
   .badge-guide-legend {
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.5rem 0.8rem;
     font-size: 0.68rem;
+  }
+
+  .badge-front-preview-visual {
+    width: 68px;
+    flex-basis: 68px;
   }
 
   .badge-design-card {
