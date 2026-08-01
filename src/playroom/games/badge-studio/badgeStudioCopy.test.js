@@ -41,6 +41,21 @@ test('badge studio selects a complete Chinese interface without changing the Eng
   assert.equal(english.canvas.wrapArea, 'Wrap area');
   assert.equal(english.canvas.frontPreviewTitle, 'Finished badge front');
   assert.match(english.canvas.wrapExplanation, /wraps around the badge side/);
+  assert.deepEqual(english.productionGuide, {
+    eyebrow: 'Important before designing',
+    title: 'Know what stays on your badge',
+    description: 'Your photo is printed larger than the finished badge because the outer band wraps around the edge.',
+    cutTitle: '70 mm cut artwork',
+    cutDescription: 'Fill the photo or background all the way to this edge.',
+    frontTitle: '58 mm finished front',
+    frontDescription: 'This center circle stays visible on the finished badge.',
+    safeTitle: '54 mm safe content',
+    safeDescription: 'Keep faces, text, and logos inside this area.',
+  });
+  assert.equal(chinese.productionGuide.title, '先了解徽章的显示范围');
+  assert.equal(chinese.productionGuide.cutTitle, '70 mm 裁切图稿');
+  assert.match(chinese.productionGuide.description, /外圈会包到徽章侧边/);
+  assert.equal(chinese.productionGuide.safeDescription, '请把人脸、文字和标志保留在这个范围内。');
 });
 
 test('badge studio falls back to English for an unsupported language', () => {

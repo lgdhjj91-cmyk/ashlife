@@ -45,6 +45,17 @@ const english = {
     privacyTitle: 'Your photos stay on this device while you design.',
     privacyDescription: 'Only completed print files, the preview, and order details are sent when you choose Submit.',
   },
+  productionGuide: {
+    eyebrow: 'Important before designing',
+    title: 'Know what stays on your badge',
+    description: 'Your photo is printed larger than the finished badge because the outer band wraps around the edge.',
+    cutTitle: '70 mm cut artwork',
+    cutDescription: 'Fill the photo or background all the way to this edge.',
+    frontTitle: '58 mm finished front',
+    frontDescription: 'This center circle stays visible on the finished badge.',
+    safeTitle: '54 mm safe content',
+    safeDescription: 'Keep faces, text, and logos inside this area.',
+  },
   canvas: {
     instruction: 'Move and zoom until the important part stays inside the safe circle.',
     quality: {
@@ -200,6 +211,17 @@ const chinese = {
     limits: 'JPG、PNG 或 WebP · 最多 20 张 · 每张 15 MB',
     privacyTitle: '设计期间，照片会保留在您的设备中。',
     privacyDescription: '只有完成的打印文件、预览图和订单资料会在您提交时发送。',
+  },
+  productionGuide: {
+    eyebrow: '设计前的重要提示',
+    title: '先了解徽章的显示范围',
+    description: '照片会比成品徽章印得更大，因为外圈会包到徽章侧边。',
+    cutTitle: '70 mm 裁切图稿',
+    cutDescription: '照片或背景必须铺满到这个边缘。',
+    frontTitle: '58 mm 成品正面',
+    frontDescription: '成品正面会显示中央这个圆形范围。',
+    safeTitle: '54 mm 安全内容',
+    safeDescription: '请把人脸、文字和标志保留在这个范围内。',
   },
   canvas: {
     instruction: '移动和缩放照片，把重要内容保持在安全圆圈内。',

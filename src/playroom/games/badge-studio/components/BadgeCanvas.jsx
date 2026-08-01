@@ -10,6 +10,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import BadgeArtwork from './BadgeArtwork';
+import BadgeProductionNotice from './BadgeProductionNotice';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -19,7 +20,7 @@ const qualityIcons = {
   low: AlertTriangle,
 };
 
-const BadgeCanvas = ({ design, onTransform, onReset, onReplace, copy }) => {
+const BadgeCanvas = ({ design, onTransform, onReset, onReplace, copy, productionGuideCopy }) => {
   const stageRef = useRef(null);
   const pointersRef = useRef(new Map());
   const gestureRef = useRef(null);
@@ -80,6 +81,7 @@ const BadgeCanvas = ({ design, onTransform, onReset, onReplace, copy }) => {
 
   return (
     <section className="badge-editor-panel">
+      <BadgeProductionNotice copy={productionGuideCopy} compact />
       <div className="badge-editor-intro">
         <p>{copy.instruction}</p>
         <span className={`badge-quality ${design.quality}`}>
