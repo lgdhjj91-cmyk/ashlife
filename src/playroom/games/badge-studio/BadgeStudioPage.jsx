@@ -19,6 +19,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 import A4SheetPreview from './components/A4SheetPreview';
 import BadgeArtwork from './components/BadgeArtwork';
 import BadgeCanvas from './components/BadgeCanvas';
+import BadgeProductionNotice from './components/BadgeProductionNotice';
 import DesignCollection from './components/DesignCollection';
 import ResetProjectDialog from './components/ResetProjectDialog';
 import { submitBadgeOrder } from './appsScriptSubmission';
@@ -453,6 +454,7 @@ const BadgeStudioPage = () => {
 
   const renderUpload = () => (
     <section className="badge-upload-step">
+      <BadgeProductionNotice copy={copy.productionGuide} />
       <div
         className="badge-upload-dropzone"
         onDragOver={(event) => event.preventDefault()}
@@ -498,6 +500,7 @@ const BadgeStudioPage = () => {
             replaceInputRef.current?.click();
           }}
           copy={copy.canvas}
+          productionGuideCopy={copy.productionGuide}
         />
       )}
       <DesignCollection
