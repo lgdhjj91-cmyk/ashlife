@@ -518,7 +518,7 @@ const PlayroomPage = () => {
               <article className="badge-studio-feature-card">
                 <div className="badge-studio-feature-preview">
                   <img
-                    src={`${import.meta.env.BASE_URL}diy/badge-display-1.webp`}
+                    src={`${import.meta.env.BASE_URL}diy/badgetcartoon.jpg`}
                     alt="A display collection of custom Ashlife badges"
                     loading="lazy"
                     decoding="async"

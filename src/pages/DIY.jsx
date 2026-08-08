@@ -72,10 +72,15 @@ const DIY_PRODUCTS = [
       { type: 'image', src: asset('diy/badge-display-2.webp'), alt: 'Custom badge display tray' },
       {
         type: 'image',
-        srcByLang: { en: asset('diy/badge-info-en.svg'), zh: asset('diy/badge-info-zh.svg') },
+        srcByLang: { en: asset('diy/badge-info-en.jpg'), zh: asset('diy/badge-info-zh.jpg') },
         alt: '58mm custom badge info card',
       },
       { type: 'image', src: asset('diy/badge-back.webp'), alt: 'Badge pin-back sample' },
+      {
+        type: 'image',
+        srcByLang: { en: asset('diy/baddetails.jpg'), zh: asset('diy/baddetails_chn.jpg') },
+        alt: '58mm custom badge info card',
+      }
     ],
   },
   {
@@ -379,7 +384,7 @@ function BadgeStudioPromo({ language }) {
   return (
     <aside className="diy-badge-studio-promo" aria-labelledby="diy-badge-studio-title">
       <div className="diy-badge-studio-preview" aria-hidden="true">
-        <img src={asset('diy/badge-display-1.webp')} alt="" loading="lazy" />
+        <img src={asset('diy/badgetcartoon.jpg')} alt="" loading="lazy" />
         <span>58 mm</span>
       </div>
 
