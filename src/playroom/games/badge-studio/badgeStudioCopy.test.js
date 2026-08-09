@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getBadgeStudioCopy } from './badgeStudioCopy.js';
+import { badgeConfig } from './badgeStudioConfig.js';
 
 test('badge studio selects a complete Chinese interface without changing the English default', () => {
   const english = getBadgeStudioCopy('en');
@@ -56,6 +57,11 @@ test('badge studio selects a complete Chinese interface without changing the Eng
   assert.equal(chinese.productionGuide.cutTitle, '70 mm 裁切图稿');
   assert.match(chinese.productionGuide.description, /外圈会包到徽章侧边/);
   assert.equal(chinese.productionGuide.safeDescription, '请把人脸、文字和标志保留在这个范围内。');
+  assert.equal(badgeConfig.submissionRewardCoins, 200);
+  assert.equal(english.finish.rewardOffer, 'Submit this design to earn {coins} Joy Coins.');
+  assert.equal(english.finish.rewardEarned, '{coins} Joy Coins were added to your wallet.');
+  assert.equal(chinese.finish.rewardOffer, '成功提交这个设计可获得 {coins} Joy Coins。');
+  assert.equal(chinese.finish.rewardEarned, '已将 {coins} Joy Coins 加入您的钱包。');
 });
 
 test('badge studio falls back to English for an unsupported language', () => {

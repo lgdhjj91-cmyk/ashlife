@@ -4,9 +4,11 @@ import {
   ArrowLeft,
   BellOff,
   BookOpen,
+  Brain,
   Clapperboard,
   Coins,
   Gamepad2,
+  Palette,
   RotateCcw,
   Sparkles,
   Volume2,
@@ -24,6 +26,7 @@ import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
 import { useLanguage } from '../../context/LanguageContext';
 import { getPlayroomClawFeatureCopy } from './playroomClawFeatureCopy';
+import { badgeConfig } from '../games/badge-studio/badgeStudioConfig';
 import { useMemoryGame } from '../hooks/useMemoryGame';
 import { usePlayroomProgress } from '../hooks/usePlayroomProgress';
 import { usePlayroomSound } from '../hooks/usePlayroomSound';
@@ -47,11 +50,18 @@ const playroomCopy = {
     collectionTitle: '{count} / {total} unlocked',
     collectionDescription: 'Collect common stickers from completions and rarer stickers from daily challenges.',
     viewAlbum: 'View Album',
-    firstGame: 'First game',
     memoryTitle: 'Product Memory Match',
-    badgeStudioPill: 'Create and print',
+    chooseGameTitle: 'Choose your activity',
+    chooseGameDescription: 'Pick one activity at a time. Your rewards and progress stay saved.',
+    chooseGameLabel: 'Playroom activities',
+    clawTabMeta: 'Arcade challenge',
+    memoryTabMeta: 'Puzzle game',
+    badgeTabMeta: 'Creative studio',
+    badgeStudioReward: 'Earn {coins} Joy Coins after submitting',
+    comingNext: 'More games coming next',
     badgeStudioTitle: 'Badge Studio',
     badgeStudioDescription: 'Upload your photos, design 58 mm badges and build a print-ready A4 sheet.',
+    badgeStudioImageAlt: 'A display collection of custom Ashlife badges',
     badgeStudioButton: 'Start Designing',
     badgeStudioMeta: 'Free browser tool',
     badgeStudioOutput: '300 DPI A4 export',
@@ -184,11 +194,18 @@ const playroomCopy = {
     collectionTitle: '已解锁 {count} / {total}',
     collectionDescription: '通关可获得普通贴纸，完成每日挑战可获得更稀有的贴纸。',
     viewAlbum: '查看图鉴',
-    firstGame: '第一个游戏',
     memoryTitle: '商品记忆配对',
-    badgeStudioPill: '创作与打印',
+    chooseGameTitle: '选择您的活动',
+    chooseGameDescription: '每次专心玩一个活动，奖励和进度都会自动保留。',
+    chooseGameLabel: '游戏天地活动',
+    clawTabMeta: '街机挑战',
+    memoryTabMeta: '益智游戏',
+    badgeTabMeta: '创意设计室',
+    badgeStudioReward: '成功提交可获得 {coins} Joy Coins',
+    comingNext: '更多游戏即将推出',
     badgeStudioTitle: '徽章设计室',
     badgeStudioDescription: '上传照片，设计 58 毫米徽章，并自动排版成可打印的 A4 文件。',
+    badgeStudioImageAlt: 'Ashlife 定制徽章展示',
     badgeStudioButton: '开始设计',
     badgeStudioMeta: '免费浏览器工具',
     badgeStudioOutput: '300 DPI A4 输出',
@@ -331,6 +348,7 @@ const PlayroomPage = () => {
   const progressActions = usePlayroomProgress();
   const { progress, summary, resetProgress, updateSettings } = progressActions;
   const [view, setView] = useState('landing');
+  const [activeActivity, setActiveActivity] = useState('claw');
   const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
   const [showAlbum, setShowAlbum] = useState(false);
   const [showTutorial, setShowTutorial] = useState(() => !progress.settings.tutorialCompleted);
@@ -440,105 +458,112 @@ const PlayroomPage = () => {
               </article>
             </section>
 
-            <section className="playroom-games-section">
-              <div className="playroom-section-heading">
-                <span className="playroom-pill">{labels.firstGame}</span>
-                <h2>{clawLabels.title}</h2>
-                <p>{clawLabels.description}</p>
+            <section className="playroom-games-section" aria-labelledby="playroom-activity-title">
+              <div className="playroom-game-browser-heading">
+                <h2 id="playroom-activity-title">{labels.chooseGameTitle}</h2>
+                <p>{labels.chooseGameDescription}</p>
               </div>
 
-              <article className="claw-feature-card">
-                <div className="claw-feature-preview">
-                  <img
-                    src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
-                    alt={clawLabels.imageAlt}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="memory-game-copy">
-                  <Gamepad2 size={28} />
-                  <h3>{clawLabels.title}</h3>
-                  <p>{clawLabels.description}</p>
-                  <div className="claw-card-meta">
-                    <span>{clawLabels.difficulty}</span>
-                    <span>{clawLabels.reward}</span>
-                  </div>
-                  <Link className="playroom-button primary" to="/play/claw-machine/">
-                    <Sparkles size={18} />
-                    {clawLabels.button}
-                  </Link>
-                </div>
-              </article>
-
-              <div className="playroom-section-heading secondary-game-heading">
-                <span className="playroom-pill">{labels.memoryTitle}</span>
-                <p>{labels.selectMode}</p>
+              <div className="playroom-game-tabs" aria-label={labels.chooseGameLabel}>
+                <button type="button" className={activeActivity === 'claw' ? 'active' : ''} aria-pressed={activeActivity === 'claw'} onClick={() => setActiveActivity('claw')}>
+                  <Gamepad2 size={24} />
+                  <span><strong>{clawLabels.title}</strong><small>{labels.clawTabMeta}</small></span>
+                </button>
+                <button type="button" className={activeActivity === 'memory' ? 'active' : ''} aria-pressed={activeActivity === 'memory'} onClick={() => setActiveActivity('memory')}>
+                  <Brain size={24} />
+                  <span><strong>{labels.memoryTitle}</strong><small>{labels.memoryTabMeta}</small></span>
+                </button>
+                <button type="button" className={activeActivity === 'badge' ? 'active' : ''} aria-pressed={activeActivity === 'badge'} onClick={() => setActiveActivity('badge')}>
+                  <Palette size={24} />
+                  <span><strong>{labels.badgeStudioTitle}</strong><small>{labels.badgeTabMeta}</small></span>
+                </button>
               </div>
 
-              <article className="memory-game-card">
-                <div className="memory-game-preview">
-                  {stickers.slice(0, 6).map((sticker) => (
-                    <img key={sticker.id} src={sticker.image} alt="" loading="lazy" />
-                  ))}
-                </div>
-                <div className="memory-game-copy">
-                  <Gamepad2 size={28} />
-                  <h3>{labels.matchTitle}</h3>
-                  <p>{labels.matchDescription}</p>
-                  <DifficultySelector selected={selectedDifficulty} labels={labels} onSelect={setSelectedDifficulty} />
-                  <div className="memory-game-actions">
-                    <button className="playroom-button primary" type="button" onClick={startMemoryMatch}>
-                      <Sparkles size={18} />
-                      {labels.startGame}
-                    </button>
-                    <button className="playroom-button secondary" type="button" onClick={() => setShowTutorial(true)}>
-                      {labels.howToPlay}
-                    </button>
-                  </div>
-                </div>
-              </article>
-
-              <div className="coming-soon-grid" aria-label={labels.comingSoon}>
-                {labels.games.map((gameTitle) => (
-                  <article className="coming-soon-card" key={gameTitle}>
-                    <Clapperboard size={22} />
-                    <h3>{gameTitle}</h3>
-                    <span>{labels.comingSoon}</span>
+              <div className="playroom-game-stage" aria-live="polite">
+                {activeActivity === 'claw' && (
+                  <article className="claw-feature-card">
+                    <div className="claw-feature-preview">
+                      <img
+                        src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
+                        alt={clawLabels.imageAlt}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="memory-game-copy">
+                      <Gamepad2 size={28} />
+                      <h3>{clawLabels.title}</h3>
+                      <p>{clawLabels.description}</p>
+                      <div className="claw-card-meta">
+                        <span>{clawLabels.difficulty}</span>
+                        <span>{clawLabels.reward}</span>
+                      </div>
+                      <Link className="playroom-button primary" to="/play/claw-machine/">
+                        <Sparkles size={18} />
+                        {clawLabels.button}
+                      </Link>
+                    </div>
                   </article>
-                ))}
+                )}
+
+                {activeActivity === 'memory' && (
+                  <article className="memory-game-card">
+                    <div className="memory-game-preview">
+                      {stickers.slice(0, 6).map((sticker) => (
+                        <img key={sticker.id} src={sticker.image} alt="" loading="lazy" />
+                      ))}
+                    </div>
+                    <div className="memory-game-copy">
+                      <Brain size={28} />
+                      <h3>{labels.matchTitle}</h3>
+                      <p>{labels.matchDescription}</p>
+                      <DifficultySelector selected={selectedDifficulty} labels={labels} onSelect={setSelectedDifficulty} />
+                      <div className="memory-game-actions">
+                        <button className="playroom-button primary" type="button" onClick={startMemoryMatch}>
+                          <Sparkles size={18} />
+                          {labels.startGame}
+                        </button>
+                        <button className="playroom-button secondary" type="button" onClick={() => setShowTutorial(true)}>
+                          {labels.howToPlay}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                )}
+
+                {activeActivity === 'badge' && (
+                  <article className="badge-studio-feature-card">
+                    <div className="badge-studio-feature-preview">
+                      <img
+                        src={`${import.meta.env.BASE_URL}diy/badgetcartoon.jpg`}
+                        alt={labels.badgeStudioImageAlt}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <span>58 mm</span>
+                    </div>
+                    <div className="memory-game-copy">
+                      <Palette size={28} />
+                      <h3>{labels.badgeStudioTitle}</h3>
+                      <p>{labels.badgeStudioDescription}</p>
+                      <div className="claw-card-meta">
+                        <span>{labels.badgeStudioMeta}</span>
+                        <span>{labels.badgeStudioOutput}</span>
+                        <span className="reward">{labels.badgeStudioReward.replace('{coins}', badgeConfig.submissionRewardCoins)}</span>
+                      </div>
+                      <Link className="playroom-button primary" to="/play/badge-studio/">
+                        <Sparkles size={18} />
+                        {labels.badgeStudioButton}
+                      </Link>
+                    </div>
+                  </article>
+                )}
               </div>
 
-              <div className="playroom-section-heading badge-studio-section-heading">
-                <span className="playroom-pill">{labels.badgeStudioPill}</span>
-                <h2>{labels.badgeStudioTitle}</h2>
-                <p>{labels.badgeStudioDescription}</p>
+              <div className="playroom-coming-next">
+                <Clapperboard size={22} />
+                <div><strong>{labels.comingNext}</strong><span>{labels.games.join(', ')}</span></div>
               </div>
-
-              <article className="badge-studio-feature-card">
-                <div className="badge-studio-feature-preview">
-                  <img
-                    src={`${import.meta.env.BASE_URL}diy/badgetcartoon.jpg`}
-                    alt="A display collection of custom Ashlife badges"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span>58 mm</span>
-                </div>
-                <div className="memory-game-copy">
-                  <Sparkles size={28} />
-                  <h3>{labels.badgeStudioTitle}</h3>
-                  <p>{labels.badgeStudioDescription}</p>
-                  <div className="claw-card-meta">
-                    <span>{labels.badgeStudioMeta}</span>
-                    <span>{labels.badgeStudioOutput}</span>
-                  </div>
-                  <Link className="playroom-button primary" to="/play/badge-studio/">
-                    <Sparkles size={18} />
-                    {labels.badgeStudioButton}
-                  </Link>
-                </div>
-              </article>
             </section>
           </>
         ) : (

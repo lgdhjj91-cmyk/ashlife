@@ -151,6 +151,11 @@ const english = {
     uploading: (fileName) => `Uploading ${fileName}`,
     finalizing: 'Finalizing your order…',
     complete: 'Order submitted successfully.',
+    rewardOffer: 'Submit this design to earn {coins} Joy Coins.',
+    rewardAdding: 'Adding your Joy Coins...',
+    rewardEarned: '{coins} Joy Coins were added to your wallet.',
+    rewardFailed: 'Your design was submitted, but the Joy Coin reward is still pending.',
+    retryReward: 'Retry reward',
   },
   action: {
     back: 'Back',
@@ -318,6 +323,11 @@ const chinese = {
     uploading: (fileName) => `正在上传 ${fileName}`,
     finalizing: '正在完成订单…',
     complete: '订单已成功提交。',
+    rewardOffer: '成功提交这个设计可获得 {coins} Joy Coins。',
+    rewardAdding: '正在加入 Joy Coins...',
+    rewardEarned: '已将 {coins} Joy Coins 加入您的钱包。',
+    rewardFailed: '设计已成功提交，但 Joy Coin 奖励暂时还未加入。',
+    retryReward: '重试奖励',
   },
   action: {
     back: '返回',
