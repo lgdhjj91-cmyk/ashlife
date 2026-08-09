@@ -4,16 +4,16 @@
     ".write": false,
     "products": {
       ".read": true,
-      ".write": "auth != null && auth.token.admin === true"
+      ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'"
     },
     "settings": {
       "siteContent": {
         ".read": true,
-        ".write": "auth != null && auth.token.admin === true"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'"
       },
       "payment": {
         ".read": true,
-        ".write": "auth != null && auth.token.admin === true"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'"
       }
     },
     "joyWallets": {
@@ -27,9 +27,9 @@
       ".write": false
     },
     "orders": {
-      ".read": "auth != null && auth.token.admin === true",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$orderId": {
-        ".write": "(auth != null && auth.token.admin === true) || (!data.exists() && newData.child('status').val() === 'pending_verification')",
+        ".write": "(auth != null && auth.token.firebase.sign_in_provider != 'anonymous') || (!data.exists() && newData.child('status').val() === 'pending_verification')",
         ".validate": "newData.hasChildren(['customerName', 'customerPhone', 'items', 'total', 'status', 'createdAt']) && newData.child('customerName').isString() && newData.child('customerPhone').isString() && newData.child('items').exists() && newData.child('total').isNumber()"
       }
     }

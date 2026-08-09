@@ -1,1 +1,1 @@
-export const hasAdminClaim = (tokenResult) => tokenResult?.claims?.admin === true;
+export const canAccessAdmin = (user) => Boolean(user && !user.isAnonymous);

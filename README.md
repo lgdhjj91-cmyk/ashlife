@@ -62,14 +62,16 @@ Required Firebase services:
 - Cloud Functions in `asia-southeast1` for Joy Coin wallet and voucher operations.
 - Storage is configured, although QR/order images are currently stored as compressed base64 in the database.
 
-Admin login no longer uses frontend username/password environment variables. Create the owner/admin account in Firebase Authentication, then sign in at `/admin`.
+Admin login no longer uses frontend username/password environment variables or custom claims. Create an Email/Password user in Firebase Authentication, then sign in at `/admin`. Anonymous Joy Rewards users cannot access the admin dashboard.
 
 Recommended admin security:
 
-- Use one dedicated admin email.
-- Add an `admin: true` custom claim to that Firebase Auth user for stricter rules.
+- Keep only trusted non-anonymous accounts in Firebase Authentication.
+- Delete or disable access for any account that should no longer manage the site.
 - Do not commit `.env.local`.
 - Do not expose admin credentials in frontend code or README files.
+
+Security tradeoff: every non-anonymous Firebase user can manage products, orders, payment settings, and site content. This includes customers who link a Joy Rewards guest wallet to an email/password account. Use custom claims or a separate allowlist if customer accounts are enabled and should not receive admin access.
 
 ### Joy Coin vouchers
 
@@ -141,13 +143,9 @@ If `stock` is missing, the storefront treats it as “confirm before order” in
 - Admin users should manage products, orders, payment QR settings, and site content.
 - Checkout orders are manually verified; stock is not deducted by public frontend writes.
 
-Example Realtime Database rules are in `firebase.database.rules.json`. For production, prefer custom claims:
+Realtime Database rules are in `firebase.database.rules.json`. They allow any non-anonymous authenticated user to manage admin data while keeping anonymous Joy Rewards guests blocked.
 
-```json
-"isAdmin": "auth != null && auth.token.admin === true"
-```
-
-Set the `admin: true` custom claim on the owner account before using the admin dashboard. Do not use `auth != null` as an admin rule because ordinary visitors use anonymous Firebase identities for Joy Rewards.
+This intentionally removes the custom-claim requirement. If customers can create or link accounts, restore a custom claim or use an explicit UID allowlist before production because those accounts otherwise receive the same database permissions as the owner.
 
 ## SEO Checklist
 

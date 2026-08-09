@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { database } from '../firebase';
 import { auth } from '../firebase';
 import { ref, onValue, set, get, update } from 'firebase/database';
-import { hasAdminClaim } from './adminAuthRules';
+import { canAccessAdmin } from './adminAuthRules';
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
@@ -19,30 +19,16 @@ export const OrderProvider = ({ children }) => {
   });
   const [loadingOrders, setLoadingOrders] = useState(true);
 
-  // Subscribe to orders only after Firebase Auth confirms an admin session.
+  // Subscribe to orders only after Firebase Auth confirms a non-anonymous session.
   useEffect(() => {
     let unsubscribeOrders = null;
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (unsubscribeOrders) {
         unsubscribeOrders();
         unsubscribeOrders = null;
       }
 
-      if (!user) {
-        setOrders([]);
-        setLoadingOrders(false);
-        return;
-      }
-
-      try {
-        const tokenResult = await user.getIdTokenResult();
-        if (!hasAdminClaim(tokenResult)) {
-          setOrders([]);
-          setLoadingOrders(false);
-          return;
-        }
-      } catch (error) {
-        console.error('Admin order claim check failed:', error);
+      if (!canAccessAdmin(user)) {
         setOrders([]);
         setLoadingOrders(false);
         return;
