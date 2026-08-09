@@ -27,6 +27,6 @@
 - [ ] Admin hidden from public navigation
 - [ ] Firebase Auth admin account created
 - [ ] Firebase security rules reviewed
-- [ ] Firebase custom admin claim configured
+- [ ] Firebase non-anonymous user access reviewed
 - [ ] Google Search Console ready
 - [ ] Final `npm run build` passes
