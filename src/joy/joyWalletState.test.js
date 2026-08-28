@@ -54,3 +54,29 @@ test('selection drops a voucher that no longer meets the cart minimum', () => {
     null
   );
 });
+
+test('Firestore voucher arrays and timestamps normalize to newest-first ISO values', () => {
+  const wallet = normalizeJoyWallet({
+    coins: 300,
+    updatedAt: { toDate: () => new Date('2026-08-28T02:00:00.000Z') },
+    vouchers: [
+      {
+        code: 'JOY-RM1-OLDER',
+        status: 'available',
+        createdAt: { toDate: () => new Date('2026-08-28T00:00:00.000Z') },
+      },
+      {
+        code: 'JOY-RM2-NEWER',
+        status: 'available',
+        createdAt: { toDate: () => new Date('2026-08-28T01:00:00.000Z') },
+      },
+    ],
+  });
+
+  assert.equal(wallet.updatedAt, '2026-08-28T02:00:00.000Z');
+  assert.deepEqual(wallet.vouchers.map((voucher) => voucher.code), [
+    'JOY-RM2-NEWER',
+    'JOY-RM1-OLDER',
+  ]);
+  assert.equal(wallet.vouchers[0].createdAt, '2026-08-28T01:00:00.000Z');
+});

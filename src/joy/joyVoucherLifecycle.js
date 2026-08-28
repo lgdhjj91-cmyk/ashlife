@@ -116,6 +116,7 @@ export const reserveVoucherRecord = (voucher, reservation) => {
     status: 'reserved',
     reservedByUid: uid,
     reservedOrderId: orderId,
+    reservedSubtotalSen: asInteger(reservation.subtotalSen),
     reservedAt: reservation.at,
     updatedAt: reservation.at,
   };
@@ -156,6 +157,7 @@ export const settleVoucherRecord = (voucher, settlement) => {
   };
   delete restored.reservedByUid;
   delete restored.reservedOrderId;
+  delete restored.reservedSubtotalSen;
   delete restored.reservedAt;
   delete restored.usedAt;
   return restored;
