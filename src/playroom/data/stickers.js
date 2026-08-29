@@ -145,6 +145,30 @@ export const stickers = [
     productCategory: 'Cute Accessories',
     alt: 'Pink heart keychain sticker',
   },
+  {
+    id: 'merge-golden-bunny',
+    name: 'Golden Ashlife Bunny',
+    image: `${import.meta.env.BASE_URL}assets/playroom/merge-joy/pieces/11-golden-ashlife-bunny.webp`,
+    category: 'Rare Stickers',
+    rarity: 'special',
+    productCategory: 'Cute Accessories',
+    alt: 'Legendary golden Ashlife bunny sticker',
+  },
+  ...[
+    ['merge-weekly-sleepy-bunny', 'Sleepy Bunny', '09-bunny-plush.webp'],
+    ['merge-weekly-shopping-bear', 'Shopping Bear', '10-mystery-gift-box.webp'],
+    ['merge-weekly-tiny-chick', 'Tiny Chick', '08-chick-plush.webp'],
+    ['merge-weekly-rainbow-pencil-case', 'Rainbow Pencil Case', '07-kawaii-pencil-case.webp'],
+    ['merge-weekly-golden-star-charm', 'Golden Star Charm', '01-star-charm.webp'],
+  ].map(([id, name, filename]) => ({
+    id,
+    name,
+    image: `${import.meta.env.BASE_URL}assets/playroom/merge-joy/pieces/${filename}`,
+    category: 'Rare Stickers',
+    rarity: 'rare',
+    productCategory: 'Cute Accessories',
+    alt: `${name} weekly Merge & Joy sticker`,
+  })),
 ];
 
 export const stickerById = new Map(stickers.map((sticker) => [sticker.id, sticker]));

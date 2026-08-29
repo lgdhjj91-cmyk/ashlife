@@ -48,6 +48,12 @@ const playroomCopy = {
     collectionDescription: 'Collect common stickers from completions and rarer stickers from daily challenges.',
     viewAlbum: 'View Album',
     firstGame: 'First game',
+    mergeJoyPill: 'New daily mini game',
+    mergeJoyTitle: 'Ashlife Merge & Joy',
+    mergeJoyDescription: 'Drop cute Ashlife items, merge matching pairs and create the legendary Golden Bunny!',
+    mergeJoyButton: 'Play Now',
+    mergeJoyType: 'Physics + Puzzle',
+    mergeJoyReward: 'Daily Joy Coins + collectible sticker',
     memoryTitle: 'Product Memory Match',
     badgeStudioPill: 'Create and print',
     badgeStudioTitle: 'Badge Studio',
@@ -185,6 +191,12 @@ const playroomCopy = {
     collectionDescription: '通关可获得普通贴纸，完成每日挑战可获得更稀有的贴纸。',
     viewAlbum: '查看图鉴',
     firstGame: '第一个游戏',
+    mergeJoyPill: '全新每日小游戏',
+    mergeJoyTitle: 'Ashlife 合成欢乐',
+    mergeJoyDescription: '放下可爱的 Ashlife 小物，合并相同物品，创造传说中的金色兔兔！',
+    mergeJoyButton: '马上玩',
+    mergeJoyType: '物理 + 益智',
+    mergeJoyReward: '每日 Joy Coins + 收藏贴纸',
     memoryTitle: '商品记忆配对',
     badgeStudioPill: '创作与打印',
     badgeStudioTitle: '徽章设计室',
@@ -442,6 +454,36 @@ const PlayroomPage = () => {
 
             <section className="playroom-games-section">
               <div className="playroom-section-heading">
+                <span className="playroom-pill">{labels.mergeJoyPill}</span>
+                <h2>{labels.mergeJoyTitle}</h2>
+                <p>{labels.mergeJoyDescription}</p>
+              </div>
+
+              <article className="merge-joy-feature-card">
+                <div className="merge-joy-feature-preview">
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/playroom/merge-joy/concept/merge-joy-desktop.png`}
+                    alt={labels.mergeJoyTitle}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="memory-game-copy">
+                  <Sparkles size={28} />
+                  <h3>{labels.mergeJoyTitle}</h3>
+                  <p>{labels.mergeJoyDescription}</p>
+                  <div className="claw-card-meta">
+                    <span>{labels.mergeJoyType}</span>
+                    <span>{labels.mergeJoyReward}</span>
+                  </div>
+                  <Link className="playroom-button primary" to="/play/merge-joy/">
+                    <Sparkles size={18} />
+                    {labels.mergeJoyButton}
+                  </Link>
+                </div>
+              </article>
+
+              <div className="playroom-section-heading secondary-game-heading">
                 <span className="playroom-pill">{labels.firstGame}</span>
                 <h2>{clawLabels.title}</h2>
                 <p>{clawLabels.description}</p>
