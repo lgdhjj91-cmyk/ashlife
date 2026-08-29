@@ -281,6 +281,174 @@
   background: #fff0f4;
 }
 
+.joy-redeem-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(55, 28, 52, 0.48);
+  backdrop-filter: blur(7px);
+}
+
+.joy-redeem-dialog {
+  position: relative;
+  width: min(100%, 440px);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: clamp(1.4rem, 4vw, 2rem);
+  border: 1px solid rgba(228, 84, 137, 0.2);
+  border-radius: 28px;
+  color: #61325f;
+  background:
+    radial-gradient(circle at top right, rgba(255, 222, 126, 0.4), transparent 35%),
+    #fffafd;
+  box-shadow: 0 28px 80px rgba(52, 24, 49, 0.28);
+  text-align: center;
+  animation: joy-redeem-dialog-in 180ms ease-out;
+}
+
+.joy-redeem-dialog-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #765f72;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+}
+
+.joy-redeem-dialog-close:hover,
+.joy-redeem-dialog-close:focus-visible {
+  color: #963d67;
+  background: #fff0f5;
+}
+
+.joy-redeem-dialog-icon {
+  display: inline-grid;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 0.8rem;
+  place-items: center;
+  border-radius: 18px;
+  color: #9a5a0d;
+  background: #fff0b8;
+  box-shadow: 0 10px 25px rgba(203, 145, 30, 0.18);
+}
+
+.joy-redeem-dialog-eyebrow {
+  display: block;
+  color: #c74878;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.joy-redeem-dialog h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.65rem, 5vw, 2rem);
+}
+
+.joy-redeem-dialog > p {
+  margin: 0.5rem auto 1.1rem;
+  color: #765f72;
+  line-height: 1.55;
+}
+
+.joy-redeem-dialog-ticket {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.1rem;
+  border: 1px dashed #e486ab;
+  border-radius: 20px;
+  background: white;
+}
+
+.joy-redeem-dialog-ticket > svg {
+  color: #b34872;
+}
+
+.joy-redeem-dialog-ticket > strong {
+  font-size: 2rem;
+}
+
+.joy-redeem-dialog-ticket > span {
+  color: #765f72;
+}
+
+.joy-redeem-dialog-ticket > small {
+  margin-top: 0.65rem;
+  color: #8b7684;
+  font-weight: 800;
+}
+
+.joy-redeem-dialog-ticket code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #8d315b;
+  font-size: clamp(0.95rem, 4vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.joy-redeem-dialog-ticket button,
+.joy-redeem-dialog-done {
+  min-height: 44px;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.joy-redeem-dialog-ticket button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1rem;
+  color: #9b3d66;
+  background: #fff0f5;
+}
+
+.joy-redeem-dialog-done {
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.7rem 1rem;
+  color: white;
+  background: #e45489;
+}
+
+.joy-redeem-dialog button:focus-visible {
+  outline: 3px solid rgba(228, 84, 137, 0.3);
+  outline-offset: 2px;
+}
+
+@keyframes joy-redeem-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .joy-redeem-dialog {
+    animation: none;
+  }
+}
+
 @media (max-width: 760px) {
   .joy-rewards-heading,
   .joy-voucher-ticket,
@@ -303,5 +471,9 @@
 
   .joy-account-form {
     grid-template-columns: 1fr;
+  }
+
+  .joy-redeem-dialog {
+    border-radius: 24px;
   }
 }

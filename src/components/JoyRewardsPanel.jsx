@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Check, Coins, Copy, Gift, LogIn, LogOut, ShieldCheck, UserPlus } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Coins, Copy, Gift, LogIn, LogOut, ShieldCheck, Sparkles, UserPlus, X } from 'lucide-react';
 import { useJoyWallet } from '../context/JoyWalletContext';
 import { useLanguage } from '../context/LanguageContext';
+import { createRedeemedVoucherNotice } from '../joy/joyRedeemNotice';
 import { JOY_VOUCHER_TIERS } from '../joy/joyVoucherRules';
 import './JoyRewardsPanel.css';
 
@@ -19,6 +21,14 @@ const copy = {
     empty: 'No vouchers yet. Play a game, collect coins, then redeem one here.',
     copy: 'Copy code',
     copied: 'Copied',
+    redeemedEyebrow: 'Voucher ready',
+    redeemedTitle: 'Voucher redeemed!',
+    redeemedIntro: 'Your new voucher is ready to use at checkout.',
+    redeemedAria: 'Redeemed voucher details',
+    voucherCode: 'Voucher code',
+    minimumSpend: 'Minimum item spend {amount}',
+    close: 'Close',
+    closeDialog: 'Close voucher details',
     available: 'Ready to use',
     reserved: 'Reserved for an order',
     used: 'Used',
@@ -48,6 +58,14 @@ const copy = {
     empty: '目前还没有优惠券。先玩游戏赚取金币，再回来兑换。',
     copy: '复制代码',
     copied: '已复制',
+    redeemedEyebrow: '优惠券已准备好',
+    redeemedTitle: '优惠券兑换成功！',
+    redeemedIntro: '你的新优惠券已经可以在结账时使用。',
+    redeemedAria: '已兑换优惠券详情',
+    voucherCode: '优惠券代码',
+    minimumSpend: '商品最低消费 {amount}',
+    close: '关闭',
+    closeDialog: '关闭优惠券详情',
     available: '可以使用',
     reserved: '已保留给订单',
     used: '已使用',
@@ -88,13 +106,37 @@ const JoyRewardsPanel = () => {
   const [accountForm, setAccountForm] = useState({ email: '', password: '' });
   const [accountBusy, setAccountBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [redeemedVoucher, setRedeemedVoucher] = useState(null);
+  const redeemDialogCloseRef = useRef(null);
+  const redeemedNotice = redeemedVoucher
+    ? createRedeemedVoucherNotice(redeemedVoucher)
+    : null;
+
+  useEffect(() => {
+    if (!redeemedVoucher) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeDialog = (event) => {
+      if (event.key === 'Escape') setRedeemedVoucher(null);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeDialog);
+    redeemDialogCloseRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeDialog);
+    };
+  }, [redeemedVoucher]);
 
   const handleRedeem = async (tierId) => {
     setBusyTier(tierId);
     setNotice('');
     const result = await redeemVoucher(tierId);
     setBusyTier('');
-    setNotice(result.success ? `${result.voucher.code} ${labels.available}` : result.error);
+    if (result.success) {
+      setRedeemedVoucher(result.voucher);
+    } else {
+      setNotice(result.error);
+    }
   };
 
   const handleCopy = async (code) => {
@@ -116,6 +158,11 @@ const JoyRewardsPanel = () => {
     setAccountBusy(false);
     setNotice(result.success ? labels.accountSuccess : result.error);
     if (result.success) setAccountForm({ email: '', password: '' });
+  };
+
+  const closeRedeemedVoucher = () => {
+    setRedeemedVoucher(null);
+    setCopiedCode('');
   };
 
   return (
@@ -252,6 +299,57 @@ const JoyRewardsPanel = () => {
 
       {(notice || serviceError) && (
         <p className="joy-rewards-notice" role="status">{notice || serviceError}</p>
+      )}
+
+      {redeemedNotice && createPortal(
+        <div
+          className="joy-redeem-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeRedeemedVoucher();
+          }}
+        >
+          <section
+            className="joy-redeem-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="joy-redeem-dialog-title"
+            aria-label={labels.redeemedAria}
+          >
+            <button
+              ref={redeemDialogCloseRef}
+              type="button"
+              className="joy-redeem-dialog-close"
+              aria-label={labels.closeDialog}
+              onClick={closeRedeemedVoucher}
+            >
+              <X size={20} />
+            </button>
+
+            <div className="joy-redeem-dialog-icon" aria-hidden="true">
+              <Sparkles size={24} />
+            </div>
+            <span className="joy-redeem-dialog-eyebrow">{labels.redeemedEyebrow}</span>
+            <h2 id="joy-redeem-dialog-title">{labels.redeemedTitle}</h2>
+            <p>{labels.redeemedIntro}</p>
+
+            <div className="joy-redeem-dialog-ticket">
+              <Gift size={22} aria-hidden="true" />
+              <strong>{redeemedNotice.discountLabel}</strong>
+              <span>{labels.minimumSpend.replace('{amount}', redeemedNotice.minimumLabel)}</span>
+              <small>{labels.voucherCode}</small>
+              <code>{redeemedNotice.code}</code>
+              <button type="button" onClick={() => handleCopy(redeemedNotice.code)}>
+                {copiedCode === redeemedNotice.code ? <Check size={17} /> : <Copy size={17} />}
+                {copiedCode === redeemedNotice.code ? labels.copied : labels.copy}
+              </button>
+            </div>
+
+            <button type="button" className="joy-redeem-dialog-done" onClick={closeRedeemedVoucher}>
+              {labels.close}
+            </button>
+          </section>
+        </div>,
+        document.body
       )}
     </section>
   );
