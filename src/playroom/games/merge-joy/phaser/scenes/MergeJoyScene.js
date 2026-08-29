@@ -1,17 +1,32 @@
-import { mergeTiers, getMergeTier } from '../../data/mergeTiers.js';
+import { mergeTiers, getMergeTier, getPieceDiameter } from '../../data/mergeTiers.js';
 import { createPieceSequence } from '../../utils/seededRandom.js';
 import { canMerge, lockMergePair } from '../../systems/mergeRules.js';
 import { calculateMergeAward, getComboCount, PERFECT_DROP_WINDOW_MS } from '../../systems/scoring.js';
 import { isDangerousBody, updateDangerState } from '../../systems/dangerRules.js';
 import { destroyMatterPieceSafely } from '../../systems/phaserPieceCleanup.js';
 
-const BOARD = { left: 46, right: 574, top: 18, bottom: 752, dangerY: 158 };
+const BOARD = { left: 46, right: 574, top: 18, bottom: 752, dangerY: 240 };
 const PREVIEW_Y = 78;
 const SPAWN_Y = 92;
 const WALL_SIZE = 34;
 
-const bodySizeForTier = (tier) => {
-  const size = tier.diameter;
+export const getMergedVelocity = (first, second) => ({
+  x: Math.min(0.45, Math.max(-0.45, ((first?.x || 0) + (second?.x || 0)) * 0.09)),
+  y: Math.min(0.5, Math.max(0, ((first?.y || 0) + (second?.y || 0)) * 0.06)),
+});
+
+export const getRepeatedDropPressure = ({ previousX, x, streak = 0 }) => {
+  if (previousX === null || Math.abs(x - previousX) >= 24) return { streak: 0, velocityX: 0 };
+  const nextStreak = streak + 1;
+  return { streak: nextStreak, velocityX: nextStreak < 2 ? 0 : nextStreak % 2 === 0 ? 0.65 : -0.65 };
+};
+
+export const getContainedPosition = ({ x, y, halfWidth = 0, halfHeight = 0 }) => ({
+  x: Math.min(BOARD.right - halfWidth, Math.max(BOARD.left + halfWidth, x)),
+  y: Math.min(BOARD.bottom - halfHeight, Math.max(BOARD.top + halfHeight, y)),
+});
+
+const bodySizeForTier = (tier, size = tier.diameter) => {
   if (tier.shape === 'wide') return { width: size * 0.9, height: size * 0.54 };
   if (tier.shape === 'tall') return { width: size * 0.62, height: size * 0.88 };
   if (tier.shape === 'square') return { width: size * 0.78, height: size * 0.78 };
@@ -63,6 +78,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
 
       this.matter.add.rectangle(BOARD.left - WALL_SIZE / 2, 390, WALL_SIZE, 760, { isStatic: true, friction: 0.2 });
       this.matter.add.rectangle(BOARD.right + WALL_SIZE / 2, 390, WALL_SIZE, 760, { isStatic: true, friction: 0.2 });
+      this.matter.add.rectangle(310, BOARD.top - WALL_SIZE / 2, 560, WALL_SIZE, { isStatic: true, friction: 0.2 });
       this.matter.add.rectangle(310, BOARD.bottom + WALL_SIZE / 2, 560, WALL_SIZE, { isStatic: true, friction: 0.32 });
     }
 
@@ -85,6 +101,8 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       this.previousMergeAt = 0;
       this.lastDropToken = 0;
       this.lastDropAt = 0;
+      this.lastDropX = null;
+      this.sameLaneDropStreak = 0;
       this.dangerState = { elapsedMs: 0, warningLevel: 0, gameOver: false };
       this.isGameOver = false;
       this.isPaused = false;
@@ -112,8 +130,9 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       if (this.isGameOver || this.preview) return;
       this.currentTier = forcedTier || this.nextTierFromQueue();
       const tier = getMergeTier(this.currentTier);
+      const size = getPieceDiameter(tier, true);
       this.preview = this.add.image(this.aimX, PREVIEW_Y, tier.textureKey)
-        .setDisplaySize(tier.diameter, tier.diameter)
+        .setDisplaySize(size, size)
         .setDepth(20);
       this.tweens.add({ targets: this.preview, y: PREVIEW_Y - 4, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       this.emitState();
@@ -122,7 +141,8 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
     movePreviewTo(x) {
       if (!this.preview || this.isGameOver || this.isPaused) return;
       const tier = getMergeTier(this.currentTier);
-      this.aimX = Phaser.Math.Clamp(x, BOARD.left + tier.diameter / 2, BOARD.right - tier.diameter / 2);
+      const size = getPieceDiameter(tier, true);
+      this.aimX = Phaser.Math.Clamp(x, BOARD.left + size / 2, BOARD.right - size / 2);
       this.preview.x = this.aimX;
     }
 
@@ -140,7 +160,14 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       this.currentTier = null;
       this.lastDropToken += 1;
       this.lastDropAt = this.time.now;
-      this.addPiece(tier, x, SPAWN_Y, { dropToken: this.lastDropToken });
+      const pressure = getRepeatedDropPressure({ previousX: this.lastDropX, x, streak: this.sameLaneDropStreak });
+      this.lastDropX = x;
+      this.sameLaneDropStreak = pressure.streak;
+      this.addPiece(tier, x, SPAWN_Y, {
+        dropToken: this.lastDropToken,
+        isDrop: true,
+        velocity: pressure.velocityX ? { x: pressure.velocityX, y: 0 } : null,
+      });
       this.holdLocked = false;
       this.eventsBridge('drop', { tier, x });
       const token = this.roundToken;
@@ -167,11 +194,12 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       return true;
     }
 
-    addPiece(tierNumber, x, y, { velocity = null, dropToken = 0 } = {}) {
+    addPiece(tierNumber, x, y, { velocity = null, dropToken = 0, bornAt = null, isDrop = false } = {}) {
       const tier = getMergeTier(tierNumber);
+      const size = getPieceDiameter(tier, isDrop);
       const piece = this.matter.add.image(x, y, tier.textureKey);
-      piece.setDisplaySize(tier.diameter, tier.diameter);
-      const bodySize = bodySizeForTier(tier);
+      piece.setDisplaySize(size, size);
+      const bodySize = bodySizeForTier(tier, size);
       if (bodySize.radius) piece.setCircle(bodySize.radius);
       else piece.setRectangle(bodySize.width, bodySize.height, { chamfer: { radius: Math.min(bodySize.width, bodySize.height) * 0.22 } });
       piece.setFriction(0.12, 0.02, 0.08);
@@ -181,7 +209,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       if (velocity) piece.setVelocity(velocity.x, velocity.y);
       const id = this.nextPieceId++;
       piece.setDataEnabled();
-      piece.setData({ mergePiece: true, id, tier: tier.tier, merging: false, dropToken });
+      piece.setData({ mergePiece: true, id, tier: tier.tier, merging: false, dropToken, bornAt: bornAt ?? this.time.now });
       this.pieces.set(id, piece);
       return piece;
     }
@@ -206,12 +234,10 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
     processMerge(first, second, pairKey) {
       const sourceTier = first.getData('tier');
       const dropToken = Math.max(first.getData('dropToken') || 0, second.getData('dropToken') || 0);
+      const bornAt = Math.min(first.getData('bornAt') ?? this.time.now, second.getData('bornAt') ?? this.time.now);
       const x = (first.x + second.x) / 2;
       const y = (first.y + second.y) / 2;
-      const velocity = {
-        x: ((first.body?.velocity.x || 0) + (second.body?.velocity.x || 0)) * 0.42,
-        y: Math.min(-1.8, ((first.body?.velocity.y || 0) + (second.body?.velocity.y || 0)) * 0.18 - 1.2),
-      };
+      const velocity = getMergedVelocity(first.body?.velocity, second.body?.velocity);
       this.tweens.add({ targets: [first, second], scaleX: 0.78, scaleY: 0.78, alpha: 0.42, duration: 130, ease: 'Back.in' });
       this.createPopEffect(x, y, sourceTier + 1);
       const token = this.roundToken;
@@ -222,7 +248,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
         destroyMatterPieceSafely(this.tweens, first);
         destroyMatterPieceSafely(this.tweens, second);
         const nextTier = sourceTier + 1;
-        const created = this.addPiece(nextTier, x, y, { velocity, dropToken });
+        const created = this.addPiece(nextTier, x, y, { velocity, dropToken, bornAt });
         created.setAngularVelocity(Phaser.Math.Clamp(velocity.x * 0.015, -0.035, 0.035));
 
         const now = this.time.now;
@@ -246,13 +272,13 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
 
     createPopEffect(x, y, tier) {
       const colors = tier === 11 ? [0xffcf4d, 0xffef9a, 0xf47aa3] : [0xf47aa3, 0xa98be8, 0xffd966];
-      for (let index = 0; index < 9; index += 1) {
+      for (let index = 0; index < 7; index += 1) {
         const dot = this.add.circle(x, y, 3 + (index % 3), colors[index % colors.length], 0.9).setDepth(30);
-        const angle = (Math.PI * 2 * index) / 9;
+        const angle = (Math.PI * 2 * index) / 7;
         this.tweens.add({
           targets: dot,
-          x: x + Math.cos(angle) * (34 + index * 2),
-          y: y + Math.sin(angle) * (34 + index * 2),
+          x: x + Math.cos(angle) * (22 + index),
+          y: y + Math.sin(angle) * (22 + index),
           alpha: 0,
           scale: 0.2,
           duration: 260,
@@ -277,11 +303,17 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       if (this.isGameOver || this.isPaused || !this.pieces) return;
       const hasDanger = [...this.pieces.values()].some((piece) => {
         if (!piece.active || piece.getData('merging')) return false;
+        const halfWidth = (piece.body.bounds.max.x - piece.body.bounds.min.x) / 2;
+        const halfHeight = (piece.body.bounds.max.y - piece.body.bounds.min.y) / 2;
+        const contained = getContainedPosition({ x: piece.x, y: piece.y, halfWidth, halfHeight });
+        if (contained.x !== piece.x || contained.y !== piece.y) {
+          piece.setPosition(contained.x, contained.y);
+          piece.setVelocity(0, 0);
+        }
         return isDangerousBody({
           top: piece.body.bounds.min.y,
           dangerY: BOARD.dangerY,
-          speed: piece.body.speed,
-          isSleeping: piece.body.isSleeping,
+          ageMs: this.time.now - (piece.getData('bornAt') ?? this.time.now),
         });
       });
       const previousWarning = this.dangerState.warningLevel;

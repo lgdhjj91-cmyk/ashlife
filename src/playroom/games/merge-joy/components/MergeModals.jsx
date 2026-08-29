@@ -26,27 +26,16 @@ export const MergeTutorial = ({ onClose }) => (
   </Modal>
 );
 
-export const MergeDiscoveryModal = ({ tier, progressCount, onClose }) => {
+export const MergeDiscoveryToast = ({ tier, progressCount }) => {
   const piece = getMergeTier(tier);
   if (!piece) return null;
   return (
-    <Modal className="merge-discovery-modal" label="New Merge and Joy discovery" onClose={onClose}>
-      <span className="merge-modal-kicker">NEW DISCOVERY!</span>
+    <aside className="merge-discovery-toast" role="status" aria-live="polite">
       <img src={piece.image} alt={piece.name} />
-      <h2>{piece.name}</h2>
-      <p>{progressCount} / {mergeTiers.length} pieces discovered</p>
-    </Modal>
+      <span><strong>New discovery!</strong>{piece.name}<small>{progressCount} / {mergeTiers.length} pieces</small></span>
+    </aside>
   );
 };
-
-export const MergeLegendaryModal = ({ onClose }) => (
-  <Modal className="merge-legendary-modal" label="Legendary Golden Ashlife Bunny merge" onClose={onClose}>
-    <span className="merge-modal-kicker">LEGENDARY MERGE!</span>
-    <img src={getMergeTier(11).image} alt="Golden Ashlife Bunny" />
-    <h2>Golden Ashlife Bunny</h2>
-    <p>Your collection just became legendary.</p>
-  </Modal>
-);
 
 export const MergeGameOverModal = ({ summary, onReplay, onCollection, onBack }) => {
   if (!summary) return null;

@@ -79,3 +79,13 @@ test('Golden Bunny and streak stickers unlock once while milestone coins stay id
   assert.equal(progress.coinAward, 0);
   assert.equal(progress.nextProgress.unlockedStickers.filter((id) => id === 'merge-golden-bunny').length, 1);
 });
+
+test('Golden Bunny unlock follows the reached tier when discoveries were saved live', () => {
+  const result = applyMergeSessionResult(defaultPlayroomProgress, {
+    mode: 'endless',
+    dateKey: '2026-08-29',
+    stats: { score: 12_000, highestTier: 11, maxCombo: 4, perfectDrops: 1, createdByTier: {} },
+  });
+
+  assert.ok(result.stickerIds.includes('merge-golden-bunny'));
+});

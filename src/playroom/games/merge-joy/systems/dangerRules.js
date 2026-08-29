@@ -1,7 +1,8 @@
-export const DANGER_GRACE_MS = 2_500;
+export const DANGER_GRACE_MS = 2_000;
+export const DANGER_ENTRY_DELAY_MS = 800;
 
-export const isDangerousBody = ({ top, dangerY, speed = 0, isSleeping = false }) =>
-  top < dangerY && (isSleeping || speed <= 0.35);
+export const isDangerousBody = ({ top, dangerY, ageMs = 0 }) =>
+  top < dangerY && ageMs >= DANGER_ENTRY_DELAY_MS;
 
 export const updateDangerState = ({ elapsedMs = 0, deltaMs = 0, hasDanger = false }) => {
   if (!hasDanger) return { elapsedMs: 0, warningLevel: 0, gameOver: false };

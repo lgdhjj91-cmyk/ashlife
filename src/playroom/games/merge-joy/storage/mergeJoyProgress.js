@@ -91,7 +91,7 @@ export const applyMergeSessionResult = (
     },
   };
 
-  if (Number(stats.createdByTier?.[11]) > 0) {
+  if (Number(stats.highestTier) >= 11) {
     nextProgress = addSticker(nextProgress, 'merge-golden-bunny', dateKey, unlocked);
   }
 
