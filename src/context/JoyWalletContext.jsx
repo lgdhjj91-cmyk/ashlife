@@ -15,15 +15,18 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
-import { onValue, ref } from 'firebase/database';
-import { httpsCallable } from 'firebase/functions';
-import { auth, database, functions } from '../firebase';
+import { auth, firestore } from '../firebase';
 import { loadPlayroomProgress, savePlayroomProgress } from '../playroom/storage/playroomStorage';
 import { createJoyRequestId, normalizeJoyWallet } from '../joy/joyWalletState';
+import {
+  createFirestoreJoyStore,
+  createJoyRepository,
+} from '../joy/joyFirestoreRepository';
 
 const JoyWalletContext = createContext(null);
 
 const emptyWallet = normalizeJoyWallet(null);
+const joyRepository = createJoyRepository(createFirestoreJoyStore(firestore));
 
 const getErrorMessage = (error) => {
   const code = String(error?.code || '');
@@ -34,9 +37,8 @@ const getErrorMessage = (error) => {
   if (code.includes('admin-restricted-operation')) {
     return 'Joy Rewards guest access is not enabled yet. The shop is still available without vouchers.';
   }
-  if (code.includes('functions/not-found')) {
-    return 'Joy Rewards is awaiting its Firebase backend deployment.';
-  }
+  if (code.includes('permission-denied')) return 'Joy Rewards access was denied. Please refresh and try again.';
+  if (code.includes('failed-precondition')) return error?.message || 'This Joy Rewards action is not available.';
   return error?.message || 'Joy Rewards is temporarily unavailable.';
 };
 
@@ -54,12 +56,6 @@ export const JoyWalletProvider = ({ children }) => {
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [autoApplySuppressed, setAutoApplySuppressed] = useState(false);
   const anonymousSignInPending = useRef(false);
-
-  const callFunction = useCallback(async (name, data = {}) => {
-    const callable = httpsCallable(functions, name);
-    const result = await callable(data);
-    return result.data;
-  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
@@ -83,27 +79,27 @@ export const JoyWalletProvider = ({ children }) => {
         return;
       }
 
-      setUser(nextUser);
       setLoading(true);
       try {
         const localCoins = loadPlayroomProgress().coins;
-        await callFunction('migrateLegacyJoyCoins', { coins: localCoins });
+        await joyRepository.migrateLegacyJoyCoins(nextUser.uid, localCoins);
+        setUser(nextUser);
         setServiceError('');
       } catch (error) {
+        setUser(nextUser);
         setServiceError(getErrorMessage(error));
+        setLoading(false);
       }
     });
 
     return unsubscribe;
-  }, [callFunction]);
+  }, []);
 
   useEffect(() => {
     if (!user?.uid) return undefined;
-    const walletRef = ref(database, `joyWallets/${user.uid}`);
-    const unsubscribe = onValue(
-      walletRef,
-      (snapshot) => {
-        const nextWallet = normalizeJoyWallet(snapshot.val());
+    const unsubscribe = joyRepository.subscribeJoyWallet(user.uid, {
+      onValue: (snapshot) => {
+        const nextWallet = normalizeJoyWallet(snapshot);
         setWallet(nextWallet);
         const localProgress = loadPlayroomProgress();
         if (localProgress.coins !== nextWallet.coins) {
@@ -111,18 +107,19 @@ export const JoyWalletProvider = ({ children }) => {
         }
         setLoading(false);
       },
-      (error) => {
+      onError: (error) => {
         setServiceError(getErrorMessage(error));
         setLoading(false);
-      }
-    );
+      },
+    });
     return unsubscribe;
   }, [user?.uid]);
 
   const awardCoins = useCallback(
     async (amount, claimId = createJoyRequestId('reward')) => {
       try {
-        const result = await callFunction('awardJoyCoins', { amount, claimId });
+        if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+        const result = await joyRepository.awardJoyCoins(auth.currentUser.uid, amount, claimId);
         setServiceError('');
         return { success: true, coins: result.coins };
       } catch (error) {
@@ -131,12 +128,13 @@ export const JoyWalletProvider = ({ children }) => {
         return { success: false, error: message };
       }
     },
-    [callFunction]
+    []
   );
 
   const resetCoins = useCallback(async () => {
     try {
-      const result = await callFunction('resetJoyCoins');
+      if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+      const result = await joyRepository.resetJoyCoins(auth.currentUser.uid);
       setServiceError('');
       return { success: true, coins: result.coins };
     } catch (error) {
@@ -144,15 +142,17 @@ export const JoyWalletProvider = ({ children }) => {
       setServiceError(message);
       return { success: false, error: message };
     }
-  }, [callFunction]);
+  }, []);
 
   const redeemVoucher = useCallback(
     async (tierId) => {
       try {
-        const result = await callFunction('redeemJoyVoucher', {
+        if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+        const result = await joyRepository.redeemJoyVoucher(
+          auth.currentUser.uid,
           tierId,
-          requestId: createJoyRequestId('redeem'),
-        });
+          createJoyRequestId('redeem')
+        );
         setServiceError('');
         return { success: true, ...result };
       } catch (error) {
@@ -161,13 +161,13 @@ export const JoyWalletProvider = ({ children }) => {
         return { success: false, error: message };
       }
     },
-    [callFunction]
+    []
   );
 
   const previewVoucher = useCallback(
     async (code, subtotalSen) => {
       try {
-        const result = await callFunction('previewJoyVoucher', { code, subtotalSen });
+        const result = await joyRepository.previewJoyVoucher(code, subtotalSen);
         setServiceError('');
         return { success: true, ...result };
       } catch (error) {
@@ -175,13 +175,18 @@ export const JoyWalletProvider = ({ children }) => {
         return { success: false, valid: false, error: message };
       }
     },
-    [callFunction]
+    []
   );
 
   const reserveVoucher = useCallback(
     async ({ code, orderId, subtotalSen }) => {
       try {
-        const result = await callFunction('reserveJoyVoucher', { code, orderId, subtotalSen });
+        if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+        const result = await joyRepository.reserveJoyVoucher(auth.currentUser.uid, {
+          code,
+          orderId,
+          subtotalSen,
+        });
         setServiceError('');
         return { success: true, ...result };
       } catch (error) {
@@ -189,20 +194,30 @@ export const JoyWalletProvider = ({ children }) => {
         return { success: false, error: message };
       }
     },
-    [callFunction]
+    []
   );
 
   const releaseVoucher = useCallback(
     async ({ code, orderId }) => {
       try {
-        const result = await callFunction('releaseJoyVoucher', { code, orderId });
+        if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+        const result = await joyRepository.releaseJoyVoucher(auth.currentUser.uid, { code, orderId });
         return { success: true, ...result };
       } catch (error) {
         return { success: false, error: getErrorMessage(error) };
       }
     },
-    [callFunction]
+    []
   );
+
+  const settleVoucher = useCallback(async ({ code, orderId, orderStatus }) => {
+    try {
+      const result = await joyRepository.settleJoyVoucher({ code, orderId, orderStatus });
+      return { success: true, ...result };
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error) };
+    }
+  }, []);
 
   const createAccount = useCallback(async (email, password) => {
     if (!auth.currentUser) throw new Error('Guest session is still loading.');
@@ -266,6 +281,7 @@ export const JoyWalletProvider = ({ children }) => {
       previewVoucher,
       reserveVoucher,
       releaseVoucher,
+      settleVoucher,
       createAccount,
       signInCustomer,
       signOutCustomer,
@@ -287,6 +303,7 @@ export const JoyWalletProvider = ({ children }) => {
       previewVoucher,
       reserveVoucher,
       releaseVoucher,
+      settleVoucher,
       createAccount,
       signInCustomer,
       signOutCustomer,

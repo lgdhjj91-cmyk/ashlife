@@ -59,7 +59,7 @@ Required Firebase services:
 
 - Realtime Database for `products`, `orders`, and `settings`.
 - Firebase Authentication with Anonymous and Email/Password enabled.
-- Cloud Functions in `asia-southeast1` for Joy Coin wallet and voucher operations.
+- Cloud Firestore Standard for Joy Coin wallets and one-time vouchers.
 - Storage is configured, although QR/order images are currently stored as compressed base64 in the database.
 
 Admin login no longer uses frontend username/password environment variables or custom claims. Create an Email/Password user in Firebase Authentication, then sign in at `/admin`. Anonymous Joy Rewards users cannot access the admin dashboard.
@@ -89,14 +89,14 @@ Before production use:
 
 1. In Firebase Console, enable **Authentication → Sign-in method → Anonymous**.
 2. Enable **Email/Password** as well if customers should be able to keep their wallet through an optional account.
-3. Install the function dependencies with `npm --prefix functions install`.
-4. Deploy the server operations and database rules:
+3. Create the project's single **Cloud Firestore Standard** database in the Singapore region (`asia-southeast1`). The Standard database works on the Firebase Spark plan; do not select Enterprise edition.
+4. Deploy Firestore rules and indexes without deploying Cloud Functions:
 
 ```bash
-npx firebase-tools deploy --only functions,database --project YOUR_FIREBASE_PROJECT_ID
+npx firebase-tools deploy --only firestore --project ashlife-6da65
 ```
 
-The frontend function region defaults to `asia-southeast1` and can be changed with `VITE_FIREBASE_FUNCTIONS_REGION`.
+Spark's free Firestore quota is sufficient for normal small-store use, but usage should still be monitored in Firebase Console. Game reward claims are created by the browser, so a determined user can manufacture coin claims; voucher codes, coin deductions, ownership, and one-time status transitions are constrained by `firestore.rules`.
 
 ## Product Data Structure
 
@@ -143,7 +143,7 @@ If `stock` is missing, the storefront treats it as “confirm before order” in
 - Admin users should manage products, orders, payment QR settings, and site content.
 - Checkout orders are manually verified; stock is not deducted by public frontend writes.
 
-Realtime Database rules are in `firebase.database.rules.json`. They allow any non-anonymous authenticated user to manage admin data while keeping anonymous Joy Rewards guests blocked.
+Realtime Database rules are in `firebase.database.rules.json`. Firestore rules are in `firestore.rules`. Realtime Database rules allow any non-anonymous authenticated user to manage admin data, while Firestore keeps each Joy wallet private and permits authenticated voucher-code checks.
 
 This intentionally removes the custom-claim requirement. If customers can create or link accounts, restore a custom claim or use an explicit UID allowlist before production because those accounts otherwise receive the same database permissions as the owner.
 

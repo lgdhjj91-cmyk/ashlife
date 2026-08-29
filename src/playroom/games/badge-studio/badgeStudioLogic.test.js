@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { a4Config, badgeConfig } from './badgeStudioConfig.js';
 import {
   classifyImageQuality,
   createOrderId,
@@ -18,6 +19,20 @@ test('millimetres convert to the standard rounded A4 dimensions at 300 DPI', () 
   assert.equal(mmToPx(210, 300), 2480);
   assert.equal(mmToPx(297, 300), 3508);
   assert.equal(mmToPx(70, 300), 827);
+});
+
+test('A4 badge rows leave a two millimetre cutting gutter and balanced page margins', () => {
+  const rowCenters = [...new Set(a4Config.slots.map((slot) => slot.yMm))];
+  const radiusMm = badgeConfig.artworkDiameterMm / 2;
+  const rowGaps = rowCenters.slice(1).map(
+    (center, index) => center - rowCenters[index] - badgeConfig.artworkDiameterMm
+  );
+  const topMarginMm = rowCenters[0] - radiusMm;
+  const bottomMarginMm = a4Config.heightMm - rowCenters.at(-1) - radiusMm;
+
+  assert.deepEqual(rowGaps, [2, 2, 2]);
+  assert.equal(topMarginMm, 5.5);
+  assert.equal(bottomMarginMm, 5.5);
 });
 
 test('cover transform keeps aspect ratio and centers a landscape image', () => {

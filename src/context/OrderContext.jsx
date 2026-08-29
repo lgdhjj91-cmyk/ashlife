@@ -4,11 +4,13 @@ import { database } from '../firebase';
 import { auth } from '../firebase';
 import { ref, onValue, set, get, update } from 'firebase/database';
 import { canAccessAdmin } from './adminAuthRules';
+import { useJoyWallet } from './JoyWalletContext';
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
+  const { settleVoucher } = useJoyWallet();
   const [orders, setOrders] = useState([]);
   const [paymentSettings, setPaymentSettings] = useState({
     mae_qr_url: '',
@@ -232,12 +234,32 @@ export const OrderProvider = ({ children }) => {
         updatedAt: new Date().toISOString(),
       });
 
+      if (current.voucher?.code && ['confirmed', 'completed', 'rejected', 'cancelled'].includes(status)) {
+        const settlement = await settleVoucher({
+          code: current.voucher.code,
+          orderId,
+          orderStatus: status,
+        });
+        if (!settlement.success) {
+          return {
+            success: false,
+            orderUpdated: true,
+            error: `Order updated, but voucher synchronization needs retry. ${settlement.error}`,
+          };
+        }
+
+        await update(orderRef, {
+          'voucher/status': settlement.voucher.status,
+          'voucher/updatedAt': new Date().toISOString(),
+        });
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Failed to update order status:', error);
       return { success: false, error: error.message };
     }
-  }, []);
+  }, [settleVoucher]);
 
   // Upload QR code image (admin)
   const uploadQRCode = useCallback(

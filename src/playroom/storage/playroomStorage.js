@@ -24,6 +24,27 @@ export const defaultPlayroomProgress = {
     fastestSuccess: null,
     fewestAttempts: null,
   },
+  mergeJoy: {
+    tutorialCompleted: false,
+    highestScore: 0,
+    highestTier: 1,
+    discoveries: {},
+    bestCombo: 0,
+    perfectDrops: 0,
+    selectedMode: 'endless',
+    soundEnabled: false,
+    daily: {
+      date: '',
+      completed: false,
+      medal: null,
+      coinsClaimed: 0,
+      challengeId: '',
+    },
+  },
+  dailyStreak: {
+    completionDates: [],
+    rewardedMilestones: [],
+  },
   dailyChallenge: {
     lastClaimedDate: '',
     claimedChallengeId: '',
@@ -46,6 +67,21 @@ export const defaultPlayroomProgress = {
 };
 
 const cloneDefault = () => JSON.parse(JSON.stringify(defaultPlayroomProgress));
+
+const normalizeMergeDiscoveries = (discoveries) => {
+  if (!discoveries || typeof discoveries !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(discoveries)
+      .filter(([tier]) => Number(tier) >= 1 && Number(tier) <= 11)
+      .map(([tier, discovery]) => [
+        tier,
+        {
+          firstDate: typeof discovery?.firstDate === 'string' ? discovery.firstDate : '',
+          count: Math.max(0, Number(discovery?.count) || 0),
+        },
+      ])
+  );
+};
 
 export const normalizePlayroomProgress = (value) => {
   const base = cloneDefault();
@@ -96,6 +132,36 @@ export const normalizePlayroomProgress = (value) => {
         typeof value.clawMachine?.classicLastPlayedDate === 'string'
           ? value.clawMachine.classicLastPlayedDate
           : base.clawMachine.classicLastPlayedDate,
+    },
+    mergeJoy: {
+      ...base.mergeJoy,
+      ...(value.mergeJoy && typeof value.mergeJoy === 'object' ? value.mergeJoy : {}),
+      highestScore: Math.max(0, Number(value.mergeJoy?.highestScore) || 0),
+      highestTier: Math.min(11, Math.max(1, Number(value.mergeJoy?.highestTier) || 1)),
+      discoveries: normalizeMergeDiscoveries(value.mergeJoy?.discoveries),
+      bestCombo: Math.max(0, Number(value.mergeJoy?.bestCombo) || 0),
+      perfectDrops: Math.max(0, Number(value.mergeJoy?.perfectDrops) || 0),
+      selectedMode: ['endless', 'daily'].includes(value.mergeJoy?.selectedMode)
+        ? value.mergeJoy.selectedMode
+        : base.mergeJoy.selectedMode,
+      tutorialCompleted: Boolean(value.mergeJoy?.tutorialCompleted),
+      soundEnabled: Boolean(value.mergeJoy?.soundEnabled),
+      daily: {
+        ...base.mergeJoy.daily,
+        ...(value.mergeJoy?.daily && typeof value.mergeJoy.daily === 'object' ? value.mergeJoy.daily : {}),
+        medal: ['bronze', 'silver', 'gold', 'perfect'].includes(value.mergeJoy?.daily?.medal)
+          ? value.mergeJoy.daily.medal
+          : null,
+        coinsClaimed: Math.min(30, Math.max(0, Number(value.mergeJoy?.daily?.coinsClaimed) || 0)),
+      },
+    },
+    dailyStreak: {
+      completionDates: Array.isArray(value.dailyStreak?.completionDates)
+        ? [...new Set(value.dailyStreak.completionDates.filter((date) => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)))]
+        : [],
+      rewardedMilestones: Array.isArray(value.dailyStreak?.rewardedMilestones)
+        ? [...new Set(value.dailyStreak.rewardedMilestones.filter((milestone) => typeof milestone === 'string'))]
+        : [],
     },
     records: {
       ...base.records,

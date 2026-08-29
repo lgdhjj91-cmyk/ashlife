@@ -17,14 +17,14 @@ export const a4Config = Object.freeze({
   slotsPerSheet: 8,
   showCutOutlines: true,
   slots: [
-    { xMm: 52.5, yMm: 43.5 },
-    { xMm: 157.5, yMm: 43.5 },
-    { xMm: 52.5, yMm: 113.5 },
-    { xMm: 157.5, yMm: 113.5 },
-    { xMm: 52.5, yMm: 183.5 },
-    { xMm: 157.5, yMm: 183.5 },
-    { xMm: 52.5, yMm: 253.5 },
-    { xMm: 157.5, yMm: 253.5 },
+    { xMm: 52.5, yMm: 40.5 },
+    { xMm: 157.5, yMm: 40.5 },
+    { xMm: 52.5, yMm: 112.5 },
+    { xMm: 157.5, yMm: 112.5 },
+    { xMm: 52.5, yMm: 184.5 },
+    { xMm: 157.5, yMm: 184.5 },
+    { xMm: 52.5, yMm: 256.5 },
+    { xMm: 157.5, yMm: 256.5 },
   ],
 });
 

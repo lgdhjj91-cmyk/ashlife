@@ -1,0 +1,256 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function validTier(data) {
+      let tierId = data.tierId;
+      return (tierId == 'rm1' && data.coinCost == 100 && data.valueSen == 100 && data.minSubtotalSen == 1000)
+        || (tierId == 'rm2' && data.coinCost == 200 && data.valueSen == 200 && data.minSubtotalSen == 1500)
+        || (tierId == 'rm5' && data.coinCost == 500 && data.valueSen == 500 && data.minSubtotalSen == 2000);
+    }
+
+    function validWallet(data) {
+      return data.coins is int
+        && data.coins >= 0
+        && data.coins <= 1000000
+        && data.legacyMigrated is bool
+        && data.lastMutationId is string
+        && data.lastMutationType is string
+        && data.updatedAt == request.time;
+    }
+
+    function validWalletCreate() {
+      return validWallet(request.resource.data)
+        && request.resource.data.legacyMigrated == true
+        && request.resource.data.lastMutationType == 'migrate'
+        && request.resource.data.legacyMigratedAt == request.time;
+    }
+
+    function validMigration() {
+      return resource.data.get('legacyMigrated', false) == false
+        && request.resource.data.legacyMigrated == true
+        && request.resource.data.lastMutationType == 'migrate'
+        && request.resource.data.coins >= resource.data.coins
+        && request.resource.data.coins - resource.data.coins <= 1000000
+        && request.resource.data.legacyMigratedAt == request.time;
+    }
+
+    function validAward(uid) {
+      let amount = request.resource.data.coins - resource.data.coins;
+      let claim = getAfter(/databases/$(database)/documents/joyWallets/$(uid)/claims/$(request.resource.data.lastMutationId));
+      return request.resource.data.lastMutationType == 'award'
+        && amount >= 1
+        && amount <= 500
+        && claim.data.amount == amount
+        && claim.data.createdAt == request.time;
+    }
+
+    function validReset() {
+      return request.resource.data.lastMutationType == 'reset'
+        && request.resource.data.coins == 0;
+    }
+
+    function validRedemption(uid) {
+      let code = request.resource.data.lastVoucherCode;
+      let voucher = getAfter(/databases/$(database)/documents/joyVouchers/$(code));
+      let redemption = getAfter(/databases/$(database)/documents/joyWallets/$(uid)/redemptions/$(request.resource.data.lastMutationId));
+      return request.resource.data.lastMutationType == 'redeem'
+        && code is string
+        && voucher.data.code == code
+        && voucher.data.ownerUid == uid
+        && voucher.data.status == 'available'
+        && request.resource.data.coins == resource.data.coins - voucher.data.coinCost
+        && redemption.data.code == code
+        && redemption.data.tierId == voucher.data.tierId;
+    }
+
+    function validWalletUpdate(uid) {
+      return validWallet(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'coins',
+          'legacyMigrated',
+          'legacyMigratedAt',
+          'updatedAt',
+          'lastMutationId',
+          'lastMutationType',
+          'lastVoucherCode'
+        ])
+        && (validMigration() || validAward(uid) || validReset() || validRedemption(uid));
+    }
+
+    function validVoucherShape(code, data) {
+      return data.keys().hasOnly([
+          'code',
+          'tierId',
+          'coinCost',
+          'valueSen',
+          'minSubtotalSen',
+          'ownerUid',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.code == code
+        && data.ownerUid == request.auth.uid
+        && data.status == 'available'
+        && data.createdAt == request.time
+        && data.updatedAt == request.time
+        && validTier(data)
+        && ((data.tierId == 'rm1' && code.matches('^JOY-RM1-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'rm2' && code.matches('^JOY-RM2-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'rm5' && code.matches('^JOY-RM5-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$')));
+    }
+
+    function pairedRedemption(code) {
+      let walletBefore = get(/databases/$(database)/documents/joyWallets/$(request.auth.uid)).data;
+      let walletAfter = getAfter(/databases/$(database)/documents/joyWallets/$(request.auth.uid)).data;
+      let redemption = getAfter(/databases/$(database)/documents/joyWallets/$(request.auth.uid)/redemptions/$(walletAfter.lastMutationId)).data;
+      return walletAfter.lastMutationType == 'redeem'
+        && walletAfter.lastVoucherCode == code
+        && walletAfter.coins == walletBefore.coins - request.resource.data.coinCost
+        && redemption.code == code
+        && redemption.tierId == request.resource.data.tierId;
+    }
+
+    function immutableVoucherFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'status',
+        'reservedByUid',
+        'reservedOrderId',
+        'reservedSubtotalSen',
+        'reservedAt',
+        'usedAt',
+        'restoredAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validReservation() {
+      return resource.data.status == 'available'
+        && request.resource.data.status == 'reserved'
+        && request.resource.data.reservedByUid == request.auth.uid
+        && request.resource.data.reservedOrderId is string
+        && request.resource.data.reservedOrderId.size() > 0
+        && request.resource.data.reservedSubtotalSen is int
+        && request.resource.data.reservedSubtotalSen >= resource.data.minSubtotalSen
+        && request.resource.data.reservedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && immutableVoucherFields();
+    }
+
+    function sameReservation() {
+      return resource.data.status == 'reserved'
+        && resource.data.reservedByUid == request.auth.uid
+        && request.resource.data == resource.data;
+    }
+
+    function validCustomerRelease() {
+      return resource.data.status == 'reserved'
+        && resource.data.reservedByUid == request.auth.uid
+        && request.resource.data.status == 'available'
+        && request.resource.data.restoredAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && !('reservedByUid' in request.resource.data)
+        && !('reservedOrderId' in request.resource.data)
+        && !('reservedSubtotalSen' in request.resource.data)
+        && !('reservedAt' in request.resource.data)
+        && immutableVoucherFields();
+    }
+
+    function validAdminConsumption() {
+      return isAdmin()
+        && resource.data.status == 'reserved'
+        && request.resource.data.status == 'used'
+        && request.resource.data.usedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && immutableVoucherFields();
+    }
+
+    function validAdminRestoration() {
+      return isAdmin()
+        && resource.data.status == 'reserved'
+        && request.resource.data.status == 'available'
+        && request.resource.data.restoredAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && !('reservedByUid' in request.resource.data)
+        && !('reservedOrderId' in request.resource.data)
+        && !('reservedSubtotalSen' in request.resource.data)
+        && !('reservedAt' in request.resource.data)
+        && immutableVoucherFields();
+    }
+
+    function sameSettledVoucher() {
+      return request.resource.data == resource.data
+        && (resource.data.status == 'available' || (isAdmin() && resource.data.status == 'used'));
+    }
+
+    match /joyWallets/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if isOwner(uid) && validWalletCreate();
+      allow update: if isOwner(uid) && validWalletUpdate(uid);
+      allow delete: if false;
+
+      match /claims/{claimId} {
+        allow get: if isOwner(uid);
+        allow list: if false;
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['amount', 'createdAt'])
+          && request.resource.data.amount is int
+          && request.resource.data.amount >= 1
+          && request.resource.data.amount <= 500
+          && request.resource.data.createdAt == request.time
+          && getAfter(/databases/$(database)/documents/joyWallets/$(uid)).data.lastMutationId == claimId
+          && getAfter(/databases/$(database)/documents/joyWallets/$(uid)).data.lastMutationType == 'award';
+        allow update, delete: if false;
+      }
+
+      match /redemptions/{requestId} {
+        allow get: if isOwner(uid);
+        allow list: if false;
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['code', 'tierId', 'createdAt'])
+          && request.resource.data.code is string
+          && request.resource.data.tierId is string
+          && request.resource.data.createdAt == request.time
+          && getAfter(/databases/$(database)/documents/joyWallets/$(uid)).data.lastMutationId == requestId
+          && getAfter(/databases/$(database)/documents/joyWallets/$(uid)).data.lastMutationType == 'redeem';
+        allow update, delete: if false;
+      }
+    }
+
+    match /joyVouchers/{code} {
+      allow get: if signedIn();
+      allow list: if signedIn()
+        && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn()
+        && validVoucherShape(code, request.resource.data)
+        && pairedRedemption(code);
+      allow update: if signedIn()
+        && (validReservation()
+          || sameReservation()
+          || sameSettledVoucher()
+          || validCustomerRelease()
+          || validAdminConsumption()
+          || validAdminRestoration());
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

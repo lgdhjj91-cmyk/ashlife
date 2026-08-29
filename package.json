@@ -10,8 +10,7 @@
     "build:domain": "vite build --base=/",
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
-    "test:functions": "npm --prefix functions test",
-    "test:all": "npm test && npm run test:functions",
+    "test:all": "npm test",
     "preview": "vite preview"
   },
   "dependencies": {
