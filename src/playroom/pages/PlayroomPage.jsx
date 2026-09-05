@@ -6,6 +6,7 @@ import {
   BookOpen,
   Coins,
   Gamepad2,
+  Palette,
   RotateCcw,
   Sparkles,
   Volume2,
@@ -23,6 +24,7 @@ import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
 import { useLanguage } from '../../context/LanguageContext';
 import { getPlayroomClawFeatureCopy } from './playroomClawFeatureCopy';
+import { badgeConfig } from '../games/badge-studio/badgeStudioConfig';
 import { useMemoryGame } from '../hooks/useMemoryGame';
 import { usePlayroomProgress } from '../hooks/usePlayroomProgress';
 import { usePlayroomSound } from '../hooks/usePlayroomSound';
@@ -54,9 +56,17 @@ const playroomCopy = {
     mergeJoyType: 'Physics + Puzzle',
     mergeJoyReward: 'Daily Joy Coins + collectible sticker',
     memoryTitle: 'Product Memory Match',
-    badgeStudioPill: 'Create and print',
+    chooseGameTitle: 'Choose your activity',
+    chooseGameDescription: 'Pick one activity at a time. Your rewards and progress stay saved.',
+    chooseGameLabel: 'Playroom activities',
+    clawTabMeta: 'Arcade challenge',
+    memoryTabMeta: 'Puzzle game',
+    badgeTabMeta: 'Creative studio',
+    badgeStudioReward: 'Earn {coins} Joy Coins after submitting',
+    comingNext: 'More games coming next',
     badgeStudioTitle: 'Badge Studio',
     badgeStudioDescription: 'Upload your photos, design 58 mm badges and build a print-ready A4 sheet.',
+    badgeStudioImageAlt: 'A display collection of custom Ashlife badges',
     badgeStudioButton: 'Start Designing',
     badgeStudioMeta: 'Free browser tool',
     badgeStudioOutput: '300 DPI A4 export',
@@ -195,9 +205,17 @@ const playroomCopy = {
     mergeJoyType: '物理 + 益智',
     mergeJoyReward: '每日 Joy Coins + 收藏贴纸',
     memoryTitle: '商品记忆配对',
-    badgeStudioPill: '创作与打印',
+    chooseGameTitle: '选择您的活动',
+    chooseGameDescription: '每次专心玩一个活动，奖励和进度都会自动保留。',
+    chooseGameLabel: '游戏天地活动',
+    clawTabMeta: '街机挑战',
+    memoryTabMeta: '益智游戏',
+    badgeTabMeta: '创意设计室',
+    badgeStudioReward: '成功提交可获得 {coins} Joy Coins',
+    comingNext: '更多游戏即将推出',
     badgeStudioTitle: '徽章设计室',
     badgeStudioDescription: '上传照片，设计 58 毫米徽章，并自动排版成可打印的 A4 文件。',
+    badgeStudioImageAlt: 'Ashlife 定制徽章展示',
     badgeStudioButton: '开始设计',
     badgeStudioMeta: '免费浏览器工具',
     badgeStudioOutput: '300 DPI A4 输出',
@@ -338,6 +356,7 @@ const PlayroomPage = () => {
   const progressActions = usePlayroomProgress();
   const { progress, summary, resetProgress, updateSettings } = progressActions;
   const [view, setView] = useState('landing');
+  const [activeActivity, setActiveActivity] = useState('claw');
   const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
   const [showAlbum, setShowAlbum] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);

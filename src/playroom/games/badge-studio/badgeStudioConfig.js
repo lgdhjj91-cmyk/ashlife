@@ -8,6 +8,7 @@ export const badgeConfig = Object.freeze({
   maxQuantityPerDesign: 20,
   maxTotalBadges: 64,
   maxSubmissionFileBytes: 25_000_000,
+  submissionRewardCoins: 200,
 });
 
 export const a4Config = Object.freeze({

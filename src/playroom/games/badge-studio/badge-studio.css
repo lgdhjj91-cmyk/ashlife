@@ -1346,6 +1346,39 @@ body.badge-studio-active > div:has(> iframe[style*='position:fixed']) {
   font-weight: 900;
 }
 
+.badge-coin-reward {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  color: #70436a;
+  text-align: left;
+  border-radius: 16px;
+  background: #fff8dc;
+  border: 1px solid rgba(243, 196, 78, 0.42);
+}
+
+.badge-coin-reward > svg {
+  flex: 0 0 auto;
+  color: #c9850f;
+}
+
+.badge-coin-reward.earned {
+  color: #167a72;
+  background: #e9faf6;
+  border-color: rgba(22, 122, 114, 0.24);
+}
+
+.badge-coin-reward button {
+  display: block;
+  margin-top: 0.3rem;
+  color: #8d3d75;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
 .badge-preparing,
 .badge-submit-error {
   display: flex;

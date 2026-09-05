@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Coins,
   Download,
   FileImage,
   LoaderCircle,
@@ -38,6 +39,7 @@ import {
 import { clearBadgeDraft, loadBadgeDraft, saveBadgeDraft } from './draftStorage';
 import { getBadgeStudioCopy } from './badgeStudioCopy';
 import { clearBadgeStudioProject } from './badgeStudioReset';
+import { usePlayroomProgress } from '../../hooks/usePlayroomProgress';
 import './badge-studio.css';
 
 const EMPTY_DETAILS = {
@@ -101,6 +103,7 @@ const makeDesign = async (file, copy) => {
 const BadgeStudioPage = () => {
   const { language } = useLanguage();
   const copy = useMemo(() => getBadgeStudioCopy(language), [language]);
+  const { syncCoinReward } = usePlayroomProgress();
   const [stepIndex, setStepIndex] = useState(0);
   const [designs, setDesigns] = useState([]);
   const [activeId, setActiveId] = useState('');
@@ -115,6 +118,7 @@ const BadgeStudioPage = () => {
   const [exportBundle, setExportBundle] = useState(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const [submission, setSubmission] = useState({ status: 'idle', message: '', completed: 0, total: 1 });
+  const [rewardStatus, setRewardStatus] = useState('idle');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const fileInputRef = useRef(null);
@@ -354,6 +358,7 @@ const BadgeStudioPage = () => {
       setOrderId('');
       setExportBundle(null);
       setSubmission({ status: 'idle', message: '', completed: 0, total: 1 });
+      setRewardStatus('idle');
       replaceIdRef.current = '';
       abortRef.current = null;
       setShowResetConfirm(false);
@@ -406,10 +411,21 @@ const BadgeStudioPage = () => {
     setStepIndex((current) => Math.min(4, current + 1));
   };
 
+  const claimBadgeReward = async (rewardOrderId) => {
+    if (!rewardOrderId) return;
+    setRewardStatus('working');
+    const reward = await syncCoinReward(
+      badgeConfig.submissionRewardCoins,
+      `badge-studio-${rewardOrderId}`
+    );
+    setRewardStatus(reward.success ? 'earned' : 'error');
+  };
+
   const submitOrder = async () => {
     const bundle = exportBundle || (await prepareExports());
     if (!bundle) return;
     abortRef.current = new AbortController();
+    setRewardStatus('idle');
     setSubmission({ status: 'working', message: copy.finish.starting, completed: 0, total: bundle.files.length + 2 });
     try {
       await submitBadgeOrder({
@@ -429,6 +445,7 @@ const BadgeStudioPage = () => {
           }),
       });
       await clearBadgeDraft().catch(() => undefined);
+      await claimBadgeReward(bundle.orderInfo.orderId);
     } catch (error) {
       if (error.name === 'AbortError') {
         setSubmission({ status: 'idle', message: copy.finish.uploadCancelled, completed: 0, total: 1 });
@@ -643,6 +660,27 @@ const BadgeStudioPage = () => {
           {totalQuantity} {copy.action.badges} · {pages.length}{' '}
           {pages.length === 1 ? copy.action.sheet : copy.action.sheets}
         </p>
+
+        <div className={`badge-coin-reward ${rewardStatus}`}>
+          <Coins size={22} aria-hidden="true" />
+          <div>
+            <strong>
+              {(submission.status === 'complete'
+                ? rewardStatus === 'earned'
+                  ? copy.finish.rewardEarned
+                  : rewardStatus === 'working'
+                    ? copy.finish.rewardAdding
+                    : rewardStatus === 'error'
+                      ? copy.finish.rewardFailed
+                      : copy.finish.rewardOffer
+                : copy.finish.rewardOffer
+              ).replace('{coins}', badgeConfig.submissionRewardCoins)}
+            </strong>
+            {rewardStatus === 'error' && (
+              <button type="button" onClick={() => claimBadgeReward(orderId)}>{copy.finish.retryReward}</button>
+            )}
+          </div>
+        </div>
 
         {isPreparing && <div className="badge-preparing"><LoaderCircle size={22} />{copy.finish.preparing}</div>}
         {exportBundle && (

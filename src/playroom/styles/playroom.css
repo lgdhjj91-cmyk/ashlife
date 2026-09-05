@@ -88,6 +88,7 @@
 .playroom-button:focus-visible,
 .playroom-icon-button:focus-visible,
 .playroom-back-link:focus-visible,
+.playroom-game-tabs button:focus-visible,
 .memory-card:focus-visible,
 .difficulty-selector button:focus-visible,
 .album-shop-link:focus-visible {
@@ -204,7 +205,6 @@
 .daily-challenge-card h3,
 .collection-progress-card h2,
 .memory-game-copy h3,
-.playroom-section-heading h2,
 .game-header-panel h2 {
   margin: 0.4rem 0 0.2rem;
   color: #5b315b;
@@ -213,7 +213,6 @@
 .daily-challenge-card p,
 .collection-progress-card p,
 .memory-game-copy p,
-.playroom-section-heading p,
 .daily-result,
 .album-entry p,
 .album-entry small {
@@ -285,8 +284,136 @@
   padding: 1rem 0 4rem;
 }
 
-.playroom-section-heading {
+.playroom-game-browser-heading {
+  max-width: 620px;
   margin-bottom: 1rem;
+}
+
+.playroom-game-browser-heading h2 {
+  color: #5b315b;
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.05;
+}
+
+.playroom-game-browser-heading p {
+  margin-top: 0.35rem;
+  color: #755e71;
+  font-weight: 700;
+}
+
+.playroom-game-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0.6rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(222, 151, 181, 0.3);
+  box-shadow: 0 16px 36px rgba(112, 67, 106, 0.08);
+}
+
+.playroom-game-tabs button {
+  min-width: 0;
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  text-align: left;
+  color: #70436a;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background: transparent;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.playroom-game-tabs button:hover {
+  transform: translateY(-2px);
+  background: #fff5f8;
+}
+
+.playroom-game-tabs button:active {
+  transform: scale(0.98);
+}
+
+.playroom-game-tabs button.active {
+  color: #fff;
+  background: #8d3d75;
+  box-shadow: 0 10px 22px rgba(141, 61, 117, 0.22);
+}
+
+.playroom-game-tabs button > svg {
+  width: 42px;
+  height: 42px;
+  padding: 0.55rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #8d3d75;
+}
+
+.playroom-game-tabs button span,
+.playroom-game-tabs button strong,
+.playroom-game-tabs button small {
+  min-width: 0;
+  display: block;
+}
+
+.playroom-game-tabs button strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.playroom-game-tabs button small {
+  margin-top: 0.18rem;
+  color: #90768b;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.playroom-game-tabs button.active small {
+  color: #ffe8f0;
+}
+
+.playroom-game-stage {
+  margin-top: 0.9rem;
+}
+
+.playroom-game-stage > article {
+  min-height: 390px;
+  margin-bottom: 0;
+  animation: playroom-panel-in 0.26s ease-out;
+}
+
+.playroom-coming-next {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding: 0.8rem 1rem;
+  color: #70436a;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px dashed rgba(141, 61, 117, 0.24);
+}
+
+.playroom-coming-next svg {
+  flex: 0 0 auto;
+  color: #8d3d75;
+}
+
+.playroom-coming-next strong,
+.playroom-coming-next span {
+  display: block;
+}
+
+.playroom-coming-next span {
+  margin-top: 0.15rem;
+  color: #876f82;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .memory-game-card {
@@ -822,6 +949,17 @@
   }
 }
 
+@keyframes playroom-panel-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (min-width: 860px) {
   .memory-grid-hard {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -1000,6 +1138,12 @@
   .celebration-stars span,
   .playroom-button,
   .playroom-icon-button {
+    animation: none;
+    transition: none;
+  }
+
+  .playroom-game-stage > article,
+  .playroom-game-tabs button {
     animation: none;
     transition: none;
   }
