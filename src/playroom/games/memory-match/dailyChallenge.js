@@ -1,4 +1,4 @@
-import { stickers } from '../../data/stickers.js';
+import { memoryMatchStickers } from '../../data/stickers.js';
 import { getLocalDateKey } from '../../utils/dateKey.js';
 
 export { getLocalDateKey } from '../../utils/dateKey.js';
@@ -53,8 +53,10 @@ export const getDailyChallenge = (date = new Date()) => {
 };
 
 export const pickDailyStickerReward = (unlockedIds, rarity = 'uncommon', dateKey = getLocalDateKey()) => {
-  const preferred = stickers.filter((sticker) => sticker.rarity === rarity && !unlockedIds.includes(sticker.id));
-  const fallback = stickers.filter((sticker) => !unlockedIds.includes(sticker.id));
+  const preferred = memoryMatchStickers.filter(
+    (sticker) => sticker.rarity === rarity && !unlockedIds.includes(sticker.id)
+  );
+  const fallback = memoryMatchStickers.filter((sticker) => !unlockedIds.includes(sticker.id));
   const pool = preferred.length > 0 ? preferred : fallback;
   if (pool.length === 0) return null;
   return pool[hashDate(dateKey) % pool.length];

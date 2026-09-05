@@ -152,3 +152,161 @@
   text-decoration: line-through;
   font-weight: 500;
 }
+
+.price-prefix {
+  font-size: 0.72em;
+  font-weight: 600;
+  margin-right: 2px;
+  color: var(--text-secondary);
+}
+
+.btn-text-desktop {
+  display: inline;
+}
+
+.btn-text-mobile {
+  display: none;
+}
+
+/* Compact Mobile Product Card Styling (Shopee-like density, Ashlife identity) */
+@media (max-width: 767px) {
+  .product-card {
+    border-radius: 10px;
+  }
+
+  .product-image-wrapper {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+
+  .product-info {
+    padding: 8px 10px 10px 10px;
+  }
+
+  .product-category {
+    font-size: 0.65rem;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .product-name {
+    font-size: 0.85rem;
+    line-height: 1.25;
+    margin-bottom: 4px;
+    min-height: 2.5em;
+    max-height: 2.5em;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+  }
+
+  .product-card-meta {
+    font-size: 0.68rem;
+    min-height: 16px;
+    margin-bottom: 4px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-footer {
+    gap: 4px;
+    align-items: flex-end;
+    padding-top: 4px;
+  }
+
+  .product-price-block {
+    gap: 0;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .product-price {
+    font-size: 0.92rem;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .sale-price {
+    font-size: 0.92rem;
+  }
+
+  .product-price-original {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+
+  .add-to-cart-btn {
+    height: 30px;
+    min-width: 30px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .add-to-cart-btn .btn-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-text-desktop {
+    display: none;
+  }
+
+  .btn-text-mobile {
+    display: inline;
+  }
+
+  .discount-badge {
+    top: 6px;
+    left: 6px;
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .variant-badge {
+    right: 6px;
+    bottom: 6px;
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+}
+
+@media (max-width: 350px) {
+  .product-info {
+    padding: 6px 7px 8px 7px;
+  }
+
+  .product-name {
+    font-size: 0.8rem;
+  }
+
+  .product-price {
+    font-size: 0.88rem;
+  }
+
+  .add-to-cart-btn {
+    padding: 0 6px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 325px) {
+  .btn-text-mobile {
+    display: none;
+  }
+
+  .add-to-cart-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    padding: 0;
+  }
+}
+

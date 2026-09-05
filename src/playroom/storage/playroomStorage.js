@@ -152,7 +152,7 @@ export const normalizePlayroomProgress = (value) => {
         medal: ['bronze', 'silver', 'gold', 'perfect'].includes(value.mergeJoy?.daily?.medal)
           ? value.mergeJoy.daily.medal
           : null,
-        coinsClaimed: Math.min(30, Math.max(0, Number(value.mergeJoy?.daily?.coinsClaimed) || 0)),
+        coinsClaimed: Math.min(80, Math.max(0, Number(value.mergeJoy?.daily?.coinsClaimed) || 0)),
       },
     },
     dailyStreak: {

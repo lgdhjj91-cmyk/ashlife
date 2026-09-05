@@ -110,16 +110,16 @@
 
 .playroom-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.62fr);
   gap: clamp(1rem, 4vw, 3rem);
   align-items: center;
-  padding: clamp(1.4rem, 4vw, 3.4rem) 0 1.5rem;
+  padding: clamp(1rem, 2.5vw, 2rem) 0 1.25rem;
 }
 
 .playroom-hero h1 {
   margin: 0.45rem 0;
   color: #5b315b;
-  font-size: clamp(2.4rem, 8vw, 5rem);
+  font-size: clamp(2.35rem, 6vw, 4.25rem);
   line-height: 0.94;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .playroom-hero img {
-  width: min(100%, 520px);
+  width: min(100%, 380px);
   justify-self: end;
   border-radius: 24px;
   border: 8px solid rgba(255, 255, 255, 0.78);
@@ -174,13 +174,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin: 1.5rem 0 2rem;
 }
 
 .daily-challenge-card,
 .collection-progress-card,
 .memory-game-card,
-.coming-soon-card,
 .game-header-panel,
 .playroom-modal {
   border: 1px solid rgba(222, 151, 181, 0.28);
@@ -277,7 +276,13 @@
 }
 
 .playroom-games-section {
-  padding: 1.5rem 0 4rem;
+  display: grid;
+  gap: 1.35rem;
+  padding: 0 0 1.5rem;
+}
+
+.playroom-tools-section {
+  padding: 1rem 0 4rem;
 }
 
 .playroom-section-heading {
@@ -298,7 +303,6 @@
   grid-template-columns: minmax(260px, 0.92fr) minmax(280px, 1.08fr);
   gap: 1.2rem;
   align-items: center;
-  margin-bottom: 1.3rem;
   padding: 1.2rem;
   border-radius: 26px;
   border: 1px solid rgba(222, 151, 181, 0.28);
@@ -311,7 +315,6 @@
   grid-template-columns: minmax(260px, 1.08fr) minmax(280px, 0.92fr);
   gap: 1.2rem;
   align-items: center;
-  margin-bottom: 1.6rem;
   padding: 1.2rem;
   border-radius: 26px;
   border: 1px solid rgba(222, 151, 181, 0.3);
@@ -417,10 +420,6 @@
   font-weight: 900;
 }
 
-.secondary-game-heading {
-  margin-top: 1.6rem;
-}
-
 .memory-game-preview {
   min-height: 260px;
   display: grid;
@@ -480,45 +479,6 @@
 .difficulty-selector span {
   font-size: 0.76rem;
   font-weight: 800;
-}
-
-.coming-soon-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.9rem;
-  margin-top: 1rem;
-}
-
-.coming-soon-card {
-  min-height: 150px;
-  display: grid;
-  align-content: center;
-  gap: 0.55rem;
-  padding: 1rem;
-  border-radius: 22px;
-}
-
-.coming-soon-card svg {
-  color: #7665a8;
-}
-
-.coming-soon-card h3 {
-  color: #5b315b;
-  font-size: 1.02rem;
-}
-
-.coming-soon-card span {
-  width: fit-content;
-  padding: 0.32rem 0.62rem;
-  border-radius: 999px;
-  color: #8d3d75;
-  background: #ffe1eb;
-  font-size: 0.75rem;
-  font-weight: 900;
-}
-
-.badge-studio-section-heading {
-  margin-top: 2.8rem;
 }
 
 .memory-match-screen {
@@ -656,20 +616,6 @@
   width: min(84%, 150px);
   aspect-ratio: 1;
   object-fit: contain;
-}
-
-.memory-card-front span {
-  position: absolute;
-  left: 0.35rem;
-  right: 0.35rem;
-  bottom: 0.35rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #70436a;
-  font-size: clamp(0.62rem, 1.8vw, 0.78rem);
-  font-weight: 900;
-  text-align: center;
 }
 
 .memory-card.is-matched .memory-card-face {
@@ -896,7 +842,6 @@
     justify-self: start;
   }
 
-  .coming-soon-grid,
   .album-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -911,29 +856,95 @@
   }
 }
 
+@media (max-width: 768px) {
+  .playroom-page {
+    padding-top: 128px;
+  }
+}
+
 @media (max-width: 520px) {
+  .playroom-page {
+    padding-top: 118px;
+  }
+
   .playroom-shell {
     width: min(100% - 0.75rem, 1180px);
   }
 
-  .playroom-topbar,
   .memory-screen-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .playroom-controls {
-    justify-content: flex-end;
+  .playroom-topbar {
+    display: none;
   }
 
   .playroom-hero {
-    padding-top: 1rem;
+    display: block;
+    padding: 0.8rem 0 1rem;
   }
 
   .playroom-hero img {
+    display: none;
+  }
+
+  .playroom-hero .playroom-pill {
+    display: none;
+  }
+
+  .playroom-hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 11vw, 2.65rem);
+    line-height: 1;
+  }
+
+  .playroom-hero p {
+    margin-top: 0.45rem;
+    font-size: 0.95rem;
+  }
+
+  .joy-balance-card {
+    min-width: 0;
+    margin-top: 0.7rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .playroom-games-section {
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .merge-joy-feature-card,
+  .claw-feature-card,
+  .memory-game-card {
+    gap: 0.85rem;
+    padding: 0.75rem;
+    border-radius: 20px;
+  }
+
+  .merge-joy-feature-preview,
+  .claw-feature-preview {
+    border-width: 4px;
+    border-radius: 17px;
+  }
+
+  .memory-game-copy {
+    gap: 0.55rem;
+  }
+
+  .memory-game-copy > svg {
+    display: none;
+  }
+
+  .memory-game-copy h3,
+  .memory-game-copy p {
+    margin: 0;
+  }
+
+  .merge-joy-feature-card .playroom-button,
+  .claw-feature-card .playroom-button {
     width: 100%;
-    border-width: 5px;
-    border-radius: 18px;
   }
 
   .memory-game-preview {
@@ -942,7 +953,6 @@
     padding: 0.65rem;
   }
 
-  .coming-soon-grid,
   .album-grid,
   .completion-stats,
   .completion-rewards {
@@ -982,10 +992,6 @@
 @media (max-width: 340px) {
   .memory-grid {
     gap: 0.28rem;
-  }
-
-  .memory-card-front span {
-    display: none;
   }
 }
 

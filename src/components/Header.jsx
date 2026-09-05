@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Gamepad2, ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,16 +12,91 @@ const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.webp`;
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const navRef = useRef(null);
+  const mobileMenuBtnRef = useRef(null);
+  const cartMenuRef = useRef(null);
   const { cartItems, cartCount, cartTotal } = useCart();
   const { products } = useProducts();
   const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const playNavLabel = language === 'zh' ? '🎮 玩游戏赢奖励' : '🎮 Play & Win';
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (prevPathname !== location.pathname) {
+    setPrevPathname(location.pathname);
+    setIsCartPreviewOpen(false);
+    setIsMenuOpen(false);
+  }
+
+  const toggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+    setIsCartPreviewOpen(false);
+  };
   const closeMenu = () => setIsMenuOpen(false);
+
+  const toggleCartPreview = () => {
+    setIsCartPreviewOpen((prev) => !prev);
+    setIsMenuOpen(false);
+    setIsSearchFocused(false);
+  };
+
+  const closeAll = () => {
+    setIsMenuOpen(false);
+    setIsCartPreviewOpen(false);
+    setIsSearchFocused(false);
+  };
+
+  useEffect(() => {
+    const handleDocumentClick = (event) => {
+      if (isMenuOpen) {
+        const isClickInsideNav = navRef.current && navRef.current.contains(event.target);
+        const isClickOnMenuBtn = mobileMenuBtnRef.current && mobileMenuBtnRef.current.contains(event.target);
+        if (!isClickInsideNav && !isClickOnMenuBtn) {
+          setIsMenuOpen(false);
+        }
+      }
+
+      if (isCartPreviewOpen) {
+        if (cartMenuRef.current && !cartMenuRef.current.contains(event.target)) {
+          setIsCartPreviewOpen(false);
+        }
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+        setIsCartPreviewOpen(false);
+      }
+    };
+
+    if (isMenuOpen || isCartPreviewOpen) {
+      document.addEventListener('mousedown', handleDocumentClick);
+      document.addEventListener('touchstart', handleDocumentClick);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      document.removeEventListener('touchstart', handleDocumentClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen, isCartPreviewOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const trimmedSearch = searchQuery.trim();
   const searchSuggestions = trimmedSearch
     ? products
@@ -50,23 +125,29 @@ const Header = () => {
     }
     navigate(`/shop?search=${encodeURIComponent(trimmedSearch)}`);
     setIsSearchFocused(false);
-    closeMenu();
+    closeAll();
   };
 
   const handleSuggestionClick = () => {
     setSearchQuery('');
     setIsSearchFocused(false);
-    closeMenu();
+    closeAll();
   };
 
   return (
     <header className="header">
       <div className="container header-container">
-        <button className="mobile-menu-btn" onClick={toggleMenu} aria-label="Toggle menu">
+        <button
+          ref={mobileMenuBtnRef}
+          className="mobile-menu-btn"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+          aria-expanded={isMenuOpen}
+        >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        <Link to="/" className="logo" onClick={closeMenu}>
+        <Link to="/" className="logo" onClick={closeAll}>
           <img src={logoSrc} alt="ASHLIFE Solutions" className="logo-mark" />
         </Link>
 
@@ -79,7 +160,10 @@ const Header = () => {
               setSearchQuery(event.target.value);
               setIsSearchFocused(true);
             }}
-            onFocus={() => setIsSearchFocused(true)}
+            onFocus={() => {
+              setIsSearchFocused(true);
+              setIsCartPreviewOpen(false);
+            }}
             onBlur={() => setIsSearchFocused(false)}
             placeholder={t('global_search_placeholder')}
             aria-label={t('global_search_label')}
@@ -121,15 +205,15 @@ const Header = () => {
           )}
         </form>
 
-        <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
-          <Link to="/" onClick={closeMenu}>{t('nav_home')}</Link>
-          <Link to="/shop" onClick={closeMenu}>{t('nav_shop')}</Link>
-          <Link to="/diy" onClick={closeMenu}>{t('nav_diy')}</Link>
-          <Link to="/play/" className="play-nav-link" onClick={closeMenu}>
+        <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`} ref={navRef}>
+          <Link to="/" onClick={closeAll}>{t('nav_home')}</Link>
+          <Link to="/shop" onClick={closeAll}>{t('nav_shop')}</Link>
+          <Link to="/diy" onClick={closeAll}>{t('nav_diy')}</Link>
+          <Link to="/play/" className="play-nav-link" onClick={closeAll}>
             <Gamepad2 size={17} />
             <span>{playNavLabel}</span>
           </Link>
-          <Link to="/about" onClick={closeMenu}>{t('nav_about')}</Link>
+          <Link to="/about" onClick={closeAll}>{t('nav_about')}</Link>
         </nav>
 
         <div className="header-actions">
@@ -141,13 +225,24 @@ const Header = () => {
           >
             {t('lang_toggle')}
           </button>
-          <div className="cart-menu-wrapper">
-            <Link to="/cart" className="header-cart" onClick={closeMenu} aria-label={t('cart_title')}>
+          <div className={`cart-menu-wrapper ${isCartPreviewOpen ? 'is-open' : ''}`} ref={cartMenuRef}>
+            <button
+              type="button"
+              className={`header-cart ${isCartPreviewOpen ? 'active' : ''}`}
+              onClick={toggleCartPreview}
+              aria-label={t('cart_title')}
+              aria-expanded={isCartPreviewOpen}
+              aria-controls="cart-preview-panel"
+            >
               <ShoppingBag size={22} />
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-            </Link>
+            </button>
 
-            <div className="cart-preview-panel">
+            <div
+              id="cart-preview-panel"
+              className={`cart-preview-panel ${isCartPreviewOpen ? 'open' : ''}`}
+              aria-hidden={!isCartPreviewOpen}
+            >
               <div className="cart-preview-header">
                 <strong>{t('cart_preview_title')}</strong>
                 <span>RM {cartTotal.toFixed(2)}</span>
@@ -162,7 +257,12 @@ const Header = () => {
                       (language === 'zh' && item.variantName_zh ? item.variantName_zh : item.variantName);
 
                     return (
-                      <Link to="/cart" className="cart-preview-item" key={getCartItemKey(item)} onClick={closeMenu}>
+                      <Link
+                        to="/cart"
+                        className="cart-preview-item"
+                        key={getCartItemKey(item)}
+                        onClick={closeAll}
+                      >
                         <img src={resolveAssetUrl(item.image)} alt={itemName} />
                         <span>
                           <strong>{itemName}</strong>
@@ -182,7 +282,7 @@ const Header = () => {
                 <p className="cart-preview-empty">{t('cart_preview_empty')}</p>
               )}
 
-              <Link to="/cart" className="btn btn-primary cart-preview-button" onClick={closeMenu}>
+              <Link to="/cart" className="btn btn-primary cart-preview-button" onClick={closeAll}>
                 {t('view_shopping_cart')}
               </Link>
             </div>
@@ -190,7 +290,13 @@ const Header = () => {
         </div>
       </div>
 
-      {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
+      {isMenuOpen && (
+        <div
+          className="menu-overlay"
+          onClick={closeMenu}
+          aria-hidden="true"
+        />
+      )}
     </header>
   );
 };

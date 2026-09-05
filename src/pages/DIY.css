@@ -185,6 +185,16 @@
   background: #111;
 }
 
+.diy-media-main img.diy-media-contain {
+  object-fit: contain;
+  background: #f8ecd4;
+}
+
+.diy-media-thumb img.diy-media-contain {
+  object-fit: contain;
+  background: #f8ecd4;
+}
+
 .diy-media-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

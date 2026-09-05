@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { stickers } from '../data/stickers';
+import { memoryMatchStickers } from '../data/stickers';
 import { getDailyChallenge, pickDailyStickerReward } from '../games/memory-match/dailyChallenge';
 import { areCardsMatching, createMemoryDeck } from '../games/memory-match/memoryGameLogic';
 import { calculateJoyCoins, calculateScore, difficultySettings } from '../games/memory-match/scoring';
@@ -8,7 +8,7 @@ const getInitialHints = (difficulty) => difficultySettings[difficulty]?.freeHint
 
 export const useMemoryGame = ({ progress, progressActions, sound, initialDifficulty = 'normal' }) => {
   const [difficulty, setDifficulty] = useState(initialDifficulty);
-  const [cards, setCards] = useState(() => createMemoryDeck(stickers, difficultySettings[initialDifficulty].pairs));
+  const [cards, setCards] = useState(() => createMemoryDeck(memoryMatchStickers, difficultySettings[initialDifficulty].pairs));
   const [selectedIds, setSelectedIds] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
@@ -29,7 +29,7 @@ export const useMemoryGame = ({ progress, progressActions, sound, initialDifficu
     (nextDifficulty = difficulty) => {
       const nextSettings = difficultySettings[nextDifficulty] || difficultySettings.normal;
       setDifficulty(nextDifficulty);
-      setCards(createMemoryDeck(stickers, nextSettings.pairs));
+      setCards(createMemoryDeck(memoryMatchStickers, nextSettings.pairs));
       setSelectedIds([]);
       setIsLocked(false);
       setIsStarted(true);
@@ -68,8 +68,8 @@ export const useMemoryGame = ({ progress, progressActions, sound, initialDifficu
     const coins = calculateJoyCoins({ difficulty, moves, elapsedSeconds, usedHints });
     const unlockedPool = progress.unlockedStickers || [];
     const completionSticker =
-      stickers.find((sticker) => sticker.rarity === 'common' && !unlockedPool.includes(sticker.id)) ||
-      stickers.find((sticker) => !unlockedPool.includes(sticker.id)) ||
+      memoryMatchStickers.find((sticker) => sticker.rarity === 'common' && !unlockedPool.includes(sticker.id)) ||
+      memoryMatchStickers.find((sticker) => !unlockedPool.includes(sticker.id)) ||
       null;
     const challenge = getDailyChallenge();
     const didDaily = challenge.isComplete({ difficulty, moves, elapsedSeconds, usedHints });

@@ -535,7 +535,18 @@
   }
 
   .home-product-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .home-product-grid .product-card {
+    border-radius: 10px;
+  }
+
+  @media (max-width: 360px) {
+    .home-product-grid {
+      gap: 8px;
+    }
   }
 
   .home-ordering {

@@ -1,31 +1,31 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, HelpCircle, Pause, Play, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, BookOpen, HelpCircle, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext.jsx';
 import { usePlayroomProgress } from '../../hooks/usePlayroomProgress.js';
 import { getLocalDateKey } from '../../utils/dateKey.js';
 import { getDailyMergeChallenge, evaluateDailyChallenge } from './data/dailyChallenges.js';
 import { getMergeTier } from './data/mergeTiers.js';
-import { applyMergeSessionResult } from './storage/mergeJoyProgress.js';
+import { applyMergeSessionResult, recordMergeDiscovery } from './storage/mergeJoyProgress.js';
 import { installExternalOverlayGuard } from './utils/externalOverlayGuard.js';
 import MergeJoyGame from './MergeJoyGame.jsx';
 import MergeHUD from './components/MergeHUD.jsx';
+import MergeModeSelector from './components/MergeModeSelector.jsx';
 import {
   MergeCollectionModal,
-  MergeDiscoveryModal,
+  MergeDiscoveryToast,
   MergeGameOverModal,
-  MergeLegendaryModal,
   MergeTutorial,
 } from './components/MergeModals.jsx';
 import './styles/merge-joy.css';
 
 const copy = {
   en: {
-    back: 'Back to Playroom', title: 'Ashlife Merge & Joy', endless: 'ENDLESS', daily: 'DAILY',
+    back: 'Back to Playroom', title: 'Ashlife Merge & Joy',
     how: 'How to Play', collection: 'Collection', hold: 'HOLD', drop: 'DROP', pause: 'Pause game', resume: 'Resume game',
   },
   zh: {
-    back: '返回游戏房', title: 'Ashlife 合成欢乐', endless: '无限模式', daily: '每日挑战',
+    back: '返回游戏房', title: 'Ashlife 合成欢乐',
     how: '玩法说明', collection: '收藏', hold: '暂存', drop: '放下', pause: '暂停游戏', resume: '继续游戏',
   },
 };
@@ -34,6 +34,8 @@ const initialGameState = {
   score: 0, combo: 0, currentTier: 1, nextTier: 1, afterTier: 1, heldTier: null, holdLocked: false,
   danger: { elapsedMs: 0, warningLevel: 0, gameOver: false }, stats: { score: 0, highestTier: 1, maxCombo: 0, perfectDrops: 0, createdByTier: {} },
 };
+
+const AUTO_DROP_INTERVAL_MS = 450;
 
 const MergeJoyPage = () => {
   const { language } = useLanguage();
@@ -46,6 +48,7 @@ const MergeJoyPage = () => {
   const { progress, updateProgress, syncCoinReward } = usePlayroomProgress();
   const progressRef = useRef(progress);
   const controlsRef = useRef(null);
+  const autoDropTimer = useRef(null);
   const seenThisRound = useRef(new Set([1, ...Object.keys(progress.mergeJoy.discoveries).map(Number)]));
   const [mode, setMode] = useState(progress.mergeJoy.selectedMode || 'endless');
   const [gameState, setGameState] = useState(initialGameState);
@@ -53,7 +56,6 @@ const MergeJoyPage = () => {
   const [showCollection, setShowCollection] = useState(false);
   const [discoveryTier, setDiscoveryTier] = useState(null);
   const [discoveryCount, setDiscoveryCount] = useState(() => new Set([1, ...Object.keys(progress.mergeJoy.discoveries).map(Number)]).size);
-  const [showLegendary, setShowLegendary] = useState(false);
   const [summary, setSummary] = useState(null);
   const [paused, setPaused] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(progress.mergeJoy.soundEnabled);
@@ -63,6 +65,8 @@ const MergeJoyPage = () => {
   }, []);
 
   useEffect(() => { progressRef.current = progress; }, [progress]);
+
+  useEffect(() => () => window.clearInterval(autoDropTimer.current), []);
 
   const challengeResult = useMemo(
     () => evaluateDailyChallenge(challenge, gameState.stats || initialGameState.stats),
@@ -91,15 +95,18 @@ const MergeJoyPage = () => {
     if (type === 'asset-error') console.error(`Merge & Joy asset failed to load: ${detail.src}`);
     if (type === 'merge') {
       playTone(detail.perfectDrop ? 'perfect' : 'merge');
+      const nextProgress = recordMergeDiscovery(progressRef.current, { tier: detail.tier, count: 1, dateKey });
+      progressRef.current = nextProgress;
+      updateProgress(nextProgress);
       if (!seenThisRound.current.has(detail.tier)) {
         seenThisRound.current.add(detail.tier);
         setDiscoveryCount(Math.max(1, seenThisRound.current.size));
-        window.setTimeout(() => setDiscoveryTier(detail.tier), 520);
+        setDiscoveryTier(detail.tier);
+        window.setTimeout(() => setDiscoveryTier((current) => current === detail.tier ? null : current), 2_400);
       }
     }
     if (type === 'legendary') {
       playTone('legendary');
-      window.setTimeout(() => setShowLegendary(true), 340);
     }
     if (type === 'danger' && detail.warningLevel) playTone('warning');
     if (type === 'game-over') {
@@ -109,7 +116,7 @@ const MergeJoyPage = () => {
         dateKey,
         challengeId: challenge.id,
         dailyResult,
-        stats: detail.stats,
+        stats: { ...detail.stats, createdByTier: {} },
       });
       progressRef.current = result.nextProgress;
       updateProgress(result.nextProgress);
@@ -147,6 +154,19 @@ const MergeJoyPage = () => {
     setPaused(!paused);
   };
 
+  const stopAutoDrop = () => {
+    window.clearInterval(autoDropTimer.current);
+    autoDropTimer.current = null;
+  };
+
+  const startAutoDrop = (event) => {
+    if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    stopAutoDrop();
+    controlsRef.current?.drop();
+    autoDropTimer.current = window.setInterval(() => controlsRef.current?.drop(), AUTO_DROP_INTERVAL_MS);
+  };
+
   const restart = () => {
     setSummary(null);
     setDiscoveryTier(null);
@@ -169,10 +189,7 @@ const MergeJoyPage = () => {
         </div>
       </header>
 
-      <div className="merge-mode-tabs" aria-label="Game mode">
-        <button className={mode === 'endless' ? 'is-selected' : ''} type="button" onClick={() => chooseMode('endless')}><Sparkles />{labels.endless}</button>
-        <button className={mode === 'daily' ? 'is-selected' : ''} type="button" onClick={() => chooseMode('daily')}>{labels.daily}</button>
-      </div>
+      <MergeModeSelector language={language} mode={mode} onChoose={chooseMode} />
 
       <section className="merge-game-layout">
         <MergeHUD gameState={gameState} progress={progress} challenge={challenge} challengeResult={challengeResult} onRestart={restart} />
@@ -183,7 +200,17 @@ const MergeJoyPage = () => {
               <span>{labels.hold}</span>
               {heldPiece ? <img src={heldPiece.image} alt={heldPiece.name} /> : <strong>↻</strong>}
             </button>
-            <button className="merge-drop-button" type="button" disabled={!gameState.currentTier} onClick={() => controlsRef.current?.drop()}>
+            <button
+              className="merge-drop-button"
+              type="button"
+              disabled={gameState.gameOver}
+              title={language === 'zh' ? '长按连续放下' : 'Hold to auto-drop'}
+              aria-label={`${labels.drop}. ${language === 'zh' ? '长按连续放下' : 'Hold to auto-drop'}`}
+              onClick={(event) => { if (event.detail === 0) controlsRef.current?.drop(); }}
+              onPointerDown={startAutoDrop}
+              onPointerUp={stopAutoDrop}
+              onPointerCancel={stopAutoDrop}
+            >
               <span>↓</span>{labels.drop}
             </button>
             <button className="merge-collection-button" type="button" onClick={() => setShowCollection(true)}><BookOpen />{labels.collection}</button>
@@ -197,8 +224,7 @@ const MergeJoyPage = () => {
 
       {showTutorial && <MergeTutorial onClose={closeTutorial} />}
       {showCollection && <MergeCollectionModal progress={progress} onClose={() => setShowCollection(false)} />}
-      {discoveryTier && !showLegendary && <MergeDiscoveryModal tier={discoveryTier} progressCount={discoveryCount} onClose={() => setDiscoveryTier(null)} />}
-      {showLegendary && <MergeLegendaryModal onClose={() => { setShowLegendary(false); setDiscoveryTier(null); }} />}
+      {discoveryTier && <MergeDiscoveryToast tier={discoveryTier} progressCount={discoveryCount} />}
       <MergeGameOverModal summary={summary} onReplay={restart} onCollection={() => { setSummary(null); setShowCollection(true); }} onBack={() => navigate('/play/')} />
     </main>
   );

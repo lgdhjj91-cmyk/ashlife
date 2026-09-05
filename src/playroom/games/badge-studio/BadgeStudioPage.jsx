@@ -135,7 +135,7 @@ const BadgeStudioPage = () => {
   const hasLowResolution = designs.some((design) => design.quality === 'low');
   const endpoint = import.meta.env.VITE_BADGE_UPLOAD_ENDPOINT || '';
   const appKey = import.meta.env.VITE_BADGE_APP_KEY || '';
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601156661438';
 
   useEffect(() => {
     document.body.classList.add('badge-studio-active');

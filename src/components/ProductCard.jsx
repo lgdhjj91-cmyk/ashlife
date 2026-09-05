@@ -58,6 +58,9 @@ const ProductCard = ({ product }) => {
       addToCart: 'Add to cart',
     };
   const actionLabel = variants.length > 0 ? productText.viewOptions : productText.add;
+  const actionLabelMobile = variants.length > 0
+    ? (language === 'zh' ? '选项' : 'Option')
+    : productText.add;
 
   return (
     <Link to={`/product/${product.id}`} className="card product-card">
@@ -96,11 +99,17 @@ const ProductCard = ({ product }) => {
           <div className="product-price-block">
             {hasDiscount ? (
               <>
-                <span className="product-price sale-price">{hasPriceRange ? productText.from : ''}RM {finalPrice.toFixed(2)}</span>
+                <span className="product-price sale-price">
+                  {hasPriceRange && <span className="price-prefix">{productText.from}</span>}
+                  RM {finalPrice.toFixed(2)}
+                </span>
                 <span className="product-price-original">RM {priceRange.min.toFixed(2)}</span>
               </>
             ) : (
-              <span className="product-price">{hasPriceRange ? productText.from : ''}RM {priceRange.min.toFixed(2)}</span>
+              <span className="product-price">
+                {hasPriceRange && <span className="price-prefix">{productText.from}</span>}
+                RM {priceRange.min.toFixed(2)}
+              </span>
             )}
           </div>
           <button
@@ -109,8 +118,9 @@ const ProductCard = ({ product }) => {
             aria-label={variants.length > 0 ? productText.chooseVariation : productText.addToCart}
             disabled={tracksStock && !hasStock}
           >
-            {variants.length > 0 ? <ListChecks size={18} /> : <ShoppingBag size={18} />}
-            <span>{actionLabel}</span>
+            {variants.length > 0 ? <ListChecks className="btn-icon" size={16} /> : <ShoppingBag className="btn-icon" size={16} />}
+            <span className="btn-text-desktop">{actionLabel}</span>
+            <span className="btn-text-mobile">{actionLabelMobile}</span>
           </button>
         </div>
       </div>

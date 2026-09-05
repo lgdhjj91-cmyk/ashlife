@@ -9,7 +9,7 @@ export const stickerCategories = [
   'Rare Stickers',
 ];
 
-export const stickers = [
+export const memoryMatchStickers = [
   {
     id: 'bear-notebook',
     name: 'Bear Notebook',
@@ -145,6 +145,9 @@ export const stickers = [
     productCategory: 'Cute Accessories',
     alt: 'Pink heart keychain sticker',
   },
+];
+
+const mergeJoyRewardStickers = [
   {
     id: 'merge-golden-bunny',
     name: 'Golden Ashlife Bunny',
@@ -170,6 +173,8 @@ export const stickers = [
     alt: `${name} weekly Merge & Joy sticker`,
   })),
 ];
+
+export const stickers = [...memoryMatchStickers, ...mergeJoyRewardStickers];
 
 export const stickerById = new Map(stickers.map((sticker) => [sticker.id, sticker]));
 

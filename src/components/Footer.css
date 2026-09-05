@@ -88,3 +88,47 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+
+.footer-bottom-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-business {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.footer-business-item {
+  margin: 0;
+}
+
+.footer-business-name {
+  color: var(--text-primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.footer-business-reg {
+  white-space: nowrap;
+}
+
+.footer-copyright {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+
+@media (max-width: 320px) {
+  .footer-business-reg {
+    white-space: normal;
+    word-break: break-word;
+  }
+}

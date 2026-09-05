@@ -159,7 +159,7 @@ This intentionally removes the custom-claim requirement. If customers can create
 ## Useful Environment Variables
 
 ```env
-VITE_WHATSAPP_NUMBER=601133046104
+VITE_WHATSAPP_NUMBER=601156661438
 VITE_SHOPEE_URL=https://shopee.com.my/ashleylife
 VITE_SITE_URL=https://ashlife.my
 VITE_BASE_PATH=/ashlife/

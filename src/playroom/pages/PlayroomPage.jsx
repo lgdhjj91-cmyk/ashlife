@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   BellOff,
   BookOpen,
-  Clapperboard,
   Coins,
   Gamepad2,
   RotateCcw,
@@ -19,7 +18,7 @@ import MemoryGrid from '../components/MemoryGrid';
 import StickerAlbum from '../components/StickerAlbum';
 import TutorialModal from '../components/TutorialModal';
 import JoyRewardsPanel from '../../components/JoyRewardsPanel';
-import { stickers } from '../data/stickers';
+import { memoryMatchStickers, stickers } from '../data/stickers';
 import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
 import { useLanguage } from '../../context/LanguageContext';
@@ -66,7 +65,6 @@ const playroomCopy = {
     matchDescription: 'Flip pastel cards, find every pair, earn Joy Coins and unlock sticker rewards.',
     startGame: 'Start Game',
     howToPlay: 'How to Play',
-    comingSoon: 'Coming Soon',
     backToPlayroom: 'Back to Playroom',
     pairsMatched: '{matched} / {total} pairs matched',
     best: 'Best',
@@ -83,7 +81,6 @@ const playroomCopy = {
       hard: 'Hard',
     },
     pairCount: '{count} pairs',
-    games: ['DIY Keychain Designer', 'Shopkeeper Rush', 'Mystery Box Adventure'],
     challengeTitles: {
       'easy-finish': 'Complete one Easy game.',
       'normal-30-moves': 'Complete Normal mode in 30 moves or fewer.',
@@ -209,7 +206,6 @@ const playroomCopy = {
     matchDescription: '翻开粉彩卡牌，找出所有相同贴纸，赚取 Joy Coins 并解锁收藏。',
     startGame: '开始游戏',
     howToPlay: '玩法说明',
-    comingSoon: '即将推出',
     backToPlayroom: '返回游戏房',
     pairsMatched: '已配对 {matched} / {total} 组',
     best: '最高分',
@@ -226,7 +222,6 @@ const playroomCopy = {
       hard: '困难',
     },
     pairCount: '{count} 组',
-    games: ['DIY 钥匙扣设计师', '店长冲刺', '神秘盒冒险'],
     challengeTitles: {
       'easy-finish': '完成一局简单模式。',
       'normal-30-moves': '用 30 步或更少完成普通模式。',
@@ -345,7 +340,7 @@ const PlayroomPage = () => {
   const [view, setView] = useState('landing');
   const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
   const [showAlbum, setShowAlbum] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(() => !progress.settings.tutorialCompleted);
+  const [showTutorial, setShowTutorial] = useState(false);
   const sound = usePlayroomSound(progress.settings.soundEnabled);
   const game = useMemoryGame({ progress, progressActions, sound, initialDifficulty: selectedDifficulty });
   const dailyChallenge = useMemo(() => getDailyChallenge(), []);
@@ -360,7 +355,6 @@ const PlayroomPage = () => {
   };
 
   const closeTutorial = () => {
-    updateSettings({ tutorialCompleted: true });
     setShowTutorial(false);
   };
 
@@ -369,7 +363,7 @@ const PlayroomPage = () => {
     if (confirmed) {
       resetProgress();
       setShowAlbum(false);
-      setShowTutorial(true);
+      setShowTutorial(false);
     }
   };
 
@@ -431,6 +425,82 @@ const PlayroomPage = () => {
               <img src={mascotSrc} alt={labels.heroTitle} />
             </section>
 
+            <section className="playroom-games-section" aria-label={labels.heroDescription}>
+              <article className="merge-joy-feature-card">
+                <div className="merge-joy-feature-preview">
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/playroom/merge-joy/concept/merge-joy-desktop.png`}
+                    alt={labels.mergeJoyTitle}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="memory-game-copy">
+                  <Sparkles size={28} />
+                  <span className="playroom-pill">{labels.mergeJoyPill}</span>
+                  <h3>{labels.mergeJoyTitle}</h3>
+                  <p>{labels.mergeJoyDescription}</p>
+                  <div className="claw-card-meta">
+                    <span>{labels.mergeJoyType}</span>
+                    <span>{labels.mergeJoyReward}</span>
+                  </div>
+                  <Link className="playroom-button primary" to="/play/merge-joy/">
+                    <Sparkles size={18} />
+                    {labels.mergeJoyButton}
+                  </Link>
+                </div>
+              </article>
+
+              <article className="claw-feature-card">
+                <div className="claw-feature-preview">
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
+                    alt={clawLabels.imageAlt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="memory-game-copy">
+                  <Gamepad2 size={28} />
+                  <span className="playroom-pill">{labels.firstGame}</span>
+                  <h3>{clawLabels.title}</h3>
+                  <p>{clawLabels.description}</p>
+                  <div className="claw-card-meta">
+                    <span>{clawLabels.difficulty}</span>
+                    <span>{clawLabels.reward}</span>
+                  </div>
+                  <Link className="playroom-button primary" to="/play/claw-machine/">
+                    <Sparkles size={18} />
+                    {clawLabels.button}
+                  </Link>
+                </div>
+              </article>
+
+              <article className="memory-game-card">
+                <div className="memory-game-preview">
+                  {memoryMatchStickers.slice(0, 6).map((sticker) => (
+                    <img key={sticker.id} src={sticker.image} alt="" loading="lazy" />
+                  ))}
+                </div>
+                <div className="memory-game-copy">
+                  <Gamepad2 size={28} />
+                  <span className="playroom-pill">{labels.memoryTitle}</span>
+                  <h3>{labels.matchTitle}</h3>
+                  <p>{labels.matchDescription}</p>
+                  <DifficultySelector selected={selectedDifficulty} labels={labels} onSelect={setSelectedDifficulty} />
+                  <div className="memory-game-actions">
+                    <button className="playroom-button primary" type="button" onClick={startMemoryMatch}>
+                      <Sparkles size={18} />
+                      {labels.startGame}
+                    </button>
+                    <button className="playroom-button secondary" type="button" onClick={() => setShowTutorial(true)}>
+                      {labels.howToPlay}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </section>
+
             <JoyRewardsPanel />
 
             <section className="playroom-dashboard-grid">
@@ -452,106 +522,8 @@ const PlayroomPage = () => {
               </article>
             </section>
 
-            <section className="playroom-games-section">
+            <section className="playroom-tools-section">
               <div className="playroom-section-heading">
-                <span className="playroom-pill">{labels.mergeJoyPill}</span>
-                <h2>{labels.mergeJoyTitle}</h2>
-                <p>{labels.mergeJoyDescription}</p>
-              </div>
-
-              <article className="merge-joy-feature-card">
-                <div className="merge-joy-feature-preview">
-                  <img
-                    src={`${import.meta.env.BASE_URL}assets/playroom/merge-joy/concept/merge-joy-desktop.png`}
-                    alt={labels.mergeJoyTitle}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="memory-game-copy">
-                  <Sparkles size={28} />
-                  <h3>{labels.mergeJoyTitle}</h3>
-                  <p>{labels.mergeJoyDescription}</p>
-                  <div className="claw-card-meta">
-                    <span>{labels.mergeJoyType}</span>
-                    <span>{labels.mergeJoyReward}</span>
-                  </div>
-                  <Link className="playroom-button primary" to="/play/merge-joy/">
-                    <Sparkles size={18} />
-                    {labels.mergeJoyButton}
-                  </Link>
-                </div>
-              </article>
-
-              <div className="playroom-section-heading secondary-game-heading">
-                <span className="playroom-pill">{labels.firstGame}</span>
-                <h2>{clawLabels.title}</h2>
-                <p>{clawLabels.description}</p>
-              </div>
-
-              <article className="claw-feature-card">
-                <div className="claw-feature-preview">
-                  <img
-                    src={`${import.meta.env.BASE_URL}assets/playroom/claw-machine/card/claw-machine-preview-v2.jpg`}
-                    alt={clawLabels.imageAlt}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="memory-game-copy">
-                  <Gamepad2 size={28} />
-                  <h3>{clawLabels.title}</h3>
-                  <p>{clawLabels.description}</p>
-                  <div className="claw-card-meta">
-                    <span>{clawLabels.difficulty}</span>
-                    <span>{clawLabels.reward}</span>
-                  </div>
-                  <Link className="playroom-button primary" to="/play/claw-machine/">
-                    <Sparkles size={18} />
-                    {clawLabels.button}
-                  </Link>
-                </div>
-              </article>
-
-              <div className="playroom-section-heading secondary-game-heading">
-                <span className="playroom-pill">{labels.memoryTitle}</span>
-                <p>{labels.selectMode}</p>
-              </div>
-
-              <article className="memory-game-card">
-                <div className="memory-game-preview">
-                  {stickers.slice(0, 6).map((sticker) => (
-                    <img key={sticker.id} src={sticker.image} alt="" loading="lazy" />
-                  ))}
-                </div>
-                <div className="memory-game-copy">
-                  <Gamepad2 size={28} />
-                  <h3>{labels.matchTitle}</h3>
-                  <p>{labels.matchDescription}</p>
-                  <DifficultySelector selected={selectedDifficulty} labels={labels} onSelect={setSelectedDifficulty} />
-                  <div className="memory-game-actions">
-                    <button className="playroom-button primary" type="button" onClick={startMemoryMatch}>
-                      <Sparkles size={18} />
-                      {labels.startGame}
-                    </button>
-                    <button className="playroom-button secondary" type="button" onClick={() => setShowTutorial(true)}>
-                      {labels.howToPlay}
-                    </button>
-                  </div>
-                </div>
-              </article>
-
-              <div className="coming-soon-grid" aria-label={labels.comingSoon}>
-                {labels.games.map((gameTitle) => (
-                  <article className="coming-soon-card" key={gameTitle}>
-                    <Clapperboard size={22} />
-                    <h3>{gameTitle}</h3>
-                    <span>{labels.comingSoon}</span>
-                  </article>
-                ))}
-              </div>
-
-              <div className="playroom-section-heading badge-studio-section-heading">
                 <span className="playroom-pill">{labels.badgeStudioPill}</span>
                 <h2>{labels.badgeStudioTitle}</h2>
                 <p>{labels.badgeStudioDescription}</p>

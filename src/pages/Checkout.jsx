@@ -213,7 +213,7 @@ const Checkout = () => {
   };
 
   const sendWhatsAppReceipt = () => {
-    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601156661438';
     let message = `Hello! I have placed an online order.\n\n`;
     message += `*Order ID:* ${createdOrderId}\n`;
     message += `*Name:* ${customerInfo.name}\n`;

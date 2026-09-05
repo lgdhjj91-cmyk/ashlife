@@ -91,7 +91,7 @@ export const applyMergeSessionResult = (
     },
   };
 
-  if (Number(stats.createdByTier?.[11]) > 0) {
+  if (Number(stats.highestTier) >= 11) {
     nextProgress = addSticker(nextProgress, 'merge-golden-bunny', dateKey, unlocked);
   }
 
@@ -100,7 +100,7 @@ export const applyMergeSessionResult = (
     const previousDaily = nextProgress.mergeJoy.daily?.date === dateKey
       ? nextProgress.mergeJoy.daily
       : { date: dateKey, completed: false, medal: null, coinsClaimed: 0, challengeId };
-    const cappedCoins = Math.min(30, Math.max(0, Number(dailyResult.coins) || 0));
+    const cappedCoins = Math.min(80, Math.max(0, Number(dailyResult.coins) || 0));
     coinAward = Math.max(0, cappedCoins - (previousDaily.coinsClaimed || 0));
     const completionDates = [...new Set([...(nextProgress.dailyStreak.completionDates || []), dateKey])].sort();
     const rewardedMilestones = [...(nextProgress.dailyStreak.rewardedMilestones || [])];

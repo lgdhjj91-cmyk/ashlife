@@ -5,7 +5,7 @@ import './Footer.css';
 
 const logoSrc = `${import.meta.env.BASE_URL}brand/ashlife-logo.webp`;
 const shopeeUrl = import.meta.env.VITE_SHOPEE_URL || 'https://shopee.com.my/ashleylife';
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601156661438';
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -41,7 +41,17 @@ const Footer = () => {
         </div>
       </div>
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} ASHLIFE. {t('footer_rights')}</p>
+        <div className="container footer-bottom-container">
+          <div className="footer-business">
+            <p className="footer-business-item">
+              Operated by <strong className="footer-business-name">ASHLIFE TRADING</strong>
+            </p>
+            <p className="footer-business-item">
+              SSM Registration No.: <span className="footer-business-reg">202303166080 (JR0150219-T)</span>
+            </p>
+          </div>
+          <p className="footer-copyright">&copy; {new Date().getFullYear()} ASHLIFE. {t('footer_rights')}</p>
+        </div>
       </div>
     </footer>
   );

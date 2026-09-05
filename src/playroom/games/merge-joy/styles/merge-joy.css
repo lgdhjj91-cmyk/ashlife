@@ -21,10 +21,16 @@ body.merge-joy-active > div:not(#root) {
 .merge-top-actions button { padding: .55rem .75rem; }
 .merge-top-actions svg { width: 19px; }
 
-.merge-mode-tabs { width: fit-content; margin: .35rem auto .75rem; display: grid; grid-template-columns: repeat(2, minmax(128px, 190px)); gap: .35rem; padding: .3rem; border-radius: 18px; background: rgba(255,255,255,.64); box-shadow: 0 10px 24px rgba(118,56,79,.08); }
-.merge-mode-tabs button { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: .45rem; padding: .6rem 1rem; border: 1px solid rgba(215,142,160,.3); border-radius: 14px; color: #8b4d5e; background: #fff9f5; font-size: .9rem; font-weight: 950; }
+.merge-mode-picker { width: fit-content; margin: .25rem auto .75rem; }
+.merge-mode-heading { display: block; margin-bottom: .3rem; color: #8b4d5e; font-size: .72rem; font-weight: 900; letter-spacing: .03em; text-align: center; }
+.merge-mode-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2, minmax(168px, 220px)); gap: .35rem; padding: .3rem; border-radius: 18px; background: rgba(255,255,255,.64); box-shadow: 0 10px 24px rgba(118,56,79,.08); }
+.merge-mode-tabs button { min-height: 58px; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem .8rem; border: 1px solid rgba(215,142,160,.3); border-radius: 14px; color: #8b4d5e; background: #fff9f5; font-weight: 950; }
 .merge-mode-tabs button.is-selected { color: #fff; background: linear-gradient(180deg, #ff7897, #ed527b); border-color: #d9426b; box-shadow: inset 0 0 0 2px rgba(255,255,255,.34), 0 8px 18px rgba(219,66,107,.22); }
 .merge-mode-tabs svg { width: 17px; }
+.merge-mode-option-copy { display: grid; gap: .18rem; min-width: 0; line-height: 1.05; text-align: left; }
+.merge-mode-option-copy strong { font-size: .78rem; letter-spacing: .01em; }
+.merge-mode-option-copy small { color: #9a6d7a; font-size: .66rem; font-weight: 800; white-space: nowrap; }
+.merge-mode-tabs button.is-selected .merge-mode-option-copy small { color: rgba(255,255,255,.9); }
 
 .merge-game-layout { width: min(1400px, 100%); margin: 0 auto; display: grid; grid-template-columns: minmax(180px, 260px) minmax(360px, 560px) minmax(210px, 280px); align-items: start; justify-content: center; gap: clamp(.7rem, 2vw, 1.4rem); }
 .merge-board-column { grid-column: 2; grid-row: 1; min-width: 0; }
@@ -83,8 +89,11 @@ body.merge-joy-active > div:not(#root) {
 .merge-tutorial-steps li { display: flex; align-items: center; gap: .75rem; padding: .7rem; border-radius: 15px; background: rgba(255,255,255,.72); font-weight: 800; }
 .merge-tutorial-steps strong { width: 32px; height: 32px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; color: #fff; background: #ed668b; }
 .merge-primary-button, .merge-secondary-button { min-height: 48px; padding: .7rem 1rem; font-size: .9rem; letter-spacing: 0; }
-.merge-discovery-modal img, .merge-legendary-modal img { width: min(230px, 60vw); aspect-ratio: 1; object-fit: contain; }
-.merge-legendary-modal { background: radial-gradient(circle at 50% 35%, #fff7bd, #fff5f5 58%); }
+.merge-discovery-toast { position: fixed; z-index: 4000; top: calc(82px + 1rem); left: 50%; width: min(360px, calc(100% - 2rem)); display: flex; align-items: center; gap: .85rem; padding: .65rem 1rem; border: 3px solid rgba(255,255,255,.9); border-radius: 20px; color: #71334d; background: rgba(255,247,244,.96); box-shadow: 0 16px 38px rgba(83,35,58,.24); pointer-events: none; transform: translateX(-50%); animation: merge-discovery-toast 2.4s both; }
+.merge-discovery-toast img { width: 74px; height: 74px; object-fit: contain; }
+.merge-discovery-toast span { display: grid; flex: 1; gap: .1rem; font-weight: 900; }
+.merge-discovery-toast strong { color: #e34b73; text-transform: uppercase; }
+.merge-discovery-toast small { color: #896a78; font-size: .72rem; }
 .merge-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .65rem; margin: 1rem 0; }
 .merge-summary-grid div { min-height: 86px; display: grid; place-items: center; gap: .25rem; padding: .65rem; border-radius: 16px; background: #fff; border: 1px solid rgba(217,111,140,.25); }
 .merge-summary-grid span { font-size: .75rem; font-weight: 850; }
@@ -101,6 +110,7 @@ body.merge-joy-active > div:not(#root) {
 
 @keyframes merge-float { to { transform: translateY(-8px) rotate(8deg); } }
 @keyframes merge-warning { to { transform: translateY(-2px); } }
+@keyframes merge-discovery-toast { 0% { opacity: 0; transform: translate(-50%, -20px) scale(.92); } 12%, 82% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -12px) scale(.96); } }
 
 @media (max-width: 1040px) {
   .merge-game-layout { grid-template-columns: minmax(140px, 200px) minmax(360px, 560px); }
@@ -119,8 +129,13 @@ body.merge-joy-active > div:not(#root) {
   .merge-top-actions button { width: 42px; padding: 0; }
   .merge-top-actions button span { display: none; }
   .merge-top-actions { gap: .3rem; }
-  .merge-mode-tabs { width: min(100%, 390px); margin-bottom: .4rem; grid-template-columns: 1fr 1fr; }
-  .merge-mode-tabs button { min-height: 42px; padding: .45rem; font-size: .77rem; }
+  .merge-mode-picker { width: min(100%, 390px); margin-bottom: .4rem; }
+  .merge-mode-heading { margin-bottom: .25rem; font-size: .67rem; }
+  .merge-mode-tabs { width: 100%; grid-template-columns: 1fr 1fr; }
+  .merge-mode-tabs button { min-height: 54px; gap: .35rem; padding: .4rem .35rem; }
+  .merge-mode-tabs svg { width: 15px; }
+  .merge-mode-option-copy strong { font-size: .69rem; }
+  .merge-mode-option-copy small { font-size: .59rem; }
   .merge-game-layout { width: min(100%, 520px); grid-template-columns: 1fr; gap: .4rem; }
   .merge-board-column { grid-column: 1; grid-row: 2; }
   .merge-rail-left { grid-column: 1; grid-row: 1; grid-template-columns: 1fr 1fr auto; padding-top: 0; gap: .35rem; }
@@ -156,5 +171,5 @@ body.merge-joy-active > div:not(#root) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .merge-loading-star, .merge-page.has-warning .merge-canvas-shell { animation: none; }
+  .merge-loading-star, .merge-page.has-warning .merge-canvas-shell, .merge-discovery-toast { animation: none; }
 }

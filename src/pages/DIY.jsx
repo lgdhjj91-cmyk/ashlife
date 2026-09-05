@@ -151,7 +151,7 @@ const DIY_PRODUCTS = [
     },
     price: {
       label: { en: 'Price / pc', zh: '价格 / 个' },
-      value: 'RM 20.00',
+      value: 'RM 15.00',
       note: { en: 'Minimum order: 1 piece', zh: '最低起订量：1 个' },
     },
     specs: {
@@ -195,8 +195,8 @@ const DIY_PRODUCTS = [
       { type: 'image', src: asset('diy/ornament-couple.webp'), alt: 'Couple shaking ornament sample' },
       {
         type: 'image',
-        srcByLang: { en: asset('diy/ornament-details-en.svg'), zh: asset('diy/ornament-details.webp') },
-        alt: 'Shaking ornament structure comparison',
+        srcByLang: { en: asset('diy/ornament-main-en.webp'), zh: asset('diy/ornament-main-zh.webp') },
+        alt: 'Shaking ornament product features poster',
       },
     ],
   },
@@ -214,7 +214,7 @@ const DIY_PRODUCTS = [
     },
     price: {
       label: { en: 'Price / set', zh: '价格 / 套' },
-      value: 'RM 20.00',
+      value: 'RM 15.00',
       note: { en: 'Minimum order: 1 set', zh: '最低起订量：1 套' },
     },
     specs: {
@@ -248,7 +248,15 @@ const DIY_PRODUCTS = [
       ],
     },
     media: [
-      { type: 'frame-visual', alt: 'AI cartoon portrait frame mockup' },
+      {
+        type: 'image',
+        fit: 'contain',
+        srcByLang: {
+          en: asset('diy/english_promotepost.webp'),
+          zh: asset('diy/chineseaipromoteposter.webp'),
+        },
+        alt: 'AI cartoon portrait 15x22cm frame promotional poster',
+      },
       { type: 'image', src: asset('diy/ai-before-1.webp'), alt: 'Original portrait before AI cartoon generation' },
       { type: 'image', src: asset('diy/ai-after-anime.webp'), alt: 'Anime cartoon portrait sample' },
       { type: 'image', src: asset('diy/ai-after-watercolor.webp'), alt: 'Watercolor cartoon portrait sample' },
@@ -329,7 +337,12 @@ function MediaItem({ item, isPrimary = false, isThumbnail = false, language }) {
     return <FrameVisual language={language} />;
   }
 
-  return <img src={src} alt={item.alt} loading={isPrimary ? 'eager' : 'lazy'} />;
+  const imgClass = [
+    item.fit === 'contain' ? 'diy-media-contain' : '',
+    isThumbnail ? 'diy-thumb-img' : '',
+  ].filter(Boolean).join(' ') || undefined;
+
+  return <img src={src} alt={item.alt} className={imgClass} loading={isPrimary ? 'eager' : 'lazy'} />;
 }
 
 function FrameVisual({ language }) {

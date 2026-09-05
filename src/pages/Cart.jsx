@@ -129,7 +129,7 @@ const Cart = () => {
       setWaSubmitting(false);
     }
 
-    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+    const shopWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '601156661438';
     const message = encodeURIComponent(generateWhatsAppMessage(orderId));
     const whatsappUrl = `https://wa.me/${shopWhatsApp}?text=${message}`;
     if (popup) popup.location.href = whatsappUrl;

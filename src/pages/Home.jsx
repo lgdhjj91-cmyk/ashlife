@@ -34,7 +34,7 @@ const Home = () => {
     siteContent.homeFocusProductIds,
     4
   );
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601133046104';
+  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '601156661438';
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     'Hello ASHLIFE, I would like to ask about product availability.'
   )}`;

@@ -208,3 +208,32 @@
     overflow: hidden;
   }
 }
+
+@media (max-width: 640px) {
+  .shop-page {
+    gap: var(--spacing-md);
+  }
+
+  .shop-header {
+    margin-top: var(--spacing-sm);
+    gap: var(--spacing-md);
+  }
+
+  .shop-title-copy h1 {
+    font-size: 1.85rem;
+  }
+
+  .shop-filters {
+    gap: var(--spacing-sm);
+  }
+
+  .shop-layout {
+    gap: var(--spacing-md);
+    margin-top: 0;
+  }
+
+  .shop-results-info {
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.82rem;
+  }
+}

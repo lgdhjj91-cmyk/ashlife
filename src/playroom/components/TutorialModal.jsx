@@ -1,7 +1,8 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
-const TutorialModal = ({ labels, onClose }) => (
+const TutorialModal = ({ labels, onClose }) => createPortal(
   <div className="playroom-modal-backdrop" role="dialog" aria-modal="true" aria-label={labels.tutorial.dialogLabel}>
     <section className="playroom-modal tutorial-modal">
       <div className="modal-title-row">
@@ -22,7 +23,8 @@ const TutorialModal = ({ labels, onClose }) => (
         {labels.tutorial.gotIt}
       </button>
     </section>
-  </div>
+  </div>,
+  document.body
 );
 
 export default TutorialModal;
