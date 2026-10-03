@@ -24,7 +24,7 @@ import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
 import { useLanguage } from '../../context/LanguageContext';
 import { getPlayroomClawFeatureCopy } from './playroomClawFeatureCopy';
-import { badgeConfig } from '../games/badge-studio/badgeStudioConfig';
+import { getGiftRushCopy } from '../games/gift-rush/giftRushCopy';
 import { useMemoryGame } from '../hooks/useMemoryGame';
 import { usePlayroomProgress } from '../hooks/usePlayroomProgress';
 import { usePlayroomSound } from '../hooks/usePlayroomSound';
@@ -165,6 +165,7 @@ const playroomCopy = {
       'Lifestyle Items': 'Lifestyle Items',
     },
     stickerNames: {
+      'gift-rush-happy-parcel': 'Happy Parcel',
       'bear-notebook': 'Bear Notebook',
       'bunny-pencil-case': 'Bunny Pencil Case',
       'cream-glue-set': 'Cream Glue Set',
@@ -314,6 +315,7 @@ const playroomCopy = {
       'Lifestyle Items': '生活商品',
     },
     stickerNames: {
+      'gift-rush-happy-parcel': '欢乐包裹',
       'bear-notebook': '小熊笔记本',
       'bunny-pencil-case': '兔兔笔袋',
       'cream-glue-set': '奶油胶套装',
@@ -356,7 +358,7 @@ const PlayroomPage = () => {
   const progressActions = usePlayroomProgress();
   const { progress, summary, resetProgress, updateSettings } = progressActions;
   const [view, setView] = useState('landing');
-  const [activeActivity, setActiveActivity] = useState('claw');
+  const giftRushLabels = getGiftRushCopy(language);
   const [selectedDifficulty, setSelectedDifficulty] = useState('normal');
   const [showAlbum, setShowAlbum] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -467,6 +469,20 @@ const PlayroomPage = () => {
                     <Sparkles size={18} />
                     {labels.mergeJoyButton}
                   </Link>
+                </div>
+              </article>
+
+              <article className="gift-rush-feature-card">
+                <div className="gift-rush-feature-preview">
+                  <img src={import.meta.env.BASE_URL + 'assets/playroom/gift-rush/rewards/happy-parcel.webp'} alt={giftRushLabels.title} width="512" height="512" loading="lazy" />
+                </div>
+                <div className="memory-game-copy">
+                  <Sparkles size={28} />
+                  <span className="playroom-pill">{giftRushLabels.cardType}</span>
+                  <h3>{giftRushLabels.title}</h3>
+                  <p>{giftRushLabels.cardDescription}</p>
+                  <div className="claw-card-meta"><span>{giftRushLabels.cardReward}</span></div>
+                  <Link className="playroom-button primary" to="/play/gift-rush/"><Sparkles size={18} />{giftRushLabels.playNow}</Link>
                 </div>
               </article>
 

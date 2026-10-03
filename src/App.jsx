@@ -24,6 +24,7 @@ const PlayroomPage = lazy(() => import('./playroom/pages/PlayroomPage'));
 const AshlifeClawMachinePage = lazy(() => import('./playroom/games/claw-machine/AshlifeClawMachinePage'));
 const BadgeStudioPage = lazy(() => import('./playroom/games/badge-studio/BadgeStudioPage'));
 const MergeJoyPage = lazy(() => import('./playroom/games/merge-joy/MergeJoyPage'));
+const GiftRushPage = lazy(() => import('./playroom/games/gift-rush/GiftRushPage'));
 
 function App() {
   const basename = import.meta.env.BASE_URL;
@@ -48,6 +49,11 @@ function App() {
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/diy" element={<DIY />} />
+                      <Route path="/play/gift-rush/*" element={
+                        <Suspense fallback={<div className="page container">Opening Ashlife Gift Rush...</div>}>
+                          <GiftRushPage />
+                        </Suspense>
+                      } />
                       <Route
                         path="/play/merge-joy/"
                         element={
