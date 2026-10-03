@@ -11,7 +11,7 @@ export const createGiftRushClaimRunner = ({ awardCoins, getCurrentUid }) => {
       const attempt = Promise.resolve().then(async () => {
         try {
           if (getCurrentUid() !== claim.ownerUid) return { ...base, status: 'wallet-changed' };
-          const result = await awardCoins(20, claimId);
+          const result = await awardCoins(20, claimId, claim.ownerUid);
           if (getCurrentUid() !== claim.ownerUid) return { ...base, status: 'wallet-changed' };
           return result?.success
             ? { ...base, status: 'credited' }

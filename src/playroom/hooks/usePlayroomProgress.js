@@ -18,10 +18,6 @@ export const usePlayroomProgress = () => {
   } = useJoyWallet();
   const [progress, setProgress] = useState(() => loadPlayroomProgress());
 
-  useEffect(() => {
-    savePlayroomProgress(progress);
-  }, [progress]);
-
   const updateProgress = useCallback((updater) => {
     setProgress((current) => {
       const base = walletLoading
@@ -142,8 +138,8 @@ export const usePlayroomProgress = () => {
   }, [resetWalletCoins]);
 
   const syncCoinReward = useCallback(
-    (amount, claimId = createJoyRequestId('game-reward')) =>
-      awardWalletCoins(Math.max(0, Number(amount) || 0), claimId),
+    (amount, claimId = createJoyRequestId('game-reward'), expectedOwnerUid = null) =>
+      awardWalletCoins(Math.max(0, Number(amount) || 0), claimId, expectedOwnerUid),
     [awardWalletCoins]
   );
 
@@ -157,6 +153,10 @@ export const usePlayroomProgress = () => {
           }),
     [progress, wallet.coins, walletLoading]
   );
+
+  useEffect(() => {
+    savePlayroomProgress(syncedProgress);
+  }, [syncedProgress]);
 
   const summary = useMemo(
     () => ({

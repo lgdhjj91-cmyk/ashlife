@@ -16,7 +16,7 @@ test('catalogue artwork exists and both languages cover every playable item and 
     assert.ok(en.products[product.id] && zh.products[product.id]);
     await access(new URL('../../../../../public/' + product.imagePath, import.meta.url));
   }
-  for (const path of ['customers/customer-atlas.webp', 'rewards/happy-parcel.webp']) {
+  for (const path of ['customers/customer-atlas.webp', 'rewards/happy-parcel.webp', 'card/gift-rush-preview.webp']) {
     await access(new URL('../../../../../public/assets/playroom/gift-rush/' + path, import.meta.url));
   }
 });

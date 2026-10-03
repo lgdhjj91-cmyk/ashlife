@@ -474,7 +474,7 @@ const PlayroomPage = () => {
 
               <article className="gift-rush-feature-card">
                 <div className="gift-rush-feature-preview">
-                  <img src={import.meta.env.BASE_URL + 'assets/playroom/gift-rush/rewards/happy-parcel.webp'} alt={giftRushLabels.title} width="512" height="512" loading="lazy" />
+                  <img src={import.meta.env.BASE_URL + 'assets/playroom/gift-rush/card/gift-rush-preview.webp'} alt={giftRushLabels.title} width="900" height="746" loading="lazy" />
                 </div>
                 <div className="memory-game-copy">
                   <Sparkles size={28} />

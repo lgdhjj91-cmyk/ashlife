@@ -6,5 +6,5 @@
 - Happy Parcel: generated with the built-in image generation tool on 2026-10-03. Original exec-83d14f7f-bd9b-4828-9efb-9fc16ba253ed.png. Resized to 512 × 512 and exported WebP with alpha preserved; 43,810 bytes.
 - Product imagery: reuses the six original Ashlife sticker images under assets/game/stickers/. IDs and names are defined in the game's independent catalogue.
 - Counter, striped awning, wrapping patterns, shelves, and interaction controls: native CSS/HTML.
-- Game card preview: will use a screenshot of the implemented counter, rather than a mock interface.
+- Game card preview: actual implemented counter captured during browser QA; width 900 × 746, WebP quality 84, 31,174 bytes. Source: `gift-rush-card-source.png` in the session QA artifact folder.
 - Synthesized sounds: existing Playroom Web Audio tones, played only when shared sound preferences enable them.

@@ -8,7 +8,7 @@ import { usePlayroomSound } from '../../hooks/usePlayroomSound';
 import { getLocalDateKey } from '../../utils/dateKey.js';
 import { getGiftRushCopy } from './giftRushCopy.js';
 import { getGiftRushDailyChallenge, evaluateGiftRushChallenge } from './data/dailyChallenges.js';
-import { prepareGiftRushClaim, confirmGiftRushClaim } from './storage/giftRushProgress.js';
+import { prepareGiftRushClaim, confirmGiftRushClaim, getGiftRushRewardStatus, giftRushClaimId } from './storage/giftRushProgress.js';
 import { createGiftRushClaimRunner } from './systems/rewardClaims.js';
 import { useGiftRushGame } from './hooks/useGiftRushGame.js';
 import { GiftSprite } from './components/GiftArt.jsx';
@@ -53,8 +53,9 @@ const GiftRushPage = () => {
     if (!runnerRef.current) runnerRef.current = createGiftRushClaimRunner({
       awardCoins: syncCoinReward, getCurrentUid: () => uidRef.current,
     });
-    for (const [claimId, claim] of Object.entries(pendingClaims)) {
+    for (const claim of Object.values(pendingClaims)) {
       if (claim.ownerUid !== ownerUid) continue;
+      const claimId = giftRushClaimId(claim.dateKey);
       const key = ownerUid + ':' + claimId + ':' + retryToken;
       if (attempted.current.has(key)) continue;
       attempted.current.add(key);
@@ -71,7 +72,8 @@ const GiftRushPage = () => {
   const dateKey = state.sessionId ? state.dateKey : getLocalDateKey();
   const challenge = getGiftRushDailyChallenge(dateKey);
   const challengeProgress = evaluateGiftRushChallenge(challenge, state.stats);
-  const dailyRecord = progress.giftRush.dailyByDate[dateKey];
+  const dailyRewardStatus = getGiftRushRewardStatus(progress.giftRush, dateKey, ownerUid);
+  const otherWalletPending = Object.values(pendingClaims).some(claim => claim.dateKey === dateKey && claim.ownerUid && claim.ownerUid !== ownerUid);
   const active = ['running', 'paused'].includes(state.status);
   const activeDialog = dialog || (state.status === 'paused' ? 'pause' : state.status === 'finished' ? 'results' : null);
   const start = () => {
@@ -114,8 +116,8 @@ const GiftRushPage = () => {
     : lastEvent?.type === 'wrong' ? (lastEvent.reason === 'wrap' ? copy.wrongWrap : copy.wrongItems) : copy.expired;
   const claimDisabled = walletLoading || !ownerUid;
   const rewardText = state.mode !== 'daily' ? copy.practiceReward
-    : dailyRecord?.coinsClaimed === 20 ? copy.rewardCredited
-    : dailyRecord?.completed ? copy.rewardPending : copy.rewardIncomplete;
+    : dailyRewardStatus === 'credited' ? copy.rewardCredited
+    : dailyRewardStatus === 'pending' ? copy.rewardPending : otherWalletPending ? copy.walletChanged : copy.rewardIncomplete;
   return <main className={'page gift-rush-page ' + (active ? 'gift-is-playing ' : '') + (progress.settings.reduceMotion || systemReducedMotion ? 'gift-reduced-motion' : '')}>
     <div className="gift-shell">
       <div className="gift-topbar">
@@ -128,16 +130,16 @@ const GiftRushPage = () => {
         <span>{copy.eyebrow}</span><h1>{copy.title}</h1><p>{copy.description}</p>
       </header>
       {state.status === 'idle' ? <section className="gift-setup">
-        <div className="gift-shop-scene"><div className="gift-awning" /><div className="gift-shop-sign">ASHLIFE <span>GIFT COUNTER</span></div>
+        <div className="gift-shop-scene"><div className="gift-awning" /><div className="gift-shop-sign">ASHLIFE <span>{copy.counterSign}</span></div>
           <div className="gift-shop-customers">{['bear', 'bunny', 'chick'].map(id => <GiftSprite key={id} customerId={id} expression={id === 'bunny' ? 'happy' : 'waiting'} label={copy.customers[id]} />)}</div>
           <div className="gift-shop-counter"><span>♡</span><Gift size={36} /><span>♡</span></div>
           <div className="gift-scene-caption">{copy.stickerHint}</div>
         </div>
-        <div className="gift-setup-copy"><span className="gift-section-label">90 SECONDS OF JOY</span><h2>{copy.chooseMode}</h2><p>{copy.modeHint}</p>
+        <div className="gift-setup-copy"><span className="gift-section-label">{copy.setupLabel}</span><h2>{copy.chooseMode}</h2><p>{copy.modeHint}</p>
           <div className="gift-mode-options">{['practice', 'daily'].map(value => <button type="button" key={value} aria-pressed={mode === value} onClick={() => setMode(value)}>
             <span>{value === 'daily' ? <Sparkles size={20} /> : <Gift size={20} />}<strong>{copy[value]}</strong></span><small>{copy[value + 'Note']}</small>
           </button>)}</div>
-          {mode === 'daily' ? <div className="gift-daily-note"><strong>{copy.goal}</strong><p>{copy.dailyGoals[challenge.id]}</p>{dailyRecord?.coinsClaimed === 20 ? <small>{copy.rewardAlready}</small> : null}</div> : null}
+          {mode === 'daily' ? <div className="gift-daily-note"><strong>{copy.goal}</strong><p>{copy.dailyGoals[challenge.id]}</p>{dailyRewardStatus === 'credited' ? <small>{copy.rewardAlready}</small> : null}</div> : null}
           <button type="button" className="gift-primary gift-start" onClick={start}><Gift size={20} />{copy.start}</button>
           <div className="gift-personal-best"><Trophy size={17} />{copy.best}: <strong>{progress.giftRush.bestScore.toLocaleString()}</strong></div>
         </div>
@@ -147,7 +149,7 @@ const GiftRushPage = () => {
           soundEnabled={progress.settings.soundEnabled} onSound={() => updateSettings({ soundEnabled: !progress.settings.soundEnabled })} onPause={game.pause} />
         <CustomerQueue state={state} copy={copy} dispatch={game.dispatch} />
         <div className={'gift-feedback ' + (showFeedback ? 'visible ' + lastEvent.type : '')} role="status" aria-live="polite">
-          {showFeedback ? <><GiftSprite customerId={lastEvent.customerId} expression={lastEvent.type === 'delivered' ? 'happy' : 'disappointed'} label={copy.customers[lastEvent.customerId]} /><span>{feedbackText}</span>{lastEvent.points ? <strong>+{lastEvent.points}</strong> : null}</> : <span aria-hidden="true">♡</span>}
+          {showFeedback ? <><GiftSprite customerId={lastEvent.customerId} expression={lastEvent.type === 'delivered' ? 'happy' : 'disappointed'} label={copy.customers[lastEvent.customerId]} /><span>{feedbackText}</span>{lastEvent.points ? <><Gift key={lastEvent.id} className="gift-dispatch" size={19} aria-hidden="true" /><strong>+{lastEvent.points}</strong></> : null}</> : <span aria-hidden="true">♡</span>}
         </div>
         <PackingCounter state={state} copy={copy} dispatch={game.dispatch} />
       </section>}
@@ -173,9 +175,8 @@ const GiftRushPage = () => {
         <p>{copy.best}: <strong>{progress.giftRush.bestScore.toLocaleString()}</strong></p>
         {state.mode === 'daily' ? <div className="gift-daily-note"><strong>{challengeProgress.complete ? copy.goalDone : copy.goal}</strong><p>{copy.dailyGoals[challenge.id]} ({Math.min(challengeProgress.progress, challenge.target)}/{challenge.target})</p></div> : null}
         <p className="gift-result-reward" role="status">{rewardText}</p>
-        {state.mode === 'daily' && dailyRecord?.completed && dailyRecord.coinsClaimed !== 20 ? <>
-          {pendingClaims['gift-rush-daily:' + dateKey]?.ownerUid && pendingClaims['gift-rush-daily:' + dateKey].ownerUid !== ownerUid ? <p>{copy.walletChanged}</p> :
-            <button type="button" className="gift-secondary" disabled={claimDisabled} onClick={() => claimReward(dateKey)}>{copy.retry}</button>}
+        {state.mode === 'daily' && dailyRewardStatus === 'pending' ? <>
+          <button type="button" className="gift-secondary" disabled={claimDisabled} onClick={() => claimReward(dateKey)}>{pendingClaims[giftRushClaimId(dateKey)] ? copy.claim : copy.retry}</button>
           {claimDisabled ? <small>{copy.walletWait}</small> : null}
         </> : null}
         {state.stats.perfectOrders >= 5 && !ownedStickerAtStart ? <p className="gift-sticker-earned"><Sparkles size={16} />{copy.stickerUnlocked}</p> : null}

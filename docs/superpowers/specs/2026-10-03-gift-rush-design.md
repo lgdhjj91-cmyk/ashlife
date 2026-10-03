@@ -73,8 +73,8 @@ Keep storage key `ashlife-playroom-v1` and version 1. Add a normalized `giftRush
 
 - `tutorialCompleted: false`, `selectedMode: 'practice'`.
 - `bestScore: 0`, `bestCombo: 0`, `totalOrdersServed: 0`, `lastCompletedSessionId: ''`.
-- `dailyByDate: {}`; each date holds `{ challengeId, completed, bestScore, coinsClaimed }`, with `coinsClaimed` restricted to 0 or 20. Retain the latest 30 valid dates.
-- `pendingRewardClaims: {}`; each key is the deterministic claim ID and holds `{ dateKey, amount: 20, ownerUid }`. Pending claims are not removed by date pruning.
+- `dailyByDate: {}`; each date holds `{ challengeId, completed, bestScore, completedOwnerUids, claimedOwnerUids }`. Qualification and confirmation belong to individual wallets. Retain the latest 30 valid dates.
+- `pendingRewardClaims: {}`; each local key is the deterministic claim ID plus an encoded owner UID (no suffix for an unbound claim), holding `{ dateKey, amount: 20, ownerUid }`. Pending claims survive date pruning. The wallet transport still receives only `gift-rush-daily:<dateKey>`, so retries deduplicate separately in each wallet.
 
 Persist a qualifying claim before attempting the wallet call. Never add coins optimistically in the Gift Rush result reducer. Show Reward Pending when the wallet is loading or the request fails; offer retry after the round and when revisiting the game. On success, mark the matching date claimed and remove that pending claim. Repeating a request after a lost response is safe because the wallet claim ID is unchanged. Do not show a pending reward as credited.
 
@@ -119,4 +119,4 @@ Missing customer/product artwork must show a labeled fallback instead of disabli
 3. Saved progress, daily reward claims, album integration, and Playroom discovery.
 4. Browser playtesting, visual inspection, balance tuning, and production build verification.
 
-This document describes the proposed game; this request only creates planning documents.
+Implemented on 2026-10-03. Final verification and execution adjustments are recorded in `docs/qa/2026-10-03-gift-rush.md`.

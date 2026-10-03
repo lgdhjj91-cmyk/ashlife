@@ -18,6 +18,7 @@ import {
 import { auth, firestore } from '../firebase';
 import { loadPlayroomProgress, savePlayroomProgress } from '../playroom/storage/playroomStorage';
 import { createJoyRequestId, normalizeJoyWallet } from '../joy/joyWalletState';
+import { awardJoyCoinsForCurrentUser } from '../joy/joyRewardTransport.js';
 import {
   createFirestoreJoyStore,
   createJoyRepository,
@@ -116,10 +117,9 @@ export const JoyWalletProvider = ({ children }) => {
   }, [user?.uid]);
 
   const awardCoins = useCallback(
-    async (amount, claimId = createJoyRequestId('reward')) => {
+    async (amount, claimId = createJoyRequestId('reward'), expectedOwnerUid = null) => {
       try {
-        if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
-        const result = await joyRepository.awardJoyCoins(auth.currentUser.uid, amount, claimId);
+        const result = await awardJoyCoinsForCurrentUser(auth, joyRepository, amount, claimId, expectedOwnerUid);
         setServiceError('');
         return { success: true, coins: result.coins };
       } catch (error) {

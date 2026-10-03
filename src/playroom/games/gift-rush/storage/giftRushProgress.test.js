@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizePlayroomProgress } from '../../../storage/playroomStorage.js';
-import { normalizeGiftRushProgress, applyGiftRushResult, prepareGiftRushClaim, confirmGiftRushClaim } from './giftRushProgress.js';
+import { normalizeGiftRushProgress, applyGiftRushResult, prepareGiftRushClaim, confirmGiftRushClaim, giftRushClaimKey } from './giftRushProgress.js';
 
 const result = (overrides = {}) => ({ sessionId: 'session-a', mode: 'daily', dateKey: '2026-10-03', challengeId: 'combo-four', stats: { score: 900, servedOrders: 6, perfectOrders: 5, maxCombo: 4 }, ...overrides });
 const original = () => normalizePlayroomProgress({ coins: 88, custom: { keep: true }, records: { normal: { bestScore: 30 } }, clawMachine: { wonPrizeIds: ['bunny-plush'] }, mergeJoy: { highestScore: 123 } });
@@ -18,21 +18,21 @@ test('old saves retain other games and malformed Gift Rush fields recover safely
   assert.equal(malformed.bestCombo, 0);
   assert.equal(malformed.selectedMode, 'practice');
   assert.equal(malformed.dailyByDate['2026-02-31'], undefined);
-  assert.equal(malformed.dailyByDate['2026-10-03'].coinsClaimed, 0);
+  assert.equal(malformed.dailyByDate['2026-10-03'].claimedOwnerUids.length, 0);
   assert.deepEqual(malformed.pendingRewardClaims, {});
 });
 test('completed daily rounds prepare one fixed reward without optimistic coins or duplicate totals', () => {
   const first = applyGiftRushResult(original(), result(), { ownerUid: 'guest-1' });
   assert.equal(first.nextProgress.coins, 88);
   assert.equal(first.claimId, 'gift-rush-daily:2026-10-03');
-  assert.deepEqual(first.nextProgress.giftRush.pendingRewardClaims[first.claimId], { dateKey: '2026-10-03', amount: 20, ownerUid: 'guest-1' });
+  assert.deepEqual(first.nextProgress.giftRush.pendingRewardClaims[giftRushClaimKey('2026-10-03', 'guest-1')], { dateKey: '2026-10-03', amount: 20, ownerUid: 'guest-1' });
   assert.deepEqual(first.stickerIds, ['gift-rush-happy-parcel']);
   const repeated = applyGiftRushResult(first.nextProgress, result(), { ownerUid: 'guest-1' });
   assert.deepEqual(repeated.nextProgress, first.nextProgress);
   assert.equal(repeated.nextProgress.giftRush.totalOrdersServed, 6);
   const confirmed = confirmGiftRushClaim(first.nextProgress, { claimId: first.claimId, ownerUid: 'guest-1' });
   assert.equal(confirmed.coins, 88);
-  assert.equal(confirmed.giftRush.dailyByDate['2026-10-03'].coinsClaimed, 20);
+  assert.equal(confirmed.giftRush.dailyByDate['2026-10-03'].claimedOwnerUids.includes('guest-1'), true);
   assert.deepEqual(confirmed.giftRush.pendingRewardClaims, {});
   assert.equal(applyGiftRushResult(confirmed, result({ sessionId: 'session-b' }), { ownerUid: 'guest-1' }).claimId, null);
 });
@@ -43,7 +43,7 @@ test('practice and incomplete daily games never prepare coins', () => {
 test('unbound rewards require binding and bound rewards cannot move between wallets', () => {
   const first = applyGiftRushResult(original(), result(), { ownerUid: null });
   const bound = prepareGiftRushClaim(first.nextProgress, { dateKey: '2026-10-03', ownerUid: 'guest-1' });
-  assert.equal(bound.nextProgress.giftRush.pendingRewardClaims[first.claimId].ownerUid, 'guest-1');
+  assert.equal(bound.nextProgress.giftRush.pendingRewardClaims[giftRushClaimKey('2026-10-03', 'guest-1')].ownerUid, 'guest-1');
   assert.equal(prepareGiftRushClaim(bound.nextProgress, { dateKey: '2026-10-03', ownerUid: 'guest-2' }).claimId, null);
   assert.deepEqual(confirmGiftRushClaim(bound.nextProgress, { claimId: first.claimId, ownerUid: 'guest-2' }), bound.nextProgress);
 });
@@ -53,7 +53,7 @@ test('daily history prunes to 30 real dates without losing an older pending clai
   const normalized = normalizeGiftRushProgress({ dailyByDate, pendingRewardClaims });
   assert.equal(Object.keys(normalized.dailyByDate).length, 30);
   assert.equal(normalized.dailyByDate['2026-10-01'], undefined);
-  assert.ok(normalized.pendingRewardClaims['gift-rush-daily:2026-09-30']);
+  assert.ok(normalized.pendingRewardClaims[giftRushClaimKey('2026-09-30', 'guest-1')]);
   const confirmed = confirmGiftRushClaim({ ...original(), giftRush: normalized }, { claimId: 'gift-rush-daily:2026-09-30', ownerUid: 'guest-1' });
   assert.equal(confirmed.giftRush.dailyByDate['2026-10-31'].completed, true);
   assert.deepEqual(confirmed.giftRush.pendingRewardClaims, {});
