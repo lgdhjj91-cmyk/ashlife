@@ -1,3 +1,5 @@
+import { getGiftRushReward, giftRushRewardId } from '../data/rewards.js';
+
 export const createGiftRushClaimRunner = ({ awardCoins, getCurrentUid }) => {
   const inFlight = new Map();
   return {
@@ -5,13 +7,13 @@ export const createGiftRushClaimRunner = ({ awardCoins, getCurrentUid }) => {
       const base = { claimId, ownerUid: claim?.ownerUid };
       if (!claim?.ownerUid) return Promise.resolve({ ...base, status: 'unbound' });
       if (claim.ownerUid !== getCurrentUid()) return Promise.resolve({ ...base, status: 'wallet-changed' });
-      if (claim.amount !== 20 || claimId !== 'gift-rush-daily:' + claim.dateKey) return Promise.resolve({ ...base, status: 'pending', error: 'Invalid reward claim.' });
+      if (claim.amount !== getGiftRushReward(claim.rewardId)?.amount || claimId !== giftRushRewardId(claim.dateKey, claim.rewardId)) return Promise.resolve({ ...base, status: 'pending', error: 'Invalid reward claim.' });
       const key = claim.ownerUid + ':' + claimId;
       if (inFlight.has(key)) return inFlight.get(key);
       const attempt = Promise.resolve().then(async () => {
         try {
           if (getCurrentUid() !== claim.ownerUid) return { ...base, status: 'wallet-changed' };
-          const result = await awardCoins(20, claimId, claim.ownerUid);
+          const result = await awardCoins(claim.amount, claimId, claim.ownerUid);
           if (getCurrentUid() !== claim.ownerUid) return { ...base, status: 'wallet-changed' };
           return result?.success
             ? { ...base, status: 'credited' }

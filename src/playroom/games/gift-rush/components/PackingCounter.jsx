@@ -11,16 +11,17 @@ const PackingCounter = ({ state, copy, dispatch }) => {
   return <div className="gift-workspace">
     <section className="gift-packing-desk" aria-label={copy.tray}>
       <div className="gift-request">
-        <span className="gift-section-label">{copy.request}</span>
+        <div className="gift-request-heading"><span className="gift-section-label">{copy.request}</span>
+          {order ? <p className="gift-request-for"><strong>{copy.customers[order.customerId]}</strong> ♡</p> : null}
+        </div>
         {order ? <>
-          <p className="gift-request-for">{copy.giftFor} <strong>{copy.customers[order.customerId]}</strong> ♡</p>
           <ul className="gift-request-items">
             {Object.entries(quantities).map(([id, quantity]) => <li key={id} data-request-item={id} data-quantity={quantity}>
               <ProductImage product={productById.get(id)} label={copy.products[id]} />
               <span>{copy.products[id]}</span><b>×{quantity}</b>
             </li>)}
           </ul>
-          <p className={'gift-request-wrap ' + order.wrapId} data-request-wrap={order.wrapId}>
+          <p className={'gift-request-wrap gift-wrap-pattern ' + order.wrapId} data-request-wrap={order.wrapId}>
             <span aria-hidden="true">{wraps.find(wrap => wrap.id === order.wrapId).symbol}</span> {copy.wrapNeeded}: <strong>{copy.wraps[order.wrapId]}</strong>
           </p>
         </> : <div className="gift-empty-request"><Gift size={30} /><strong>{copy.waiting}</strong><p>{copy.waitingNote}</p></div>}
@@ -41,7 +42,7 @@ const PackingCounter = ({ state, copy, dispatch }) => {
         {order ? selectedWrap ? copy.selectedWrapping + copy.wraps[selectedWrap] : copy.chooseWrapping : copy.wrapping}
       </span>
         <div className="gift-wrap-options">{wraps.map(wrap => <button type="button" key={wrap.id}
-          className={'gift-wrap ' + wrap.id} aria-label={copy.wraps[wrap.id]}
+          className={'gift-wrap gift-wrap-pattern ' + wrap.id} aria-label={copy.wraps[wrap.id]}
           aria-pressed={order?.tray.wrapId === wrap.id} disabled={!order}
           onClick={() => act('SELECT_WRAP', { wrapId: wrap.id })}><span aria-hidden="true">{wrap.symbol}</span><span>{copy.wraps[wrap.id]}</span>
           {selectedWrap === wrap.id ? <Check className="gift-wrap-check" size={17} aria-hidden="true" /> : null}

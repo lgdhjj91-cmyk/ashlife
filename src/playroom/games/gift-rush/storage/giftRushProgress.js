@@ -1,4 +1,5 @@
 import { getGiftRushDailyChallenge, evaluateGiftRushChallenge } from '../data/dailyChallenges.js';
+import { giftRushRewards, getGiftRushReward, giftRushRewardId } from '../data/rewards.js';
 
 const record = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 const integer = value => ['number', 'string'].includes(typeof value) && Number.isFinite(Number(value)) ? Math.max(0, Math.floor(Number(value))) : 0;
@@ -6,9 +7,17 @@ const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.te
   !Number.isNaN(Date.parse(value + 'T00:00:00Z')) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
 const uid = value => typeof value === 'string' && value.length > 0 && value.length <= 128 ? value : null;
 const owners = value => Array.isArray(value) ? [...new Set(value.filter(value => uid(value)))] : [];
-export const giftRushClaimId = date => 'gift-rush-daily:' + date;
+export const giftRushClaimId = giftRushRewardId;
 // Local storage separates owners; Firestore receives the same fixed date ID per wallet.
-export const giftRushClaimKey = (date, ownerUid) => giftRushClaimId(date) + (uid(ownerUid) ? ':' + encodeURIComponent(ownerUid) : '');
+export const giftRushClaimKey = (date, ownerUid, rewardId = 'daily') => giftRushClaimId(date, rewardId) + (uid(ownerUid) ? ':' + encodeURIComponent(ownerUid) : '');
+const rewardRecord = (daily, rewardId) => rewardId === 'daily' ? daily : daily?.scoreBonuses?.[rewardId];
+const emptyOwners = () => ({ completedOwnerUids: [], claimedOwnerUids: [] });
+const normalizeBonuses = value => Object.fromEntries(giftRushRewards.filter(reward => reward.threshold).map(reward => [reward.id, {
+  completedOwnerUids: owners(value?.[reward.id]?.completedOwnerUids), claimedOwnerUids: owners(value?.[reward.id]?.claimedOwnerUids),
+}]));
+const pendingClaim = (dateKey, ownerUid, rewardId) => ({ dateKey, amount: getGiftRushReward(rewardId).amount, ownerUid,
+  ...(rewardId === 'daily' ? {} : { rewardId }),
+});
 export const defaultGiftRushProgress = {
   tutorialCompleted: false, selectedMode: 'practice', bestScore: 0, bestCombo: 0,
   totalOrdersServed: 0, lastCompletedSessionId: '', dailyByDate: {}, pendingRewardClaims: {},
@@ -20,37 +29,38 @@ export const normalizeGiftRushProgress = value => {
     .map(([date, daily]) => [date, {
       challengeId: getGiftRushDailyChallenge(date).id, completed: Boolean(daily?.completed), bestScore: integer(daily?.bestScore),
       completedOwnerUids: owners(daily?.completedOwnerUids), claimedOwnerUids: owners(daily?.claimedOwnerUids),
+      scoreBonuses: normalizeBonuses(daily?.scoreBonuses),
     }]));
   const pendingRewardClaims = Object.fromEntries(Object.entries(record(source.pendingRewardClaims))
-    .filter(([key, claim]) => validDate(claim?.dateKey) && claim.amount === 20 &&
-      [giftRushClaimId(claim.dateKey), giftRushClaimKey(claim.dateKey, claim.ownerUid)].includes(key))
-    .map(([, claim]) => [giftRushClaimKey(claim.dateKey, claim.ownerUid), { dateKey: claim.dateKey, amount: 20, ownerUid: uid(claim.ownerUid) }]));
+    .filter(([key, claim]) => validDate(claim?.dateKey) && getGiftRushReward(claim.rewardId)?.amount === claim.amount &&
+      [giftRushClaimId(claim.dateKey, claim.rewardId), giftRushClaimKey(claim.dateKey, claim.ownerUid, claim.rewardId)].includes(key))
+    .map(([, claim]) => [giftRushClaimKey(claim.dateKey, claim.ownerUid, claim.rewardId), pendingClaim(claim.dateKey, uid(claim.ownerUid), claim.rewardId || 'daily')]));
   return {
     tutorialCompleted: Boolean(source.tutorialCompleted), selectedMode: ['practice', 'daily'].includes(source.selectedMode) ? source.selectedMode : 'practice',
     bestScore: integer(source.bestScore), bestCombo: integer(source.bestCombo), totalOrdersServed: integer(source.totalOrdersServed),
     lastCompletedSessionId: typeof source.lastCompletedSessionId === 'string' ? source.lastCompletedSessionId : '', dailyByDate, pendingRewardClaims,
   };
 };
-export const getGiftRushRewardStatus = (giftRush, dateKey, ownerUid) => {
-  const daily = giftRush.dailyByDate[dateKey];
+export const getGiftRushRewardStatus = (giftRush, dateKey, ownerUid, rewardId = 'daily') => {
+  const daily = rewardRecord(giftRush.dailyByDate[dateKey], rewardId);
   if (uid(ownerUid) && daily?.claimedOwnerUids?.includes(ownerUid)) return 'credited';
-  if (giftRush.pendingRewardClaims[giftRushClaimKey(dateKey, ownerUid)] || giftRush.pendingRewardClaims[giftRushClaimKey(dateKey, null)]) return 'pending';
+  if (giftRush.pendingRewardClaims[giftRushClaimKey(dateKey, ownerUid, rewardId)] || giftRush.pendingRewardClaims[giftRushClaimKey(dateKey, null, rewardId)]) return 'pending';
   if (uid(ownerUid) && daily?.completedOwnerUids?.includes(ownerUid)) return 'pending';
   return 'incomplete';
 };
-export const prepareGiftRushClaim = (progress, { dateKey, ownerUid }) => {
+export const prepareGiftRushClaim = (progress, { dateKey, ownerUid, rewardId = 'daily' }) => {
   const giftRush = normalizeGiftRushProgress(progress.giftRush);
   const owner = uid(ownerUid);
-  const daily = giftRush.dailyByDate[dateKey];
-  const claimId = giftRushClaimId(dateKey);
-  const key = giftRushClaimKey(dateKey, owner);
-  const unboundKey = giftRushClaimKey(dateKey, null);
+  const daily = rewardRecord(giftRush.dailyByDate[dateKey], rewardId);
+  const claimId = giftRushClaimId(dateKey, rewardId);
+  const key = giftRushClaimKey(dateKey, owner, rewardId);
+  const unboundKey = giftRushClaimKey(dateKey, null, rewardId);
   const existing = giftRush.pendingRewardClaims[key] || giftRush.pendingRewardClaims[unboundKey];
-  if (!validDate(dateKey) || (owner && daily?.claimedOwnerUids.includes(owner)) ||
+  if (!getGiftRushReward(rewardId) || !validDate(dateKey) || (owner && daily?.claimedOwnerUids.includes(owner)) ||
       (!existing && !(owner && daily?.completedOwnerUids.includes(owner)))) return { nextProgress: progress, claimId: null };
   const pendingRewardClaims = { ...giftRush.pendingRewardClaims };
   if (owner && existing?.ownerUid === null) delete pendingRewardClaims[unboundKey];
-  pendingRewardClaims[key] = { dateKey, amount: 20, ownerUid: owner };
+  pendingRewardClaims[key] = pendingClaim(dateKey, owner, rewardId);
   return { nextProgress: { ...progress, giftRush: { ...giftRush, pendingRewardClaims } }, claimId };
 };
 export const applyGiftRushResult = (progress, result, { ownerUid }) => {
@@ -72,35 +82,55 @@ export const applyGiftRushResult = (progress, result, { ownerUid }) => {
   const challenge = getGiftRushDailyChallenge(result.dateKey);
   const qualified = evaluateGiftRushChallenge(challenge, stats).complete;
   const owner = uid(ownerUid);
-  const previous = giftRush.dailyByDate[result.dateKey] || { completed: false, bestScore: 0, completedOwnerUids: [], claimedOwnerUids: [] };
+  const previous = giftRush.dailyByDate[result.dateKey] || { completed: false, bestScore: 0, ...emptyOwners(), scoreBonuses: normalizeBonuses() };
   nextProgress.giftRush.dailyByDate = { ...giftRush.dailyByDate, [result.dateKey]: {
     ...previous, challengeId: challenge.id, completed: previous.completed || qualified,
     completedOwnerUids: owner && qualified ? [...new Set([...previous.completedOwnerUids, owner])] : previous.completedOwnerUids,
     bestScore: Math.max(previous.bestScore, integer(stats.score)),
   } };
-  // Previously unbound rewards only bind through the explicit Claim action.
-  if (!qualified || giftRush.pendingRewardClaims[giftRushClaimKey(result.dateKey, null)]) return { nextProgress, stickerIds, claimId: null };
-  if (!owner) {
-    nextProgress.giftRush.pendingRewardClaims = { ...giftRush.pendingRewardClaims,
-      [giftRushClaimKey(result.dateKey, null)]: { dateKey: result.dateKey, amount: 20, ownerUid: null } };
-    return { nextProgress, stickerIds, claimId: giftRushClaimId(result.dateKey) };
+  let claimId = null;
+  for (const reward of giftRushRewards) {
+    const earned = reward.id === 'daily' ? qualified : integer(stats.score) >= reward.threshold;
+    if (!earned) continue;
+    if (reward.id !== 'daily' && owner) {
+      const daily = nextProgress.giftRush.dailyByDate[result.dateKey];
+      const bonus = daily.scoreBonuses[reward.id];
+      daily.scoreBonuses = { ...daily.scoreBonuses, [reward.id]: { ...bonus,
+        completedOwnerUids: [...new Set([...bonus.completedOwnerUids, owner])],
+      } };
+    }
+    // Previously unbound rewards only bind through the explicit Claim action.
+    if (giftRush.pendingRewardClaims[giftRushClaimKey(result.dateKey, null, reward.id)]) continue;
+    if (!owner) {
+      nextProgress.giftRush.pendingRewardClaims = { ...nextProgress.giftRush.pendingRewardClaims,
+        [giftRushClaimKey(result.dateKey, null, reward.id)]: pendingClaim(result.dateKey, null, reward.id) };
+      if (reward.id === 'daily') claimId = giftRushClaimId(result.dateKey);
+    } else {
+      const prepared = prepareGiftRushClaim(nextProgress, { dateKey: result.dateKey, ownerUid: owner, rewardId: reward.id });
+      nextProgress = prepared.nextProgress;
+      if (reward.id === 'daily') claimId = prepared.claimId;
+    }
   }
-  return { ...prepareGiftRushClaim(nextProgress, { dateKey: result.dateKey, ownerUid: owner }), stickerIds };
+  return { nextProgress, stickerIds, claimId };
 };
 export const confirmGiftRushClaim = (progress, { claimId, ownerUid }) => {
   const giftRush = normalizeGiftRushProgress(progress.giftRush);
-  const dateKey = claimId?.slice('gift-rush-daily:'.length);
-  const key = giftRushClaimKey(dateKey, ownerUid);
-  const claim = giftRush.pendingRewardClaims[key];
-  if (!claim?.ownerUid || claim.ownerUid !== ownerUid || claimId !== giftRushClaimId(claim.dateKey)) return progress;
+  const entry = Object.entries(giftRush.pendingRewardClaims).find(([, claim]) => claim.ownerUid === ownerUid && claimId === giftRushClaimId(claim.dateKey, claim.rewardId));
+  if (!entry || !uid(ownerUid)) return progress;
+  const [key, claim] = entry;
+  const rewardId = claim.rewardId || 'daily';
   const pendingRewardClaims = { ...giftRush.pendingRewardClaims };
   delete pendingRewardClaims[key];
-  const daily = giftRush.dailyByDate[claim.dateKey];
+  const daily = giftRush.dailyByDate[claim.dateKey] || { completed: false, bestScore: 0, ...emptyOwners(), scoreBonuses: normalizeBonuses() };
+  const previous = rewardRecord(daily, rewardId);
+  const confirmed = {
+    completedOwnerUids: [...new Set([...previous.completedOwnerUids, ownerUid])],
+    claimedOwnerUids: [...new Set([...previous.claimedOwnerUids, ownerUid])],
+  };
   return { ...progress, giftRush: { ...giftRush, pendingRewardClaims,
     dailyByDate: { ...giftRush.dailyByDate, [claim.dateKey]: {
-      ...daily, challengeId: getGiftRushDailyChallenge(claim.dateKey).id, completed: true, bestScore: daily?.bestScore || 0,
-      completedOwnerUids: [...new Set([...(daily?.completedOwnerUids || []), ownerUid])],
-      claimedOwnerUids: [...new Set([...(daily?.claimedOwnerUids || []), ownerUid])],
+      ...daily, challengeId: getGiftRushDailyChallenge(claim.dateKey).id,
+      ...(rewardId === 'daily' ? { completed: true, ...confirmed } : { scoreBonuses: { ...daily.scoreBonuses, [rewardId]: confirmed } }),
     } },
   } };
 };

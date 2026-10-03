@@ -58,6 +58,19 @@ test('Gift Rush fixed date claims survive retries after a lost response', async 
   assert.equal(store.dump('joyWallets/guest-1/claims/gift-rush-daily:2026-10-03').amount, 20);
 });
 
+test('Gift Rush score tiers top up independently and deduplicate after repository recreation', async () => {
+  const store = createMemoryJoyStore({ 'joyWallets/guest-1': { coins: 88, legacyMigrated: true }, 'joyWallets/guest-2': { coins: 88, legacyMigrated: true } });
+  await createJoyRepository(store).awardJoyCoins('guest-1', 20, 'gift-rush-daily:2026-10-03');
+  await createJoyRepository(store).awardJoyCoins('guest-1', 5, 'gift-rush-score-1500:2026-10-03');
+  assert.equal(store.dump('joyWallets/guest-1').coins, 113);
+  for (const [amount, id] of [[20, 'daily'], [5, 'score-1500'], [5, 'score-2000'], [5, 'score-2000']]) {
+    await createJoyRepository(store).awardJoyCoins('guest-1', amount, 'gift-rush-' + id + ':2026-10-03');
+  }
+  assert.equal(store.dump('joyWallets/guest-1').coins, 118);
+  assert.equal((await createJoyRepository(store).awardJoyCoins('guest-2', 5, 'gift-rush-score-2000:2026-10-03')).coins, 93);
+  assert.equal(store.dump('joyWallets/guest-1').coins, 118);
+});
+
 test('redemption commits the wallet deduction, request record, and voucher together', async () => {
   const store = createMemoryJoyStore({
     'joyWallets/guest-1': { coins: 188, legacyMigrated: true },

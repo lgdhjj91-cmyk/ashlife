@@ -16,6 +16,7 @@ import CustomerQueue from './components/CustomerQueue.jsx';
 import PackingCounter from './components/PackingCounter.jsx';
 import GiftRushHUD from './components/GiftRushHUD.jsx';
 import GiftRushDialog from './components/GiftRushDialogs.jsx';
+import GiftRushRewards from './components/GiftRushRewards.jsx';
 import './styles/gift-rush.css';
 
 const GiftRushPage = () => {
@@ -55,7 +56,7 @@ const GiftRushPage = () => {
     });
     for (const claim of Object.values(pendingClaims)) {
       if (claim.ownerUid !== ownerUid) continue;
-      const claimId = giftRushClaimId(claim.dateKey);
+      const claimId = giftRushClaimId(claim.dateKey, claim.rewardId);
       const key = ownerUid + ':' + claimId + ':' + retryToken;
       if (attempted.current.has(key)) continue;
       attempted.current.add(key);
@@ -100,9 +101,9 @@ const GiftRushPage = () => {
     else if (state.status === 'paused') resume();
     else if (state.status === 'finished') abandonRound();
   }, [dialog, state.status, resume, abandonRound]);
-  const claimReward = claimDate => {
+  const claimReward = (claimDate, rewardId = 'daily') => {
     if (!ownerUid || walletLoading) return;
-    updateProgress(current => prepareGiftRushClaim(current, { dateKey: claimDate, ownerUid }).nextProgress);
+    updateProgress(current => prepareGiftRushClaim(current, { dateKey: claimDate, ownerUid, rewardId }).nextProgress);
     setRewardMessage('');
     setRetryToken(current => current + 1);
   };
@@ -115,9 +116,6 @@ const GiftRushPage = () => {
   const feedbackText = lastEvent?.type === 'delivered' ? (lastEvent.perfect ? copy.perfectDelivery : copy.delivery)
     : lastEvent?.type === 'wrong' ? (lastEvent.reason === 'wrap' ? copy.wrongWrap : copy.wrongItems) : copy.expired;
   const claimDisabled = walletLoading || !ownerUid;
-  const rewardText = state.mode !== 'daily' ? copy.practiceReward
-    : dailyRewardStatus === 'credited' ? copy.rewardCredited
-    : dailyRewardStatus === 'pending' ? copy.rewardPending : otherWalletPending ? copy.walletChanged : copy.rewardIncomplete;
   return <main className={'page gift-rush-page ' + (active ? 'gift-is-playing ' : '') + (progress.settings.reduceMotion || systemReducedMotion ? 'gift-reduced-motion' : '')}>
     <div className="gift-shell">
       <div className="gift-topbar">
@@ -139,7 +137,7 @@ const GiftRushPage = () => {
           <div className="gift-mode-options">{['practice', 'daily'].map(value => <button type="button" key={value} aria-pressed={mode === value} onClick={() => setMode(value)}>
             <span>{value === 'daily' ? <Sparkles size={20} /> : <Gift size={20} />}<strong>{copy[value]}</strong></span><small>{copy[value + 'Note']}</small>
           </button>)}</div>
-          {mode === 'daily' ? <div className="gift-daily-note"><strong>{copy.goal}</strong><p>{copy.dailyGoals[challenge.id]}</p>{dailyRewardStatus === 'credited' ? <small>{copy.rewardAlready}</small> : null}</div> : null}
+          {mode === 'daily' ? <div className="gift-daily-note"><strong>{copy.goal}</strong><p>{copy.dailyGoals[challenge.id]}</p><p>{copy.scoreBonusHint}</p>{dailyRewardStatus === 'credited' ? <small>{copy.rewardAlready}</small> : null}</div> : null}
           <button type="button" className="gift-primary gift-start" onClick={start}><Gift size={20} />{copy.start}</button>
           <div className="gift-personal-best"><Trophy size={17} />{copy.best}: <strong>{progress.giftRush.bestScore.toLocaleString()}</strong></div>
         </div>
@@ -154,12 +152,12 @@ const GiftRushPage = () => {
         <PackingCounter state={state} copy={copy} dispatch={game.dispatch} />
       </section>}
       {state.status === 'idle' && Object.keys(pendingClaims).length ? <section className="gift-pending-rewards"><h2>{copy.pendingTitle}</h2>
-        {Object.entries(pendingClaims).map(([id, claim]) => <div key={id}><span>{claim.dateKey} · 20 {copy.coins}</span>
+        {Object.entries(pendingClaims).map(([id, claim]) => <div key={id}><span>{claim.dateKey} · {claim.amount} {copy.coins} · {claim.rewardId ? claim.rewardId.slice(6) + ' ' + copy.score : copy.goalReward}</span>
           <p>{claim.ownerUid && claim.ownerUid !== ownerUid ? copy.walletChanged : copy.rewardPending}</p>
-          <button type="button" className="gift-secondary" disabled={claimDisabled || Boolean(claim.ownerUid && claim.ownerUid !== ownerUid)} onClick={() => claimReward(claim.dateKey)}>{claim.ownerUid ? copy.retry : copy.claim}</button>
+          <button type="button" className="gift-secondary" disabled={claimDisabled || Boolean(claim.ownerUid && claim.ownerUid !== ownerUid)} onClick={() => claimReward(claim.dateKey, claim.rewardId)}>{claim.ownerUid ? copy.retry : copy.claim}</button>
         </div>)}
       </section> : null}
-      <p className="gift-wallet-status" role="status">{rewardMessage === 'credited' && state.status === 'idle' ? copy.rewardCredited : rewardMessage === 'wallet-changed' ? copy.walletChanged : ''}</p>
+      <p className="gift-wallet-status" role="status">{rewardMessage === 'credited' && state.status === 'idle' ? copy.rewardUpdated : rewardMessage === 'wallet-changed' ? copy.walletChanged : ''}</p>
     </div>
     {activeDialog ? <GiftRushDialog title={activeDialog === 'tutorial' ? copy.tutorial : activeDialog === 'pause' ? copy.paused : activeDialog === 'leave' ? copy.leaveTitle : activeDialog === 'restart' ? copy.restartTitle : copy.results} copy={copy} onClose={closeDialog}>
       {activeDialog === 'tutorial' ? <><ol className="gift-tutorial">{copy.tutorialSteps.map(step => <li key={step}>{step}</li>)}</ol><button type="button" className="gift-primary" onClick={finishTutorial}>{tutorialStartsGame ? copy.start : copy.close}</button></> : null}
@@ -174,11 +172,8 @@ const GiftRushPage = () => {
         <div className="gift-result-stats">{[[copy.served, state.stats.servedOrders], [copy.perfect, state.stats.perfectOrders], [copy.maxCombo, state.stats.maxCombo]].map(([label, value]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
         <p>{copy.best}: <strong>{progress.giftRush.bestScore.toLocaleString()}</strong></p>
         {state.mode === 'daily' ? <div className="gift-daily-note"><strong>{challengeProgress.complete ? copy.goalDone : copy.goal}</strong><p>{copy.dailyGoals[challenge.id]} ({Math.min(challengeProgress.progress, challenge.target)}/{challenge.target})</p></div> : null}
-        <p className="gift-result-reward" role="status">{rewardText}</p>
-        {state.mode === 'daily' && dailyRewardStatus === 'pending' ? <>
-          <button type="button" className="gift-secondary" disabled={claimDisabled} onClick={() => claimReward(dateKey)}>{pendingClaims[giftRushClaimId(dateKey)] ? copy.claim : copy.retry}</button>
-          {claimDisabled ? <small>{copy.walletWait}</small> : null}
-        </> : null}
+        {state.mode === 'daily' ? <><GiftRushRewards giftRush={progress.giftRush} dateKey={dateKey} ownerUid={ownerUid} copy={copy} claimDisabled={claimDisabled} onClaim={claimReward} />
+          {otherWalletPending ? <p className="gift-result-reward">{copy.walletChanged}</p> : null}</> : <p className="gift-result-reward">{copy.practiceReward}</p>}
         {state.stats.perfectOrders >= 5 && !ownedStickerAtStart ? <p className="gift-sticker-earned"><Sparkles size={16} />{copy.stickerUnlocked}</p> : null}
         <div className="gift-dialog-actions"><button type="button" className="gift-primary" onClick={() => { setOwnedStickerAtStart(progress.unlockedStickers.includes('gift-rush-happy-parcel')); game.startRound(state.mode); }}>{copy.replay}</button>
           <button type="button" className="gift-secondary" onClick={() => { game.abandonRound(); navigate('/play/'); }}>{copy.back}</button></div>
