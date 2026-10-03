@@ -1,10 +1,11 @@
 import React from 'react';
-import { Gift, PackageCheck, X } from 'lucide-react';
+import { Check, Gift, PackageCheck, X } from 'lucide-react';
 import { products, productById, wraps } from '../data/giftRushConfig.js';
 import { ProductImage } from './GiftArt.jsx';
 
 const PackingCounter = ({ state, copy, dispatch }) => {
   const order = state.orders.find(item => item.id === state.selectedOrderId);
+  const selectedWrap = order?.tray.wrapId;
   const act = (type, payload = {}) => dispatch({ type, sessionId: state.sessionId, orderId: order?.id, ...payload });
   const quantities = order?.items.reduce((all, id) => ({ ...all, [id]: (all[id] || 0) + 1 }), {}) || {};
   return <div className="gift-workspace">
@@ -36,13 +37,17 @@ const PackingCounter = ({ state, copy, dispatch }) => {
           </button> : <div key={index} className="gift-tray-slot" aria-label={copy.emptySlot}><span>+</span></div>;
         })}
       </div>
-      <div className="gift-wrapping"><span className="gift-section-label">{copy.wrapping}</span>
+      <div className="gift-wrapping"><span className="gift-section-label gift-wrapping-status" role="status">
+        {order ? selectedWrap ? copy.selectedWrapping + copy.wraps[selectedWrap] : copy.chooseWrapping : copy.wrapping}
+      </span>
         <div className="gift-wrap-options">{wraps.map(wrap => <button type="button" key={wrap.id}
           className={'gift-wrap ' + wrap.id} aria-label={copy.wraps[wrap.id]}
           aria-pressed={order?.tray.wrapId === wrap.id} disabled={!order}
-          onClick={() => act('SELECT_WRAP', { wrapId: wrap.id })}><span aria-hidden="true">{wrap.symbol}</span><span>{copy.wraps[wrap.id]}</span></button>)}</div>
+          onClick={() => act('SELECT_WRAP', { wrapId: wrap.id })}><span aria-hidden="true">{wrap.symbol}</span><span>{copy.wraps[wrap.id]}</span>
+          {selectedWrap === wrap.id ? <Check className="gift-wrap-check" size={17} aria-hidden="true" /> : null}
+        </button>)}</div>
       </div>
-      <button type="button" className="gift-primary gift-pack" disabled={!order} onClick={() => act('PACK')}><PackageCheck size={21} />{copy.pack}</button>
+      <button type="button" className="gift-primary gift-pack" disabled={!order || !selectedWrap} onClick={() => act('PACK')}><PackageCheck size={21} />{order && !selectedWrap ? copy.chooseWrappingFirst : copy.pack}</button>
     </section>
     <section className="gift-product-shelf" aria-label={copy.shelf}>
       <div className="gift-shelf-sign"><span>ASHLIFE</span><h2>{copy.shelf}</h2></div>

@@ -23,7 +23,7 @@ Defer shop decoration, inventory management, purchases, persistent campaigns, le
 
 1. Select a waiting customer. Their request shows exact product icons, quantities, and a wrapping pattern.
 2. Tap shelf products to add them to that customer's tray. A tray holds at most three items. Tapping a tray slot removes that item; Clear Tray removes items and wrapping.
-3. Select wrapping, then press Pack Gift. A valid parcel requires an exact product multiset and exact wrapping ID: missing, extra, or wrong quantities fail.
+3. Select wrapping, then press Pack Gift. Pack is disabled until wrapping is explicitly chosen; the selected choice has a checkmark and named status. A valid parcel requires an exact product multiset and exact wrapping ID: missing, extra, or wrong quantities fail.
 4. A correct parcel leaves the counter, awards points, and shows a happy reaction. It is immediately removed from active orders so a second Pack action cannot serve it again.
 5. A wrong Pack attempt removes three seconds of that customer's patience, resets the combo, and marks that order imperfect. The tray remains editable. Choosing then removing an incorrect item alone carries no penalty.
 6. Expired customers leave, reset the combo, and show a brief disappointed reaction. There is no life counter or premature game-over; the round always lasts 90 seconds of active play.
