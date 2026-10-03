@@ -1,3 +1,5 @@
+import { defaultGiftRushProgress, normalizeGiftRushProgress } from '../games/gift-rush/storage/giftRushProgress.js';
+
 const STORAGE_KEY = 'ashlife-playroom-v1';
 
 export const PLAYROOM_STORAGE_VERSION = 1;
@@ -5,6 +7,7 @@ export const PLAYROOM_STORAGE_VERSION = 1;
 export const defaultPlayroomProgress = {
   version: PLAYROOM_STORAGE_VERSION,
   coins: 0,
+  giftRush: defaultGiftRushProgress,
   unlockedStickers: [],
   stickerUnlockDates: {},
   clawMachine: {
@@ -91,6 +94,7 @@ export const normalizePlayroomProgress = (value) => {
     ...base,
     ...value,
     version: PLAYROOM_STORAGE_VERSION,
+    giftRush: normalizeGiftRushProgress(value.giftRush),
     coins: Math.max(0, Number(value.coins) || 0),
     unlockedStickers: Array.isArray(value.unlockedStickers) ? [...new Set(value.unlockedStickers)] : [],
     stickerUnlockDates:

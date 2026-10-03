@@ -50,6 +50,14 @@ test('reward claims add coins once for a repeated claim ID', async () => {
   assert.equal(store.dump('joyWallets/guest-1/claims/claim-1').amount, 12);
 });
 
+test('Gift Rush fixed date claims survive retries after a lost response', async () => {
+  const store = createMemoryJoyStore({ 'joyWallets/guest-1': { coins: 88, legacyMigrated: true } });
+  await createJoyRepository(store).awardJoyCoins('guest-1', 20, 'gift-rush-daily:2026-10-03');
+  const retried = await createJoyRepository(store).awardJoyCoins('guest-1', 20, 'gift-rush-daily:2026-10-03');
+  assert.equal(retried.coins, 108);
+  assert.equal(store.dump('joyWallets/guest-1/claims/gift-rush-daily:2026-10-03').amount, 20);
+});
+
 test('redemption commits the wallet deduction, request record, and voucher together', async () => {
   const store = createMemoryJoyStore({
     'joyWallets/guest-1': { coins: 188, legacyMigrated: true },
