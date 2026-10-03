@@ -9,7 +9,7 @@ export const products = [
 
 export const customers = ['bunny', 'bear', 'chick'].map(id => ({
   id,
-  imagePath: 'assets/playroom/gift-rush/customers/' + id + '-waiting.webp',
+  imagePath: 'assets/playroom/gift-rush/customers/customer-atlas.webp',
 }));
 export const wraps = [
   { id: 'pink-hearts', symbol: '♥' },
