@@ -174,7 +174,13 @@ const mergeJoyRewardStickers = [
   })),
 ];
 
-export const stickers = [...memoryMatchStickers, ...mergeJoyRewardStickers];
+const giftRushRewardStickers = [{
+  id: 'gift-rush-happy-parcel', name: 'Happy Parcel',
+  image: import.meta.env.BASE_URL + 'assets/playroom/gift-rush/rewards/happy-parcel.webp',
+  category: 'Cute Gifts', rarity: 'uncommon', productCategory: 'Cute Accessories',
+  alt: 'Smiling pink gift parcel with a cream bow and lavender star tag',
+}];
+export const stickers = [...memoryMatchStickers, ...mergeJoyRewardStickers, ...giftRushRewardStickers];
 
 export const stickerById = new Map(stickers.map((sticker) => [sticker.id, sticker]));
 

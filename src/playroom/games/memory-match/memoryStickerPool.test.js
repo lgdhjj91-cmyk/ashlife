@@ -46,6 +46,8 @@ test('uses only the original sticker artwork for Memory Match', async () => {
     assert.equal(deck.length, 24);
     assert.ok(deck.every((card) => card.sticker.image.includes('assets/game/stickers/')));
     assert.ok(stickers.some((sticker) => sticker.id === 'merge-golden-bunny'), 'Merge rewards should remain in the album');
+    assert.ok(stickers.some((sticker) => sticker.id === 'gift-rush-happy-parcel'), 'Gift Rush reward belongs in the album');
+    assert.ok(memoryMatchStickers.every((sticker) => !sticker.id.startsWith('gift-rush-')));
   } finally {
     await vite.close();
     await rm(cacheDir, { recursive: true, force: true });
