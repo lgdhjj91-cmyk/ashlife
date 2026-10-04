@@ -10,7 +10,7 @@ const OrderContext = createContext();
 export const useOrders = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
-  const { settleVoucher } = useJoyWallet();
+  const { settleRewards } = useJoyWallet();
   const [orders, setOrders] = useState([]);
   const [paymentSettings, setPaymentSettings] = useState({
     mae_qr_url: '',
@@ -234,9 +234,10 @@ export const OrderProvider = ({ children }) => {
         updatedAt: new Date().toISOString(),
       });
 
-      if (current.voucher?.code && ['confirmed', 'completed', 'rejected', 'cancelled'].includes(status)) {
-        const settlement = await settleVoucher({
-          code: current.voucher.code,
+      const rewardCodes = [...(current.voucher?.code ? [current.voucher.code] : []), ...(current.gifts || []).map((gift) => gift.code)];
+      if (rewardCodes.length && ['confirmed', 'completed', 'rejected', 'cancelled'].includes(status)) {
+        const settlement = await settleRewards({
+          codes: rewardCodes,
           orderId,
           orderStatus: status,
         });
@@ -244,14 +245,19 @@ export const OrderProvider = ({ children }) => {
           return {
             success: false,
             orderUpdated: true,
-            error: `Order updated, but voucher synchronization needs retry. ${settlement.error}`,
+            error: `Order updated, but reward synchronization needs retry. ${settlement.error}`,
           };
         }
 
-        await update(orderRef, {
-          'voucher/status': settlement.voucher.status,
-          'voucher/updatedAt': new Date().toISOString(),
+        const rewardUpdates = {};
+        if (current.voucher?.code) {
+          rewardUpdates['voucher/status'] = settlement.rewards.find((reward) => reward.code === current.voucher.code).status;
+          rewardUpdates['voucher/updatedAt'] = new Date().toISOString();
+        }
+        (current.gifts || []).forEach((gift, index) => {
+          rewardUpdates[`gifts/${index}/status`] = settlement.rewards.find((reward) => reward.code === gift.code).status;
         });
+        await update(orderRef, rewardUpdates);
       }
 
       return { success: true };
@@ -259,7 +265,7 @@ export const OrderProvider = ({ children }) => {
       console.error('Failed to update order status:', error);
       return { success: false, error: error.message };
     }
-  }, [settleVoucher]);
+  }, [settleRewards]);
 
   // Upload QR code image (admin)
   const uploadQRCode = useCallback(

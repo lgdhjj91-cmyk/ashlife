@@ -30,6 +30,7 @@ const ClawMachineGame = ({
   language,
   copy,
   testMode = false,
+  controlsBlocked = false,
   onEvent,
   registerControls,
 }) => {
@@ -123,6 +124,7 @@ const ClawMachineGame = ({
   }, []);
 
   const handleKeyDown = (event) => {
+    if (controlsBlocked || event.altKey || event.ctrlKey || event.metaKey) return;
     if (!gameplayKeys.has(event.code)) return;
     event.preventDefault();
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') bridgeRef.current?.setMove('left', true);
@@ -145,14 +147,24 @@ const ClawMachineGame = ({
       handleKeyDown(event);
     };
     const onDocumentKeyUp = (event) => {
+      // Key-up must clear movement even if focus moved to an input or dialog.
+      if (['ArrowLeft', 'KeyA'].includes(event.code)) bridgeRef.current?.setMove('left', false);
+      if (['ArrowRight', 'KeyD'].includes(event.code)) bridgeRef.current?.setMove('right', false);
       if (shouldIgnoreDocumentGameplayKey(event.target, shellRef.current, event.code)) return;
       handleKeyUp(event);
     };
+    const clearMovement = () => {
+      bridgeRef.current?.setMove('left', false);
+      bridgeRef.current?.setMove('right', false);
+    };
+    if (controlsBlocked) clearMovement();
     document.addEventListener('keydown', onDocumentKeyDown);
     document.addEventListener('keyup', onDocumentKeyUp);
+    window.addEventListener('blur', clearMovement);
     return () => {
       document.removeEventListener('keydown', onDocumentKeyDown);
       document.removeEventListener('keyup', onDocumentKeyUp);
+      window.removeEventListener('blur', clearMovement);
     };
   });
 

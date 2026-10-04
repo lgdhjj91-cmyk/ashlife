@@ -5,7 +5,7 @@ import { calculateMergeAward, getComboCount, PERFECT_DROP_WINDOW_MS } from '../.
 import { isDangerousBody, updateDangerState } from '../../systems/dangerRules.js';
 import { destroyMatterPieceSafely } from '../../systems/phaserPieceCleanup.js';
 
-const BOARD = { left: 46, right: 574, top: 18, bottom: 752, dangerY: 240 };
+const BOARD = { left: 46, right: 574, top: 18, bottom: 752, dangerY: 190 };
 const PREVIEW_Y = 78;
 const SPAWN_Y = 92;
 const WALL_SIZE = 34;
@@ -130,7 +130,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       if (this.isGameOver || this.preview) return;
       this.currentTier = forcedTier || this.nextTierFromQueue();
       const tier = getMergeTier(this.currentTier);
-      const size = getPieceDiameter(tier, true);
+      const size = getPieceDiameter(tier);
       this.preview = this.add.image(this.aimX, PREVIEW_Y, tier.textureKey)
         .setDisplaySize(size, size)
         .setDepth(20);
@@ -141,7 +141,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
     movePreviewTo(x) {
       if (!this.preview || this.isGameOver || this.isPaused) return;
       const tier = getMergeTier(this.currentTier);
-      const size = getPieceDiameter(tier, true);
+      const size = getPieceDiameter(tier);
       this.aimX = Phaser.Math.Clamp(x, BOARD.left + size / 2, BOARD.right - size / 2);
       this.preview.x = this.aimX;
     }
@@ -165,7 +165,6 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       this.sameLaneDropStreak = pressure.streak;
       this.addPiece(tier, x, SPAWN_Y, {
         dropToken: this.lastDropToken,
-        isDrop: true,
         velocity: pressure.velocityX ? { x: pressure.velocityX, y: 0 } : null,
       });
       this.holdLocked = false;
@@ -194,9 +193,9 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
       return true;
     }
 
-    addPiece(tierNumber, x, y, { velocity = null, dropToken = 0, bornAt = null, isDrop = false } = {}) {
+    addPiece(tierNumber, x, y, { velocity = null, dropToken = 0, bornAt = null } = {}) {
       const tier = getMergeTier(tierNumber);
-      const size = getPieceDiameter(tier, isDrop);
+      const size = getPieceDiameter(tier);
       const piece = this.matter.add.image(x, y, tier.textureKey);
       piece.setDisplaySize(size, size);
       const bodySize = bodySizeForTier(tier, size);
@@ -250,6 +249,7 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
         const nextTier = sourceTier + 1;
         const created = this.addPiece(nextTier, x, y, { velocity, dropToken, bornAt });
         created.setAngularVelocity(Phaser.Math.Clamp(velocity.x * 0.015, -0.035, 0.035));
+        this.createMergeSparkles(x, y, nextTier);
 
         const now = this.time.now;
         this.comboCount = getComboCount({ previousCount: this.comboCount, previousMergeAt: this.previousMergeAt, now });
@@ -284,6 +284,34 @@ export const createMergeJoyScene = (Phaser, { events, settings }) =>
           duration: 260,
           ease: 'Cubic.out',
           onComplete: () => dot.destroy(),
+        });
+      }
+    }
+
+    createMergeSparkles(x, y, tierNumber) {
+      const radius = getPieceDiameter(getMergeTier(tierNumber)) * 0.48;
+      const halo = this.add.circle(x, y, radius, 0xffe9a8, 0)
+        .setStrokeStyle(3, 0xffc96b, 0.8).setDepth(29);
+      this.tweens.add({
+        targets: halo, scale: 1.35, alpha: 0, duration: 440, ease: 'Cubic.out',
+        onComplete: () => halo.destroy(),
+      });
+      for (let index = 0; index < 6; index += 1) {
+        const angle = (Math.PI * 2 * index) / 6 - Math.PI / 2;
+        const sparkle = this.add.star(
+          x + Math.cos(angle) * radius, y + Math.sin(angle) * radius,
+          4, 2.5, 7, index % 2 ? 0xffa9c8 : 0xffd46a,
+        ).setStrokeStyle(1, 0xffffff, 0.9).setDepth(31).setScale(0.3);
+        this.tweens.add({
+          targets: sparkle, scale: 1, duration: 130, ease: 'Back.out',
+        });
+        this.tweens.add({
+          targets: sparkle,
+          x: x + Math.cos(angle) * (radius + 24),
+          y: y + Math.sin(angle) * (radius + 24) - 16,
+          angle: index % 2 ? 70 : -70, alpha: 0,
+          duration: 520, ease: 'Sine.out',
+          onComplete: () => sparkle.destroy(),
         });
       }
     }

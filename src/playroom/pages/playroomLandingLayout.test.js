@@ -125,7 +125,7 @@ test('puts playable games before rewards and progress on the Playroom landing pa
   const firstGame = html.indexOf('Ashlife Merge &amp; Joy');
   const secondGame = html.indexOf('Ashlife Swing &amp; Win');
   const thirdGame = html.indexOf('Product Memory Match');
-  const rewards = html.indexOf('Turn playtime into savings');
+  const rewards = html.indexOf('Little games. Real gifts.');
   const dailyChallenge = html.indexOf('Daily challenge');
 
   assert.notEqual(firstGame, -1);
@@ -136,6 +136,7 @@ test('puts playable games before rewards and progress on the Playroom landing pa
   assert.ok(firstGame < secondGame && secondGame < thirdGame, 'playable games should keep their intended order');
   assert.ok(firstGame < rewards, 'the first playable game should appear before Joy Rewards');
   assert.ok(firstGame < dailyChallenge, 'the first playable game should appear before progress cards');
+  assert.match(html, /href="\/joy-coins" class="joy-balance-card"/);
 });
 
 test('does not show an automatic tutorial or unavailable games on entry', async () => {

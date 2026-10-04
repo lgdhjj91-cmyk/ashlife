@@ -7,18 +7,21 @@ import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import JoyVoucherCard from '../components/JoyVoucherCard';
 import { useJoyWallet } from '../context/JoyWalletContext';
-import { calculateVoucherTotals, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { calculateVoucherTotals, rewardName, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { buildOrderGiftSnapshots } from '../joy/joyRewardSelection';
 import { buildOrderVoucherSnapshot, createCheckoutOrderId } from '../joy/orderVoucher';
 import { useOrders } from '../context/OrderContext';
 import './Cart.css';
+import { giftFulfillmentCopy } from '../joy/giftFulfillment';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, getAvailableStock } = useCart();
   const { t, language } = useLanguage();
   const {
     selectedVoucher,
-    reserveVoucher,
-    releaseVoucher,
+    selectedGifts,
+    reserveRewards,
+    releaseRewards,
     clearVoucherSelection,
   } = useJoyWallet();
   const { createOrder } = useOrders();
@@ -61,6 +64,10 @@ const Cart = () => {
       message += `\nJoy voucher: ${selectedVoucher.code}\n`;
       message += `Discount: -RM ${discountTotal.toFixed(2)} (subject to confirmation)\n`;
     }
+    buildOrderGiftSnapshots(selectedGifts, rmToSen(cartTotal)).forEach((gift) => {
+      message += `\nFree gift: ${rewardName(gift, language)} × 1 (${gift.code})\n`;
+    });
+    if (selectedGifts.length) message += `${giftFulfillmentCopy(language, deliveryOption)}\n`;
     message += `\n${t('wa_total')}: RM ${cartTotalAfterDiscount.toFixed(2)}\n\n`;
     message += `Notes: Payment is verified manually. Delivery fee will be confirmed before shipment.\n\n`;
     message += t('wa_closing');
@@ -72,20 +79,22 @@ const Cart = () => {
     if (cartItems.length === 0) return;
     const popup = window.open('', '_blank');
     const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
+    const gifts = buildOrderGiftSnapshots(selectedGifts, rmToSen(cartTotal));
+    const codes = [...(voucherSnapshot ? [voucherSnapshot.code] : []), ...gifts.map((gift) => gift.code)];
     let orderId = '';
 
-    if (voucherSnapshot) {
+    if (codes.length) {
       setWaSubmitting(true);
       orderId = createCheckoutOrderId();
-      const reservation = await reserveVoucher({
-        code: voucherSnapshot.code,
+      const reservation = await reserveRewards({
+        codes,
         orderId,
         subtotalSen: rmToSen(cartTotal),
       });
       if (!reservation.success) {
         setWaSubmitting(false);
         popup?.close();
-        alert(`Joy voucher could not be reserved: ${reservation.error}`);
+        alert(`Joy rewards could not be reserved: ${reservation.error}`);
         return;
       }
 
@@ -113,16 +122,17 @@ const Cart = () => {
         discount: discountTotal,
         discountSen: voucherTotals.discountSen,
         voucher: voucherSnapshot,
+        gifts,
         deliveryFee: 0,
         total: cartTotalAfterDiscount,
         paymentMethod: 'whatsapp',
       });
 
       if (!result.success) {
-        await releaseVoucher({ code: voucherSnapshot.code, orderId });
+        const released = await releaseRewards({ codes, orderId });
         setWaSubmitting(false);
         popup?.close();
-        alert(`Order could not be created: ${result.error}`);
+        alert(`Order could not be created: ${result.error}${released.success ? '' : ` Rewards still reserved; retry release: ${released.error}`}`);
         return;
       }
       clearVoucherSelection();
@@ -303,6 +313,7 @@ const Cart = () => {
                   </select>
                 </label>
 
+                <p className="checkout-note">{giftFulfillmentCopy(language, deliveryOption)}</p>
                 <div className="form-group">
                   <input
                     type="text"
@@ -332,7 +343,7 @@ const Cart = () => {
                 </div>
 
                 <button type="submit" className="btn btn-primary w-full confirm-order-btn" disabled={!isCartValid || waSubmitting}>
-                  <MessageCircle size={18} /> {waSubmitting ? 'Reserving voucher…' : t('confirm_order')}
+                  <MessageCircle size={18} /> {waSubmitting ? 'Reserving rewards…' : t('confirm_order')}
                 </button>
 
                 <p className="checkout-note">

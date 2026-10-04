@@ -53,3 +53,24 @@ test('uses only the original sticker artwork for Memory Match', async () => {
     await rm(cacheDir, { recursive: true, force: true });
   }
 });
+
+test('Memory Match uses complete repaired artwork for the damaged sticker set', async () => {
+  const cacheDir = await mkdtemp(join(tmpdir(), 'ashlife-memory-art-vite-'));
+  const vite = await createServer({
+    cacheDir,
+    logLevel: 'silent',
+    server: { middlewareMode: true, hmr: false },
+    appType: 'custom',
+  });
+
+  try {
+    const { memoryMatchStickers } = await vite.ssrLoadModule('/src/playroom/data/stickers.js');
+    const repaired = memoryMatchStickers.filter((sticker) => sticker.memoryImage);
+    assert.equal(repaired.length, 11);
+    assert.ok(repaired.every((sticker) => sticker.memoryImage.includes('/assets/game/stickers/memory/')));
+    assert.ok(repaired.every((sticker) => sticker.image.includes('/assets/game/stickers/')));
+  } finally {
+    await vite.close();
+    await rm(cacheDir, { recursive: true, force: true });
+  }
+});

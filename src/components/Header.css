@@ -467,3 +467,4 @@
     font-size: 0.92rem;
   }
 }
+.joy-header-link { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }

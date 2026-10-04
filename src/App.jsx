@@ -21,6 +21,7 @@ import DIY from './pages/DIY';
 import Checkout from './pages/Checkout';
 
 const PlayroomPage = lazy(() => import('./playroom/pages/PlayroomPage'));
+const JoyCoins = lazy(() => import('./pages/JoyCoins'));
 const AshlifeClawMachinePage = lazy(() => import('./playroom/games/claw-machine/AshlifeClawMachinePage'));
 const BadgeStudioPage = lazy(() => import('./playroom/games/badge-studio/BadgeStudioPage'));
 const MergeJoyPage = lazy(() => import('./playroom/games/merge-joy/MergeJoyPage'));
@@ -47,6 +48,7 @@ function App() {
                       <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/cart" element={<Cart />} />
                       <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/joy-coins" element={<Suspense fallback={<div className="page container">Opening Joy Coins...</div>}><JoyCoins /></Suspense>} />
                       <Route path="/about" element={<About />} />
                       <Route path="/diy" element={<DIY />} />
                       <Route path="/play/gift-rush/*" element={

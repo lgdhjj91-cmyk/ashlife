@@ -2,7 +2,9 @@ import {
   collection,
   doc,
   getDoc,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
@@ -17,7 +19,7 @@ import {
   reserveVoucherRecord,
   settleVoucherRecord,
 } from './joyVoucherLifecycle.js';
-import { getVoucherEligibility, normalizeVoucherCode } from './joyVoucherRules.js';
+import { GIFT_TIERS, getVoucherEligibility, isGardenReward, isGiftReward, normalizeVoucherCode } from './joyVoucherRules.js';
 
 const createError = (code, message) => Object.assign(new Error(message), { code });
 
@@ -31,6 +33,8 @@ const walletPath = (uid) => `joyWallets/${uid}`;
 const claimPath = (uid, claimId) => `${walletPath(uid)}/claims/${claimId}`;
 const redemptionPath = (uid, requestId) => `${walletPath(uid)}/redemptions/${requestId}`;
 const voucherPath = (code) => `joyVouchers/${code}`;
+const stockPath = (tierId) => `giftStock/${tierId}`;
+const hasGiftStock = (stock) => Number.isSafeInteger(stock?.available) && stock.available > 0;
 
 export const createFirestoreJoyStore = (firestore) => ({
   transact(operation) {
@@ -66,6 +70,13 @@ export const createFirestoreJoyStore = (firestore) => ({
     return onSnapshot(
       ownedVouchers,
       (snapshot) => onValue(snapshot.docs.map((voucher) => voucher.data())),
+      onError
+    );
+  },
+  listenHistory(uid, kind, onValue, onError) {
+    return onSnapshot(
+      query(collection(firestore, `${walletPath(uid)}/${kind}`), orderBy('createdAt', 'desc'), limit(100)),
+      (snapshot) => onValue(snapshot.docs.map((entry) => ({ ...entry.data(), id: entry.id }))),
       onError
     );
   },
@@ -145,6 +156,11 @@ export const createJoyRepository = (store, { createCode = createJoyVoucherCode }
             throw createError('joy-code-collision', 'Voucher code collision.');
           }
 
+          if (GIFT_TIERS.some((tier) => tier.id === tierId)) {
+            const stock = await transaction.get(stockPath(tierId));
+            if (stock && !hasGiftStock(stock)) throw createError('out-of-stock', 'This gift is currently out of stock. Your coins have not been spent.');
+          }
+
           const at = store.timestamp();
           const result = applyRedemption(current, tierId, code, {
             mutationId: requestId,
@@ -168,6 +184,12 @@ export const createJoyRepository = (store, { createCode = createJoyVoucherCode }
     if (!code) return { valid: false, reason: 'invalid', voucher: null };
     const voucher = await store.get(voucherPath(code));
     const eligibility = getVoucherEligibility(voucher, subtotalSen);
+    if (eligibility.eligible && isGiftReward(voucher)) {
+      const stock = await store.get(stockPath(voucher.tierId));
+      if ((stock || isGardenReward(voucher)) && !hasGiftStock(stock)) {
+        return { valid: false, reason: 'stock', voucher };
+      }
+    }
     return {
       valid: eligibility.eligible,
       reason: eligibility.reason,
@@ -176,58 +198,80 @@ export const createJoyRepository = (store, { createCode = createJoyVoucherCode }
   };
 
   const reserveJoyVoucher = async (uidValue, reservation = {}) => {
-    const uid = requireText(uidValue, 'Customer');
-    const code = normalizeVoucherCode(reservation.code);
-    const orderId = requireText(reservation.orderId, 'Order ID');
-    if (!code) throw createError('invalid-argument', 'Voucher code is required.');
-    return store.transact(async (transaction) => {
-      const current = await transaction.get(voucherPath(code));
-      const voucher = reserveVoucherRecord(current, {
-        uid,
-        orderId,
-        subtotalSen: reservation.subtotalSen,
-        at: store.timestamp(),
-      });
-      transaction.set(voucherPath(code), voucher);
-      return { voucher };
-    });
+    const result = await reserveJoyRewards(uidValue, { ...reservation, codes: [reservation.code] });
+    return { voucher: result.rewards[0] };
   };
 
   const releaseJoyVoucher = async (uidValue, reservation = {}) => {
-    const uid = requireText(uidValue, 'Customer');
-    const code = normalizeVoucherCode(reservation.code);
-    const orderId = requireText(reservation.orderId, 'Order ID');
-    if (!code) throw createError('invalid-argument', 'Voucher code is required.');
-    return store.transact(async (transaction) => {
-      const current = await transaction.get(voucherPath(code));
-      if (current?.status === 'available') return { voucher: current };
-      if (current?.reservedByUid !== uid) {
-        throw createError('permission-denied', 'This voucher reservation belongs to another customer.');
-      }
-      const voucher = settleVoucherRecord(current, {
-        orderId,
-        orderStatus: 'cancelled',
-        at: store.timestamp(),
-      });
-      transaction.set(voucherPath(code), voucher);
-      return { voucher };
-    });
+    const result = await releaseJoyRewards(uidValue, { ...reservation, codes: [reservation.code] });
+    return { voucher: result.rewards[0] };
   };
 
   const settleJoyVoucher = async (settlement = {}) => {
-    const code = normalizeVoucherCode(settlement.code);
-    const orderId = requireText(settlement.orderId, 'Order ID');
-    if (!code) throw createError('invalid-argument', 'Voucher code is required.');
+    const result = await settleJoyRewards({ ...settlement, codes: [settlement.code] });
+    return { voucher: result.rewards[0] };
+  };
+
+  const mutateRewards = async (codesValue, operation) => {
+    const codes = (Array.isArray(codesValue) ? codesValue : []).map(normalizeVoucherCode);
+    if (codes.length > GIFT_TIERS.length + 1 || codes.some((code) => !code) || new Set(codes).size !== codes.length) {
+      throw createError('invalid-argument', 'Use one cash voucher and one of each gift per order.');
+    }
+    if (!codes.length) return { rewards: [] };
     return store.transact(async (transaction) => {
-      const current = await transaction.get(voucherPath(code));
-      const voucher = settleVoucherRecord(current, {
-        orderId,
-        orderStatus: settlement.orderStatus,
-        at: store.timestamp(),
+      const records = await Promise.all(codes.map((code) => transaction.get(voucherPath(code))));
+      const groups = records.map((record) => isGiftReward(record) ? record.tierId : 'cash');
+      if (new Set(groups).size !== groups.length) {
+        throw createError('failed-precondition', 'Only one reward of each type can be used per order.');
+      }
+      const at = store.timestamp();
+      const rewards = records.map((record) => operation(record, at));
+      // All reads precede writes; a sold-out gift aborts the entire voucher bundle.
+      const stocks = await Promise.all(records.map((record) => isGiftReward(record) ? transaction.get(stockPath(record.tierId)) : undefined));
+      records.forEach((before, index) => {
+        if (!isGiftReward(before)) return;
+        const after = rewards[index];
+        const stock = stocks[index];
+        if (before.status === 'available' && after.status === 'reserved') {
+          // Preserve existing Joy-only deployments until gift allocation is configured.
+          if (!stock && !isGardenReward(before)) return;
+          if (!hasGiftStock(stock)) throw createError('out-of-stock', 'This gift is currently unavailable. Remove its code to continue, or try again after a restock.');
+          after.stockReserved = true;
+          transaction.set(stockPath(before.tierId), { ...stock, available: stock.available - 1, lastVoucherCode: codes[index], updatedAt: at });
+        } else if (before.status === 'reserved' && after.status === 'available' && before.stockReserved) {
+          if (!Number.isSafeInteger(stock?.available) || stock.available < 0) throw createError('failed-precondition', 'Gift stock needs attention before this reservation can be released.');
+          delete after.stockReserved;
+          transaction.set(stockPath(before.tierId), { ...stock, available: stock.available + 1, lastVoucherCode: codes[index], updatedAt: at });
+        }
       });
-      transaction.set(voucherPath(code), voucher);
-      return { voucher };
+      rewards.forEach((record, index) => transaction.set(voucherPath(codes[index]), record));
+      return { rewards };
     });
+  };
+
+  const reserveJoyRewards = async (uidValue, reservation = {}) => {
+    const uid = requireText(uidValue, 'Customer');
+    const orderId = requireText(reservation.orderId, 'Order ID');
+    return mutateRewards(reservation.codes, (record, at) => reserveVoucherRecord(record, {
+      uid, orderId, subtotalSen: reservation.subtotalSen, at,
+    }));
+  };
+
+  const releaseJoyRewards = async (uidValue, reservation = {}) => {
+    const uid = requireText(uidValue, 'Customer');
+    const orderId = requireText(reservation.orderId, 'Order ID');
+    return mutateRewards(reservation.codes, (record, at) => {
+      if (record?.status === 'available') return record;
+      if (record?.status !== 'reserved' || record?.reservedByUid !== uid) throw createError('permission-denied', 'This reservation cannot be released by this customer.');
+      return settleVoucherRecord(record, { orderId, orderStatus: 'cancelled', at });
+    });
+  };
+
+  const settleJoyRewards = async (settlement = {}) => {
+    const orderId = requireText(settlement.orderId, 'Order ID');
+    return mutateRewards(settlement.codes, (record, at) => settleVoucherRecord(record, {
+      orderId, orderStatus: settlement.orderStatus, at,
+    }));
   };
 
   const subscribeJoyWallet = (uidValue, handlers = {}) => {
@@ -256,6 +300,20 @@ export const createJoyRepository = (store, { createCode = createJoyVoucherCode }
     };
   };
 
+  const subscribeJoyHistory = (uidValue, handlers = {}) => {
+    const uid = requireText(uidValue, 'Customer');
+    const values = { claims: [], redemptions: [] };
+    const loaded = new Set();
+    const historyStops = ['claims', 'redemptions'].map((kind) =>
+      store.listenHistory(uid, kind, (entries) => {
+        values[kind] = entries;
+        loaded.add(kind);
+        if (loaded.size === 2) handlers.onValue?.({ ...values });
+      }, handlers.onError)
+    );
+    return () => historyStops.forEach((stop) => stop());
+  };
+
   return {
     migrateLegacyJoyCoins,
     awardJoyCoins,
@@ -265,6 +323,10 @@ export const createJoyRepository = (store, { createCode = createJoyVoucherCode }
     reserveJoyVoucher,
     releaseJoyVoucher,
     settleJoyVoucher,
+    reserveJoyRewards,
+    releaseJoyRewards,
+    settleJoyRewards,
     subscribeJoyWallet,
+    subscribeJoyHistory,
   };
 };

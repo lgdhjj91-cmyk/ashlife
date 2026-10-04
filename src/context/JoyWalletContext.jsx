@@ -54,13 +54,21 @@ export const JoyWalletProvider = ({ children }) => {
   const [wallet, setWallet] = useState(emptyWallet);
   const [loading, setLoading] = useState(true);
   const [serviceError, setServiceError] = useState('');
+  const [historyRequested, setHistoryRequested] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+  const loadHistory = useCallback(() => setHistoryRequested(true), []);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [selectedGifts, setSelectedGifts] = useState([]);
   const [autoApplySuppressed, setAutoApplySuppressed] = useState(false);
   const anonymousSignInPending = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       if (!nextUser) {
+        setSelectedVoucher(null);
+        setSelectedGifts([]);
         setUser(null);
         setWallet(emptyWallet);
         if (!anonymousSignInPending.current) {
@@ -81,6 +89,9 @@ export const JoyWalletProvider = ({ children }) => {
       }
 
       setLoading(true);
+      setWallet(emptyWallet);
+      setSelectedVoucher(null);
+      setSelectedGifts([]);
       try {
         const localCoins = loadPlayroomProgress().coins;
         await joyRepository.migrateLegacyJoyCoins(nextUser.uid, localCoins);
@@ -115,6 +126,21 @@ export const JoyWalletProvider = ({ children }) => {
     });
     return unsubscribe;
   }, [user?.uid]);
+
+  useEffect(() => {
+    setHistory([]);
+    setHistoryError('');
+    if (!historyRequested || !user?.uid) return undefined;
+    setHistoryLoading(true);
+    return joyRepository.subscribeJoyHistory(user.uid, {
+      onValue: (records) => {
+        setHistory(normalizeJoyWallet(records).history);
+        setHistoryLoading(false);
+        setHistoryError('');
+      },
+      onError: (error) => { setHistoryError(getErrorMessage(error)); setHistoryLoading(false); },
+    });
+  }, [historyRequested, user?.uid]);
 
   const awardCoins = useCallback(
     async (amount, claimId = createJoyRequestId('reward'), expectedOwnerUid = null) => {
@@ -219,6 +245,32 @@ export const JoyWalletProvider = ({ children }) => {
     }
   }, []);
 
+  const reserveRewards = useCallback(async (reservation) => {
+    try {
+      if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+      return { success: true, ...await joyRepository.reserveJoyRewards(auth.currentUser.uid, reservation) };
+    } catch (error) { return { success: false, error: getErrorMessage(error) }; }
+  }, []);
+
+  const releaseRewards = useCallback(async (reservation) => {
+    try {
+      if (!auth.currentUser?.uid) throw new Error('Guest session is still loading.');
+      return { success: true, ...await joyRepository.releaseJoyRewards(auth.currentUser.uid, reservation) };
+    } catch (error) { return { success: false, error: getErrorMessage(error) }; }
+  }, []);
+
+  const settleRewards = useCallback(async (settlement) => {
+    try { return { success: true, ...await joyRepository.settleJoyRewards(settlement) }; }
+    catch (error) { return { success: false, error: getErrorMessage(error) }; }
+  }, []);
+
+  const chooseGift = useCallback((gift) => {
+    setSelectedGifts((current) => [...current.filter((item) => item.tierId !== gift.tierId), gift]);
+  }, []);
+  const removeGift = useCallback((code) => {
+    setSelectedGifts((current) => current.filter((item) => item.code !== code));
+  }, []);
+
   const createAccount = useCallback(async (email, password) => {
     if (!auth.currentUser) throw new Error('Guest session is still loading.');
     if (!auth.currentUser.isAnonymous) throw new Error('You are already signed in.');
@@ -263,6 +315,7 @@ export const JoyWalletProvider = ({ children }) => {
   const clearVoucherSelection = useCallback(() => {
     setSelectedVoucher(null);
     setAutoApplySuppressed(false);
+    setSelectedGifts([]);
   }, []);
 
   const value = useMemo(
@@ -270,10 +323,19 @@ export const JoyWalletProvider = ({ children }) => {
       user,
       isAnonymous: user?.isAnonymous !== false,
       isCustomer: Boolean(user && !user.isAnonymous),
-      wallet,
+      wallet: { ...wallet, history },
+      loadHistory,
+      historyLoading,
+      historyError,
       loading,
       serviceError,
       selectedVoucher,
+      selectedGifts,
+      chooseGift,
+      removeGift,
+      reserveRewards,
+      releaseRewards,
+      settleRewards,
       autoApplySuppressed,
       awardCoins,
       resetCoins,
@@ -293,9 +355,19 @@ export const JoyWalletProvider = ({ children }) => {
     [
       user,
       wallet,
+      history,
+      loadHistory,
+      historyLoading,
+      historyError,
       loading,
       serviceError,
       selectedVoucher,
+      selectedGifts,
+      chooseGift,
+      removeGift,
+      reserveRewards,
+      releaseRewards,
+      settleRewards,
       autoApplySuppressed,
       awardCoins,
       resetCoins,

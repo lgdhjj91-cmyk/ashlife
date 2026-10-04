@@ -8,9 +8,11 @@ import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import { getCartItemKey, getVariantLabel } from '../utils/productVariants';
 import JoyVoucherCard from '../components/JoyVoucherCard';
 import { useJoyWallet } from '../context/JoyWalletContext';
-import { calculateVoucherTotals, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { calculateVoucherTotals, rewardName, rmToSen, senToRm } from '../joy/joyVoucherRules';
+import { buildOrderGiftSnapshots } from '../joy/joyRewardSelection';
 import { buildOrderVoucherSnapshot, createCheckoutOrderId } from '../joy/orderVoucher';
 import './Checkout.css';
+import { giftFulfillmentCopy } from '../joy/giftFulfillment';
 
 const Checkout = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -18,8 +20,9 @@ const Checkout = () => {
   const { createOrder, paymentSettings } = useOrders();
   const {
     selectedVoucher,
-    reserveVoucher,
-    releaseVoucher,
+    selectedGifts,
+    reserveRewards,
+    releaseRewards,
     clearVoucherSelection,
   } = useJoyWallet();
   const navigate = useNavigate();
@@ -34,8 +37,10 @@ const Checkout = () => {
     voucher: null,
   });
   const [checkoutOrderId] = useState(() => createCheckoutOrderId());
-  const [voucherReservation, setVoucherReservation] = useState(null);
+  const reservationsRef = useRef([]);
   const orderSubmittedRef = useRef(false);
+  const mountedRef = useRef(true);
+  const submissionPendingRef = useRef(false);
 
   // Form State
   const [customerInfo, setCustomerInfo] = useState({
@@ -91,28 +96,23 @@ const Checkout = () => {
     e.preventDefault();
     if (step === 2) {
       const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
-      let activeReservation = voucherReservation;
-
-      if (activeReservation && activeReservation.voucher.code !== voucherSnapshot?.code) {
-        await releaseVoucher({ code: activeReservation.voucher.code, orderId: checkoutOrderId });
-        activeReservation = null;
-        setVoucherReservation(null);
+      const gifts = buildOrderGiftSnapshots(selectedGifts, rmToSen(cartTotal));
+      const codes = [...(voucherSnapshot ? [voucherSnapshot.code] : []), ...gifts.map((gift) => gift.code)];
+      setLoading(true);
+      if (reservationsRef.current.length) {
+        const released = await releaseRewards({ codes: reservationsRef.current, orderId: checkoutOrderId });
+        if (!released.success) { setLoading(false); alert(released.error); return; }
+        reservationsRef.current = [];
       }
-
-      if (voucherSnapshot && !activeReservation) {
-        setLoading(true);
-        const result = await reserveVoucher({
-          code: voucherSnapshot.code,
-          orderId: checkoutOrderId,
-          subtotalSen: rmToSen(cartTotal),
-        });
-        setLoading(false);
-        if (!result.success) {
-          alert(`Joy voucher could not be reserved: ${result.error}`);
-          return;
-        }
-        setVoucherReservation({ voucher: result.voucher, orderId: checkoutOrderId });
+      if (!mountedRef.current) return;
+      const result = await reserveRewards({ codes, orderId: checkoutOrderId, subtotalSen: rmToSen(cartTotal) });
+      if (!mountedRef.current) {
+        if (result.success) await releaseRewards({ codes, orderId: checkoutOrderId });
+        return;
       }
+      setLoading(false);
+      if (!result.success) { alert(`Joy rewards could not be reserved: ${result.error}`); return; }
+      reservationsRef.current = codes;
     }
     setStep((prev) => Math.min(prev + 1, 4));
     window.scrollTo(0, 0);
@@ -124,15 +124,17 @@ const Checkout = () => {
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      if (voucherReservation && !orderSubmittedRef.current) {
-        void releaseVoucher({
-          code: voucherReservation.voucher.code,
-          orderId: voucherReservation.orderId,
+      mountedRef.current = false;
+      if (reservationsRef.current.length && !orderSubmittedRef.current && !submissionPendingRef.current) {
+        void releaseRewards({
+          codes: reservationsRef.current,
+          orderId: checkoutOrderId,
         });
       }
     };
-  }, [releaseVoucher, voucherReservation]);
+  }, [releaseRewards, checkoutOrderId]);
 
   const handleSubmitOrder = async () => {
     if (!hasSelectedQr) {
@@ -160,9 +162,11 @@ const Checkout = () => {
     }));
     const orderTotal = calculateTotal();
     const voucherSnapshot = buildOrderVoucherSnapshot(selectedVoucher, rmToSen(cartTotal));
+    const gifts = buildOrderGiftSnapshots(selectedGifts, rmToSen(cartTotal));
+    const rewardCodes = [...(voucherSnapshot ? [voucherSnapshot.code] : []), ...gifts.map((gift) => gift.code)];
 
-    if (voucherSnapshot && voucherReservation?.voucher.code !== voucherSnapshot.code) {
-      alert('Please return to order review so your Joy voucher can be reserved before payment.');
+    if (rewardCodes.length !== reservationsRef.current.length || rewardCodes.some((code) => !reservationsRef.current.includes(code))) {
+      alert('Please return to order review so your Joy rewards can be reserved before payment.');
       return;
     }
 
@@ -179,34 +183,39 @@ const Checkout = () => {
       discount: senToRm(checkoutTotals.discountSen),
       discountSen: checkoutTotals.discountSen,
       voucher: voucherSnapshot,
+      gifts,
       deliveryFee,
       total: orderTotal,
       paymentMethod: paymentInfo.method,
     };
 
+    submissionPendingRef.current = true;
     const result = await createOrder(orderData, paymentInfo.screenshotFile);
+    submissionPendingRef.current = false;
     setLoading(false);
 
     if (result.success) {
       orderSubmittedRef.current = true;
+      if (!mountedRef.current) { clearCart(); clearVoucherSelection(); return; }
       setCreatedOrderId(result.orderId);
       setSubmittedOrder({
         items: orderItems,
         total: orderTotal,
         discount: senToRm(checkoutTotals.discountSen),
         voucher: voucherSnapshot,
+        gifts,
       });
       clearCart();
       clearVoucherSelection();
       setStep(4);
       window.scrollTo(0, 0);
     } else {
-      if (voucherReservation) {
-        await releaseVoucher({
-          code: voucherReservation.voucher.code,
-          orderId: voucherReservation.orderId,
+      if (reservationsRef.current.length) {
+        const released = await releaseRewards({
+          codes: reservationsRef.current,
+          orderId: checkoutOrderId,
         });
-        setVoucherReservation(null);
+        if (released.success) reservationsRef.current = [];
       }
       alert(`Error creating order: ${result.error}`);
     }
@@ -240,6 +249,7 @@ const Checkout = () => {
       message += `*Joy voucher:* ${submittedOrder.voucher.code}\n`;
       message += `*Discount:* -RM ${Number(submittedOrder.discount || 0).toFixed(2)}\n`;
     }
+    (submittedOrder.gifts || []).forEach((gift) => { message += `*Free gift:* ${rewardName(gift)} × 1 (${gift.code})\n`; });
     message += `*Payment status:* Receipt uploaded, pending manual verification\n`;
     message += `*Payment method:* ${paymentInfo.method.toUpperCase()}\n\n`;
     message += `Please confirm my order. Thank you!`;
@@ -366,6 +376,7 @@ const Checkout = () => {
                   {t('checkout_pickup_note')}
                 </div>
               )}
+              <p className="pickup-note">{giftFulfillmentCopy(language, customerInfo.deliveryMethod)}</p>
 
               {customerInfo.deliveryMethod === 'delivery' && (
                 <div className="form-group">
@@ -443,6 +454,7 @@ const Checkout = () => {
                   <span>-RM {senToRm(checkoutTotals.discountSen).toFixed(2)}</span>
                 </div>
               )}
+              {buildOrderGiftSnapshots(selectedGifts, rmToSen(cartTotal)).map((gift) => <div className="review-summary-row" key={gift.code}><span>{rewardName(gift, language)} × 1</span><span>{language === 'zh' ? '免费' : 'Free'}</span></div>)}
               <div className="review-summary-total">
                 <span>{t('checkout_total')}</span>
                 <span>RM {calculateTotal().toFixed(2)}</span>
@@ -455,7 +467,7 @@ const Checkout = () => {
               </button>
               <button type="button" className="btn btn-primary" onClick={handleNextStep} disabled={loading}>
                 {loading ? <Loader className="spin" size={18} /> : null}
-                {loading ? 'Reserving voucher…' : t('checkout_next_payment')}
+                {loading ? 'Reserving rewards…' : t('checkout_next_payment')}
               </button>
             </div>
           </div>
@@ -575,6 +587,7 @@ const Checkout = () => {
                   <span>-RM {Number(submittedOrder.discount || 0).toFixed(2)} Joy voucher</span>
                 </div>
               )}
+              {(submittedOrder.gifts || []).map((gift) => <div className="order-voucher-result" key={gift.code}><strong>{rewardName(gift, language)} × 1 · {language === 'zh' ? '免费' : 'Free'}</strong><span>{gift.code}</span></div>)}
             </div>
 
             <p className="success-note">{t('checkout_confirm_note')}</p>

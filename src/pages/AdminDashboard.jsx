@@ -6,6 +6,9 @@ import { useSiteContent } from '../context/SiteContentContext';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { resolveAssetUrl } from '../utils/assets';
 import { getProductPriceRange, normalizeVariants } from '../utils/productVariants';
+import { rewardName } from '../joy/joyVoucherRules';
+import { giftFulfillmentCopy } from '../joy/giftFulfillment';
+import AbandonedGiftRecovery from '../components/AbandonedGiftRecovery';
 import {
   loadPlayroomProgress,
   savePlayroomProgress,
@@ -1094,6 +1097,7 @@ const AdminDashboard = () => {
       {/* ========== ORDERS TAB ========== */}
       {activeTab === 'orders' && (
         <div className="orders-panel">
+          <AbandonedGiftRecovery />
           {/* Filter Tabs */}
           <div className="order-filter-row">
             {['all', ...STATUS_OPTIONS].map((f) => (
@@ -1209,10 +1213,17 @@ const AdminDashboard = () => {
                             {order.voucher.code} · RM {Number(order.discount || 0).toFixed(2)} off · {order.voucher.status || 'reserved'}
                           </p>
                           <p className="order-detail-value">
-                            Confirmed/completed consumes it; rejected/cancelled restores it automatically.
+                            Confirmed/completed consumes it; rejected/cancelled releases unused reservations. Used codes stay consumed.
                           </p>
                         </div>
                       )}
+
+                      {(order.gifts || []).length > 0 && <div className="order-voucher-admin">
+                        <p className="order-detail-label">Free gifts · Include with this order</p>
+                        {order.gifts.map((gift) => <p className="order-detail-value" key={gift.code}>{rewardName(gift)} × 1 · Free · {gift.source === 'garden' ? 'Cozy Garden' : 'Joy Coins'}<br />{gift.code} · {gift.status || 'reserved'}</p>)}
+                        <p className="order-detail-value">{giftFulfillmentCopy('en', order.deliveryMethod)}</p>
+                        <p className="order-detail-value">Confirmed/completed uses all rewards; rejected/cancelled releases unused reservations. Used codes stay consumed.</p>
+                      </div>}
 
                       {/* Payment Screenshot */}
                       {order.paymentScreenshot && (

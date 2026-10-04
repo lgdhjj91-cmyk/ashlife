@@ -311,6 +311,7 @@ const AshlifeClawMachinePage = () => {
             language={language}
             copy={copy}
             testMode={testMode}
+            controlsBlocked={showTutorial || Boolean(sessionSummary)}
             onEvent={handleEvent}
             registerControls={setControls}
           />

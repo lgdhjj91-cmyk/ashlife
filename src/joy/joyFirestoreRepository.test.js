@@ -38,6 +38,84 @@ const createMemoryJoyStore = (seed = {}) => {
   };
 };
 
+test('multiple order rewards reserve atomically and reject duplicate gift types', async () => {
+  const nano = { code: 'nano', tierId: 'nanotoy', valueSen: 0, minSubtotalSen: 0, status: 'available' };
+  const key = { code: 'key', tierId: 'keychain', valueSen: 0, minSubtotalSen: 0, status: 'available' };
+  const cash = { code: 'cash', tierId: 'rm1', valueSen: 100, minSubtotalSen: 1000, status: 'available' };
+  const store = createMemoryJoyStore({ 'joyVouchers/NANO': nano, 'joyVouchers/KEY': key, 'joyVouchers/CASH': cash });
+  const repo = createJoyRepository(store);
+  await assert.rejects(repo.reserveJoyRewards('buyer', { codes: ['nano', 'key', 'cash'], orderId: 'o', subtotalSen: 500 }));
+  assert.equal(store.dump('joyVouchers/NANO').status, 'available');
+  const result = await repo.reserveJoyRewards('buyer', { codes: ['nano', 'key', 'cash'], orderId: 'o', subtotalSen: 1000 });
+  assert.equal(result.rewards.length, 3);
+  assert.equal(store.dump('joyVouchers/KEY').reservedOrderId, 'o');
+  await repo.releaseJoyRewards('buyer', { codes: ['nano', 'key', 'cash'], orderId: 'o' });
+  assert.equal(store.dump('joyVouchers/NANO').status, 'available');
+  await assert.rejects(repo.reserveJoyRewards('buyer', { codes: ['nano', 'nano'], orderId: 'o', subtotalSen: 1000 }));
+  const sameType = createMemoryJoyStore({ 'joyVouchers/NANO': nano, 'joyVouchers/NANO2': { ...nano, code: 'nano2' } });
+  await assert.rejects(createJoyRepository(sameType).reserveJoyRewards('buyer', { codes: ['nano', 'nano2'], orderId: 'o', subtotalSen: 1000 }));
+});
+
+test('Garden and Joy gifts share stock, reserve with cash, and release only once', async () => {
+  const gift = (code, tierId, source = 'garden') => ({ code, tierId, source, currency: source, valueSen: 0, minSubtotalSen: 0, status: 'available' });
+  const store = createMemoryJoyStore({
+    'joyVouchers/CG-PLUSHIE-AAAAAAAAAA': gift('CG-PLUSHIE-AAAAAAAAAA', 'plushie'),
+    'joyVouchers/CG-KEYCHAIN-AAAAAAAAAA': gift('CG-KEYCHAIN-AAAAAAAAAA', 'keychain'),
+    'joyVouchers/JOY-NANOTOY-AAAAAAAAAA': gift('JOY-NANOTOY-AAAAAAAAAA', 'nanotoy', 'joy'),
+    'joyVouchers/CASH': { code: 'CASH', tierId: 'rm1', valueSen: 100, minSubtotalSen: 1000, status: 'available' },
+    'giftStock/plushie': { available: 1 }, 'giftStock/keychain': { available: 1 }, 'giftStock/nanotoy': { available: 1 },
+  });
+  const repo = createJoyRepository(store);
+  const codes = ['CG-PLUSHIE-AAAAAAAAAA', 'CG-KEYCHAIN-AAAAAAAAAA', 'JOY-NANOTOY-AAAAAAAAAA', 'CASH'];
+  await repo.reserveJoyRewards('shop-guest', { codes, orderId: 'order', subtotalSen: 1000 });
+  assert.equal(store.dump('giftStock/plushie').available, 0);
+  assert.equal(store.dump('giftStock/nanotoy').available, 0);
+  await repo.reserveJoyRewards('shop-guest', { codes, orderId: 'order', subtotalSen: 1000 });
+  assert.equal(store.dump('giftStock/plushie').available, 0);
+  await repo.releaseJoyRewards('shop-guest', { codes, orderId: 'order' });
+  await repo.releaseJoyRewards('shop-guest', { codes, orderId: 'order' });
+  assert.equal(store.dump('giftStock/plushie').available, 1);
+  await repo.reserveJoyRewards('shop-guest', { codes, orderId: 'order', subtotalSen: 1000 });
+  await repo.settleJoyRewards({ codes, orderId: 'order', orderStatus: 'confirmed' });
+  await repo.settleJoyRewards({ codes, orderId: 'order', orderStatus: 'cancelled' });
+  assert.equal(store.dump('giftStock/plushie').available, 0);
+  assert.equal(store.dump('joyVouchers/CG-PLUSHIE-AAAAAAAAAA').status, 'used');
+});
+
+test('sold-out or unconfigured Garden gift cannot reserve, even using single voucher API', async () => {
+  const code = 'CG-KEYCHAIN-AAAAAAAAAA';
+  const gift = { code, tierId: 'keychain', source: 'garden', valueSen: 0, minSubtotalSen: 0, status: 'available' };
+  for (const seed of [{}, { 'giftStock/keychain': { available: 0 } }]) {
+    const store = createMemoryJoyStore({ ...seed, [`joyVouchers/${code}`]: gift });
+    const repo = createJoyRepository(store);
+    assert.equal((await repo.previewJoyVoucher(code, 100)).valid, false);
+    await assert.rejects(repo.reserveJoyVoucher('guest', { code, orderId: 'order', subtotalSen: 100 }));
+    assert.equal(store.dump(`joyVouchers/${code}`).status, 'available');
+  }
+});
+
+test('one sold-out gift rolls back the entire reward bundle', async () => {
+  const gift = tierId => ({ code: tierId.toUpperCase(), tierId, source: 'garden', valueSen: 0, minSubtotalSen: 0, status: 'available' });
+  const store = createMemoryJoyStore({ 'joyVouchers/KEYCHAIN': gift('keychain'), 'joyVouchers/PLUSHIE': gift('plushie'), 'giftStock/keychain': { available: 1 }, 'giftStock/plushie': { available: 0 } });
+  await assert.rejects(createJoyRepository(store).reserveJoyRewards('guest', { codes: ['KEYCHAIN', 'PLUSHIE'], orderId: 'order', subtotalSen: 100 }));
+  assert.equal(store.dump('giftStock/keychain').available, 1);
+  assert.equal(store.dump('joyVouchers/KEYCHAIN').status, 'available');
+});
+
+test('gift redemption deduplicates retries and consumes or restores with its order', async () => {
+  const store = createMemoryJoyStore({ 'joyWallets/buyer': { coins: 1000, legacyMigrated: true } });
+  const repo = createJoyRepository(store, { createCode: () => 'JOY-NANOTOY-AAAAAAAAAA' });
+  const first = await repo.redeemJoyVoucher('buyer', 'nanotoy', 'gift1');
+  await repo.redeemJoyVoucher('buyer', 'nanotoy', 'gift1');
+  assert.equal(store.dump('joyWallets/buyer').coins, 500);
+  await repo.reserveJoyRewards('buyer', { codes: [first.voucher.code], subtotalSen: 1, orderId: 'o' });
+  await repo.settleJoyRewards({ codes: [first.voucher.code], orderId: 'o', orderStatus: 'confirmed' });
+  assert.equal(store.dump(`joyVouchers/${first.voucher.code}`).status, 'used');
+  await assert.rejects(repo.reserveJoyRewards('buyer', { codes: [first.voucher.code], subtotalSen: 1, orderId: 'o2' }));
+  await repo.settleJoyRewards({ codes: [first.voucher.code], orderId: 'o', orderStatus: 'cancelled' });
+  assert.equal(store.dump(`joyVouchers/${first.voucher.code}`).status, 'used');
+});
+
 test('reward claims add coins once for a repeated claim ID', async () => {
   const store = createMemoryJoyStore({
     'joyWallets/guest-1': { coins: 88, legacyMigrated: true },

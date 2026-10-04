@@ -21,14 +21,24 @@ test('document listener ignores keys already handled by the focused game canvas'
   assert.equal(shouldIgnoreDocumentGameplayKey({ id: 'outside' }, mount), false);
 });
 
-test('movement keys still reach the game after a mode or difficulty button is clicked', () => {
-  const focusedButton = { tagName: 'BUTTON' };
+test('movement, grab, release and pause still work after a game button is clicked', () => {
+  const focusedButton = { tagName: 'BUTTON', closest: (selector) => selector === '.claw-page' };
 
   assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'ArrowLeft'), false);
   assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'ArrowRight'), false);
   assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyA'), false);
   assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyD'), false);
-  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'Space'), true);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'Space'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyR'), false);
+  assert.equal(shouldIgnoreDocumentGameplayKey(focusedButton, null, 'KeyP'), false);
+});
+
+test('shortcuts respect dialogs, links and buttons outside the game', () => {
+  const dialogButton = { tagName: 'BUTTON', closest: () => true };
+  assert.equal(shouldIgnoreDocumentGameplayKey(dialogButton, null, 'Space'), true);
+  assert.equal(shouldIgnoreDocumentGameplayKey(dialogButton, null, 'ArrowLeft'), true);
+  assert.equal(shouldIgnoreDocumentGameplayKey({ tagName: 'BUTTON' }, null, 'Space'), true);
+  assert.equal(shouldIgnoreDocumentGameplayKey({ tagName: 'A' }, null, 'Space'), true);
 });
 
 test('movement keys remain blocked while typing in an editable field', () => {

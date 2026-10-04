@@ -2,20 +2,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Coins, Ticket, X } from 'lucide-react';
 import { useJoyWallet } from '../context/JoyWalletContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getVoucherEligibility } from '../joy/joyVoucherRules';
+import { getVoucherEligibility, isGiftReward } from '../joy/joyVoucherRules';
+import JoyGiftSelection from './JoyGiftSelection';
 import { resolveVoucherSelection } from '../joy/joyWalletState';
 import './JoyVoucherCard.css';
 
 const copy = {
   en: {
-    title: 'Joy voucher',
+    title: 'Vouchers & gift codes',
     auto: 'Best eligible voucher is applied automatically.',
     applied: 'Applied automatically',
     keep: 'Keep for next purchase',
     kept: 'Vouchers are being kept for your next purchase.',
     useBest: 'Apply best voucher',
     choose: 'Choose another voucher',
-    enter: 'Enter voucher code',
+    enter: 'Enter voucher or gift code',
     placeholder: 'JOY-RM1-XXXXXXXXXX',
     apply: 'Apply code',
     applying: 'Checking…',
@@ -23,20 +24,22 @@ const copy = {
     reserved: 'This voucher is reserved for another order.',
     used: 'This voucher has already been used.',
     minimum: 'This cart does not meet the voucher minimum spend.',
+    purchase: 'Add a purchased item to use this gift code.',
+    stock: 'This gift is currently unavailable. Keep your code for a restock, or continue without it.',
     none: 'No saved voucher currently meets this cart’s minimum spend.',
     min: 'Min. items RM{amount}',
     discount: 'RM{amount} off',
     onlineNote: 'Voucher reservation and one-time use are secured during Pay Online checkout.',
   },
   zh: {
-    title: 'Joy 优惠券',
+    title: '优惠券与礼物代码',
     auto: '系统会自动套用最优惠且符合条件的优惠券。',
     applied: '已自动套用',
     keep: '留到下次使用',
     kept: '优惠券会保留到下次购买。',
     useBest: '套用最佳优惠券',
     choose: '选择其他优惠券',
-    enter: '输入优惠券代码',
+    enter: '输入优惠券或礼物代码',
     placeholder: 'JOY-RM1-XXXXXXXXXX',
     apply: '套用代码',
     applying: '检查中…',
@@ -44,6 +47,8 @@ const copy = {
     reserved: '此优惠券已保留给其他订单。',
     used: '此优惠券已经使用。',
     minimum: '购物车未达到优惠券的最低消费。',
+    purchase: '请先加入购买商品，再使用礼物代码。',
+    stock: '此礼物目前暂无库存。可保留代码等补货，或移除礼物继续购物。',
     none: '目前没有符合购物车最低消费的优惠券。',
     min: '商品最低 RM{amount}',
     discount: '优惠 RM{amount}',
@@ -62,6 +67,7 @@ const JoyVoucherCard = ({ subtotalSen }) => {
     autoApplySuppressed,
     previewVoucher,
     chooseVoucher,
+    chooseGift,
     keepVoucherForLater,
     enableAutoApply,
   } = useJoyWallet();
@@ -70,7 +76,7 @@ const JoyVoucherCard = ({ subtotalSen }) => {
   const [message, setMessage] = useState('');
 
   const availableVouchers = useMemo(
-    () => wallet.vouchers.filter((voucher) => voucher.status === 'available'),
+    () => wallet.vouchers.filter((voucher) => !isGiftReward(voucher) && voucher.status === 'available'),
     [wallet.vouchers]
   );
 
@@ -99,7 +105,8 @@ const JoyVoucherCard = ({ subtotalSen }) => {
     const result = await previewVoucher(manualCode, subtotalSen);
     setChecking(false);
     if (result.success && result.valid && result.voucher) {
-      chooseVoucher(result.voucher);
+      if (isGiftReward(result.voucher)) chooseGift(result.voucher);
+      else chooseVoucher(result.voucher);
       setManualCode(result.voucher.code);
       setMessage(labels.applied);
       return;
@@ -176,6 +183,7 @@ const JoyVoucherCard = ({ subtotalSen }) => {
       </form>
 
       {message && <p className="joy-code-message" role="status">{message}</p>}
+      <JoyGiftSelection subtotalSen={subtotalSen} />
       <p className="joy-online-note">{labels.onlineNote}</p>
     </section>
   );

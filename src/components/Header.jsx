@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Gamepad2, ShoppingBag, Menu, X, Search } from 'lucide-react';
+import { Coins, Gamepad2, ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductContext';
@@ -214,6 +214,7 @@ const Header = () => {
             <span>{playNavLabel}</span>
           </Link>
           <Link to="/about" onClick={closeAll}>{t('nav_about')}</Link>
+          <Link to="/joy-coins" className="joy-header-link" onClick={closeAll}><Coins size={17} /> Joy Coins</Link>
         </nav>
 
         <div className="header-actions">

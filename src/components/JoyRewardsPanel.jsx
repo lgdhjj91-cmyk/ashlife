@@ -1,31 +1,48 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { Check, Coins, Copy, Gift, LogIn, LogOut, ShieldCheck, Sparkles, UserPlus, X } from 'lucide-react';
 import { useJoyWallet } from '../context/JoyWalletContext';
 import { useLanguage } from '../context/LanguageContext';
 import { createRedeemedVoucherNotice } from '../joy/joyRedeemNotice';
-import { JOY_VOUCHER_TIERS } from '../joy/joyVoucherRules';
+import { JOY_GIFT_TIERS, JOY_VOUCHER_TIERS, isGiftReward, rewardName } from '../joy/joyVoucherRules';
+import { giftImages } from '../joy/joyRewardAssets';
+import { handleImageFallback, resolveAssetUrl } from '../utils/assets';
 import './JoyRewardsPanel.css';
+import CozyGardenFeature from './CozyGardenFeature';
+import { giftFulfillmentCopy } from '../joy/giftFulfillment';
 
 const copy = {
   en: {
     eyebrow: 'Joy Rewards',
-    title: 'Turn playtime into savings',
-    intro: 'Redeem Joy Coins for a voucher. Copy the code for any browser, or let checkout apply it automatically.',
+    title: 'Little games. Real gifts.',
+    intro: 'Turn your Joy Coins into gifts and savings. Redeem a gift, then add its code to any purchase.',
     coins: 'Joy Coins',
     redeem: 'Redeem',
-    redeeming: 'Creating voucher…',
+    redeeming: 'Redeeming…',
     need: 'Need {count} more coins',
     min: 'Minimum items RM{amount}',
-    wallet: 'My vouchers',
-    empty: 'No vouchers yet. Play a game, collect coins, then redeem one here.',
+    wallet: 'My rewards',
+    empty: 'No rewards yet. Play a game, collect coins, then redeem one here.',
+    gifts: 'A little gift with your next order',
+    giftTerms: 'Any purchase · No minimum spend · 1 of each gift per order',
+    assortment: 'Assorted design, chosen by us. While stocks last.',
+    giftUse: 'Receive 1 free gift with any purchase. Add the code at checkout; no minimum spend.',
+    cash: 'Save on your next purchase',
+    browse: 'Redeem rewards',
+    history: 'Coin history',
+    historyEmpty: 'Your coin activity will appear here as you play and redeem rewards.',
+    historyNote: 'Showing the latest 100 earnings and 100 redemptions. Older rewards remain in My rewards.',
+    earned: 'Game reward',
+    redeemed: 'Redeemed',
+    viewWallet: 'Open Joy Coins wallet',
     copy: 'Copy code',
     copied: 'Copied',
-    redeemedEyebrow: 'Voucher ready',
-    redeemedTitle: 'Voucher redeemed!',
-    redeemedIntro: 'Your new voucher is ready to use at checkout.',
+    redeemedEyebrow: 'Reward ready',
+    redeemedTitle: 'Reward redeemed!',
+    redeemedIntro: 'Your new reward is saved in My rewards, ready for checkout.',
     redeemedAria: 'Redeemed voucher details',
-    voucherCode: 'Voucher code',
+    voucherCode: 'Reward code',
     minimumSpend: 'Minimum item spend {amount}',
     close: 'Close',
     closeDialog: 'Close voucher details',
@@ -47,22 +64,34 @@ const copy = {
   },
   zh: {
     eyebrow: 'Joy 奖励',
-    title: '把游戏奖励变成购物优惠',
-    intro: '使用 Joy Coins 兑换优惠券。复制代码即可在其他设备使用，结账时也会自动套用。',
+    title: '玩小游戏，兑换真实礼物',
+    intro: '使用 Joy Coins 兑换礼物和购物优惠。兑换礼物后，在任何购物订单中使用代码即可领取。',
     coins: 'Joy Coins',
     redeem: '兑换',
     redeeming: '正在建立优惠券…',
     need: '还需要 {count} 枚金币',
     min: '商品最低消费 RM{amount}',
-    wallet: '我的优惠券',
+    wallet: '我的奖励',
+    gifts: '下个订单的小礼物',
+    giftTerms: '任意购买 · 无最低消费 · 每单每种礼物限 1 件',
+    assortment: '款式随机，由我们挑选。送完为止。',
+    giftUse: '任意购买即可获赠 1 件礼物。结账时加入代码，无最低消费。',
+    cash: '下次购物享优惠',
+    browse: '兑换奖励',
+    history: '金币记录',
+    historyEmpty: '游戏赚取和兑换金币的记录将显示在这里。',
+    historyNote: '显示最近 100 条赚取和 100 条兑换记录。更早的奖励仍保留在“我的奖励”中。',
+    earned: '游戏奖励',
+    redeemed: '已兑换',
+    viewWallet: '打开 Joy Coins 钱包',
     empty: '目前还没有优惠券。先玩游戏赚取金币，再回来兑换。',
     copy: '复制代码',
     copied: '已复制',
-    redeemedEyebrow: '优惠券已准备好',
-    redeemedTitle: '优惠券兑换成功！',
-    redeemedIntro: '你的新优惠券已经可以在结账时使用。',
+    redeemedEyebrow: '奖励已准备好',
+    redeemedTitle: '奖励兑换成功！',
+    redeemedIntro: '新奖励已保存至“我的奖励”，可以在结账时使用。',
     redeemedAria: '已兑换优惠券详情',
-    voucherCode: '优惠券代码',
+    voucherCode: '奖励代码',
     minimumSpend: '商品最低消费 {amount}',
     close: '关闭',
     closeDialog: '关闭优惠券详情',
@@ -86,13 +115,16 @@ const copy = {
 
 const formatRm = (sen) => (Number(sen || 0) / 100).toFixed(0);
 
-const JoyRewardsPanel = () => {
+const JoyRewardsPanel = ({ standalone = false }) => {
   const { language } = useLanguage();
   const labels = copy[language] || copy.en;
   const {
     user,
     isCustomer,
     wallet,
+    loadHistory,
+    historyLoading,
+    historyError,
     loading,
     serviceError,
     redeemVoucher,
@@ -107,6 +139,10 @@ const JoyRewardsPanel = () => {
   const [accountBusy, setAccountBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [redeemedVoucher, setRedeemedVoucher] = useState(null);
+  const [tab, setTab] = useState('redeem');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const visibleRewards = wallet.vouchers.filter((reward) => statusFilter === 'all' || reward.status === statusFilter);
+  useEffect(() => { if (tab === 'history') loadHistory?.(); }, [tab, loadHistory]);
   const redeemDialogCloseRef = useRef(null);
   const redeemedNotice = redeemedVoucher
     ? createRedeemedVoucherNotice(redeemedVoucher)
@@ -173,13 +209,38 @@ const JoyRewardsPanel = () => {
           <h2>{labels.title}</h2>
           <p>{labels.intro}</p>
         </div>
-        <div className="joy-wallet-balance">
+        <Link to="/joy-coins" className="joy-wallet-balance" aria-label={labels.viewWallet}>
           <Coins size={24} />
           <strong>{loading ? '…' : wallet.coins}</strong>
           <span>{labels.coins}</span>
-        </div>
+        </Link>
       </div>
 
+      <div className="joy-wallet-tabs" role="tablist" aria-label={labels.coins}>
+        {[['redeem', labels.browse], ['wallet', labels.wallet], ['history', labels.history]].map(([id, label]) => (
+          <button type="button" role="tab" id={`joy-tab-${id}`} aria-controls={`joy-panel-${id}`} aria-selected={tab === id} key={id} onClick={() => setTab(id)}>{label}</button>
+        ))}
+      </div>
+      {tab === 'redeem' && <div role="tabpanel" id="joy-panel-redeem" aria-labelledby="joy-tab-redeem">
+      <h3 className="joy-section-title">{labels.gifts}</h3>
+      <p className="joy-gift-terms">{labels.giftTerms}</p>
+      <div className="joy-gift-grid">
+        {JOY_GIFT_TIERS.map((tier) => {
+          const missing = Math.max(0, tier.coinCost - wallet.coins);
+          return <article className="joy-gift-card" key={tier.id}>
+            <img src={resolveAssetUrl(giftImages[tier.id])} alt={rewardName(tier, language)} loading="lazy" onError={handleImageFallback} />
+            <div><span className="joy-gift-tag"><Gift size={14} /> {language === 'zh' ? '免费礼物' : 'Free gift'}</span>
+              <h3>{rewardName(tier, language)}</h3><strong><Coins size={17} /> 500 {labels.coins}</strong>
+              <p>{giftFulfillmentCopy(language)}</p>
+              <button type="button" disabled={loading || Boolean(busyTier) || missing > 0 || Boolean(serviceError)} onClick={() => handleRedeem(tier.id)}>
+                {busyTier === tier.id ? labels.redeeming : missing ? labels.need.replace('{count}', missing) : labels.redeem}
+              </button>
+            </div>
+          </article>;
+        })}
+      </div>
+      {standalone && <CozyGardenFeature compact />}
+      <h3 className="joy-section-title">{labels.cash}</h3>
       <div className="joy-tier-grid">
         {JOY_VOUCHER_TIERS.map((tier) => {
           const missingCoins = Math.max(0, tier.coinCost - wallet.coins);
@@ -201,19 +262,27 @@ const JoyRewardsPanel = () => {
           );
         })}
       </div>
+      </div>}
 
-      <div className="joy-wallet-section">
+      {tab === 'wallet' && <div className="joy-wallet-section" role="tabpanel" id="joy-panel-wallet" aria-labelledby="joy-tab-wallet">
         <h3>{labels.wallet}</h3>
-        {wallet.vouchers.length === 0 ? (
+        <CozyGardenFeature compact />
+        <div className="joy-status-filters" aria-label={labels.wallet}>
+          {[['all', language === 'zh' ? '全部' : 'All'], ['available', labels.available], ['reserved', labels.reserved], ['used', labels.used]].map(([id, label]) => (
+            <button type="button" key={id} aria-pressed={statusFilter === id} onClick={() => setStatusFilter(id)}>{label} ({id === 'all' ? wallet.vouchers.length : wallet.vouchers.filter((reward) => reward.status === id).length})</button>
+          ))}
+        </div>
+        {visibleRewards.length === 0 ? (
           <p className="joy-wallet-empty">{labels.empty}</p>
         ) : (
           <div className="joy-voucher-list">
-            {wallet.vouchers.map((voucher) => (
+            {visibleRewards.map((voucher) => (
               <article className={`joy-voucher-ticket status-${voucher.status}`} key={voucher.code}>
                 <div>
-                  <strong>RM{formatRm(voucher.valueSen)}</strong>
-                  <span>{labels.min.replace('{amount}', formatRm(voucher.minSubtotalSen))}</span>
+                  <strong>{rewardName(voucher, language)}</strong>
+                  <span>{isGiftReward(voucher) ? labels.giftTerms : labels.min.replace('{amount}', formatRm(voucher.minSubtotalSen))}</span>
                   <code>{voucher.code}</code>
+                  <small>{new Date(voucher.createdAt).toLocaleString(language === 'zh' ? 'zh-MY' : 'en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}{voucher.reservedOrderId ? ` · ${voucher.reservedOrderId}` : ''}</small>
                 </div>
                 <div className="joy-voucher-actions">
                   <span className="joy-voucher-status">
@@ -223,16 +292,30 @@ const JoyRewardsPanel = () => {
                         ? labels.reserved
                         : labels.used}
                   </span>
-                  <button type="button" onClick={() => handleCopy(voucher.code)}>
+                  {voucher.status === 'available' && <button type="button" onClick={() => handleCopy(voucher.code)}>
                     {copiedCode === voucher.code ? <Check size={16} /> : <Copy size={16} />}
                     {copiedCode === voucher.code ? labels.copied : labels.copy}
-                  </button>
+                  </button>}
                 </div>
               </article>
             ))}
           </div>
         )}
-      </div>
+      </div>}
+
+      {tab === 'history' && <div className="joy-wallet-section" role="tabpanel" id="joy-panel-history" aria-labelledby="joy-tab-history">
+        <h3>{labels.history}</h3><p className="joy-history-note">{labels.historyNote}</p>
+        {historyError ? <p className="joy-rewards-notice" role="status">{historyError}</p> : historyLoading ? <p role="status">{language === 'zh' ? '正在加载记录…' : 'Loading history…'}</p> : !wallet.history.length ? <p className="joy-wallet-empty">{labels.historyEmpty}</p> : <ol className="joy-history-list">
+          {wallet.history.map((entry) => <li key={`${entry.type}-${entry.id}`}>
+            <span className={`joy-history-icon ${entry.type}`}><Coins size={20} /></span>
+            <div><strong>{entry.type === 'redeemed' ? `${labels.redeemed} · ${rewardName(JOY_VOUCHER_TIERS.find((tier) => tier.id === entry.tierId) || { tierId: entry.tierId }, language)}` : labels.earned}</strong>
+              <small>{new Date(entry.createdAt).toLocaleString(language === 'zh' ? 'zh-MY' : 'en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}</small>
+              {entry.code && <code>{entry.code}</code>}
+            </div><b className={entry.amount > 0 ? 'joy-history-positive' : ''}>{entry.amount > 0 ? '+' : ''}{entry.amount}</b>
+          </li>)}
+        </ol>}
+      </div>}
+      {!standalone && <Link className="joy-wallet-link" to="/joy-coins">{labels.viewWallet} →</Link>}
 
       <div className="joy-account-section">
         <div className="joy-account-copy">
@@ -334,8 +417,8 @@ const JoyRewardsPanel = () => {
 
             <div className="joy-redeem-dialog-ticket">
               <Gift size={22} aria-hidden="true" />
-              <strong>{redeemedNotice.discountLabel}</strong>
-              <span>{labels.minimumSpend.replace('{amount}', redeemedNotice.minimumLabel)}</span>
+              <strong>{rewardName(redeemedVoucher, language)}</strong>
+              <span>{isGiftReward(redeemedVoucher) ? labels.giftUse : labels.minimumSpend.replace('{amount}', redeemedNotice.minimumLabel)}</span>
               <small>{labels.voucherCode}</small>
               <code>{redeemedNotice.code}</code>
               <button type="button" onClick={() => handleCopy(redeemedNotice.code)}>

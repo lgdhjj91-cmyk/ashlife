@@ -9,6 +9,7 @@ import {
   isPrizeInWinZone,
   mapGripScoreToState,
 } from './PhysicsRules.js';
+import * as physicsRules from './PhysicsRules.js';
 
 test('capture region is aligned below the visual claw mouth', () => {
   const region = buildCaptureRegion({ x: 500, y: 330 }, 92);
@@ -68,4 +69,15 @@ test('the chute floor leaves a full opening between both physical rims', () => {
     right: 869,
     width: 130,
   });
+});
+
+test('a released doll resting across the inner rim can enter the chute', () => {
+  assert.equal(typeof physicsRules.isPrizeEnteringChute, 'function');
+  const hole = { x: 804, rimY: 600, sensorWidth: 120 };
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 766, y: 545, bottom: 581.1, velocityY: 0 }, hole), true);
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 804, y: 526, bottom: 581.1, velocityY: 0 }, hole), true);
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 804, y: 560, bottom: 594, velocityY: 2 }, hole), true);
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 733, y: 558, bottom: 594, velocityY: 0 }, hole), false);
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 804, y: 520, bottom: 550, velocityY: 2 }, hole), false);
+  assert.equal(physicsRules.isPrizeEnteringChute({ x: 804, y: 560, bottom: 594, velocityY: -3 }, hole), false);
 });

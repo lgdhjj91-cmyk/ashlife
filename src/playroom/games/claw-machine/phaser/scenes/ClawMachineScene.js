@@ -16,6 +16,7 @@ import {
   dampClawTilt,
   getClawCableEnd,
   getClawTextureForState,
+  getClawTextureOrigin,
   getClawTiltTarget,
 } from '../../systems/ClawMotion';
 import { canMoveTrolleyInState, formatAttemptsRemaining, getPauseTarget } from '../../systems/GameFlow';
@@ -26,6 +27,7 @@ import {
   getEffectiveHoleSensorWidth,
   getPrizeHoleSensorZone,
   isPrizeInWinZone,
+  isPrizeEnteringChute,
 } from '../../systems/PhysicsRules';
 import {
   getCapturedPrizeDistance,
@@ -111,7 +113,6 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.createClawRig();
       this.createDecorations();
       this.matter.world.on('collisionstart', this.handleCollisionStart, this);
-      this.input.keyboard?.on('keydown', () => this.markStarted());
       this.resetRoundCounters();
       emit(this.bridge, 'game-ready', this.getUiPayload());
     }
@@ -152,6 +153,8 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
 
     setPaused(isPaused) {
       if (isPaused && this.gameState !== 'PAUSED') {
+        this.controlState.left = false;
+        this.controlState.right = false;
         this.previousState = this.gameState;
         this.setGameState('PAUSED');
         this.scene.pause();
@@ -277,7 +280,9 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       const { playArea } = machineConfig;
       this.prizeMaskSource = this.make.graphics({ add: false });
       this.prizeMaskSource.fillStyle(0xffffff, 1);
-      this.prizeMaskSource.fillRect(playArea.x, playArea.y - 8, playArea.width, playArea.height + 8);
+      // Soft collision shapes sit inside the artwork. Keep the full feet/base
+      // visible on the floor, up to the cabinet's front lip.
+      this.prizeMaskSource.fillRect(playArea.x, playArea.y - 8, playArea.width, playArea.height + 28);
       this.prizeMask = this.prizeMaskSource.createGeometryMask();
     }
 
@@ -343,7 +348,10 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     createPrizes() {
-      this.prizes.forEach((entry) => entry.gameObject.destroy());
+      this.prizes.forEach((entry) => {
+        this.tweens.killTweensOf(entry.gameObject);
+        entry.gameObject.destroy();
+      });
       this.prizeLayoutSeed = (this.prizeLayoutSeed + 1) >>> 0;
       const layout = this.testMode
         ? testPrizeLayout
@@ -405,7 +413,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.trolleySprite = this.add.image(startX, machineConfig.trolley.y - 4, 'claw-trolley').setDisplaySize(116, 58).setDepth(22);
       this.clawSprite = this.add
         .image(startX, machineConfig.trolley.y + difficulty.cableLength, 'claw-open')
-        .setOrigin(0.5, 0.035)
+        .setOrigin(getClawTextureOrigin('claw-open').x, getClawTextureOrigin('claw-open').y)
         .setDisplaySize(126, 154)
         .setDepth(24);
       this.clawBaseScaleX = this.clawSprite.scaleX;
@@ -543,6 +551,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       if (Number.isFinite(released.originalInertia)) {
         Phaser.Physics.Matter.Matter.Body.setInertia(released.gameObject.body, released.originalInertia);
       }
+      Phaser.Physics.Matter.Matter.Sleeping.set(released.gameObject.body, false);
       if (this.testMode) {
         released.gameObject.setVelocity(16, -7);
       } else {
@@ -557,6 +566,9 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     restartRound() {
+      if (this.scene.isPaused()) this.setPaused(false);
+      // A restarted round must not inherit closing/lifting callbacks.
+      this.time.removeAllEvents();
       if (this.gripConstraint) {
         this.matter.world.removeConstraint(this.gripConstraint);
       }
@@ -589,7 +601,10 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     clearWonPrizeShelf() {
-      this.wonPrizeShelf.forEach((entry) => entry.sprite.destroy());
+      this.wonPrizeShelf.forEach((entry) => {
+        this.tweens.killTweensOf(entry.sprite);
+        entry.sprite.destroy();
+      });
       this.wonPrizeShelf = [];
       this.wonShelfLabel?.setVisible(false);
     }
@@ -609,13 +624,19 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
     }
 
     checkPrizeWon(prizeBody) {
+      if (prizeBody === this.capturedPrize?.gameObject?.body) return;
       const position = prizeBody.position;
-      const inWinZone = isPrizeInWinZone(position, {
-          x: this.holeZone.x,
-          rimY: machineConfig.hole.y,
-          sensorWidth: this.holeZone.width,
-          sensorHeight: this.holeZone.height + 10,
-        });
+      const hole = {
+        x: this.holeZone.x,
+        rimY: machineConfig.hole.y,
+        sensorWidth: this.holeZone.width,
+        sensorHeight: this.holeZone.height + 10,
+      };
+      const inWinZone = isPrizeInWinZone(position, hole) || isPrizeEnteringChute({
+        ...position,
+        bottom: prizeBody.bounds.max.y,
+        velocityY: prizeBody.velocity.y,
+      }, hole);
       if (
         !isCollectiblePrize({
           isWon: prizeBody.plugin?.won,
@@ -644,6 +665,7 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         statusMessage: this.copy.status.prizeCollected(this.copy.prizes[prize.id] || prize.name),
       });
       emit(this.bridge, 'prize-collected', winPayload);
+      this.celebratePrizeWin();
       const transition = getWonPrizeTransition({
         holeX: machineConfig.hole.x,
         holeY: machineConfig.hole.y,
@@ -714,6 +736,24 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
           ease: entry.sprite === sprite ? 'Back.Out' : 'Sine.Out',
         });
       });
+    }
+
+    celebratePrizeWin() {
+      const { x, y } = machineConfig.hole;
+      for (let index = 0; index < 9; index += 1) {
+        const angle = Math.PI + (Math.PI * index) / 8;
+        const star = this.add.star(x, y - 12, 5, 3, 7,
+          index % 2 ? canvasColors.deepPink : 0xffd46b)
+          .setStrokeStyle(1, 0xffffff, 0.9).setDepth(28);
+        this.tweens.add({
+          targets: star,
+          x: x + Math.cos(angle) * 80,
+          y: y - 28 + Math.sin(angle) * 78,
+          angle: index % 2 ? 90 : -90,
+          scale: 0.25, alpha: 0, duration: 650, ease: 'Cubic.Out',
+          onComplete: () => star.destroy(),
+        });
+      }
     }
 
     update(_time, delta) {
@@ -815,6 +855,10 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
         this.matter.world.removeConstraint(this.gripConstraint);
         this.gripConstraint = null;
         this.releasedPrize = this.capturedPrize;
+        if (Number.isFinite(this.releasedPrize.originalInertia)) {
+          Phaser.Physics.Matter.Matter.Body.setInertia(this.releasedPrize.gameObject.body, this.releasedPrize.originalInertia);
+        }
+        Phaser.Physics.Matter.Matter.Sleeping.set(this.releasedPrize.gameObject.body, false);
         this.capturedPrize = null;
         this.releaseStartedAt = this.time.now;
         this.setGameState('RESOLVING', { statusMessage: this.copy.status.slipping });
@@ -876,6 +920,8 @@ export const createClawMachineScene = (Phaser, { events, settings, controlState 
       this.currentClawTexture = texture;
       this.tweens.killTweensOf(this.clawSprite);
       this.clawSprite.setTexture(texture);
+      const origin = getClawTextureOrigin(texture);
+      this.clawSprite.setOrigin(origin.x, origin.y);
       this.clawSprite.setScale(this.clawBaseScaleX, this.clawBaseScaleY);
 
       if (texture === 'claw-closed') {

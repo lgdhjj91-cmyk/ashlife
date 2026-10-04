@@ -166,3 +166,5 @@ VITE_BASE_PATH=/ashlife/
 ```
 
 Switch `VITE_BASE_PATH=/` for the custom domain build.
+
+Cozy Garden gift setup and launch sequencing: [integration guide](docs/cozy-garden-integration.md).

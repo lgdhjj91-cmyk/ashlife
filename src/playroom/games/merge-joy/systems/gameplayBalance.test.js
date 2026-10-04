@@ -5,16 +5,23 @@ import * as sceneRules from '../phaser/scenes/MergeJoyScene.js';
 
 const { mergeTiers } = tierRules;
 
-test('merged pieces return to the compact merge ladder size', () => {
+test('each merge grows beyond either dropped or merged ingredients while fitting the board', () => {
   const boardWidth = 528;
-  assert.ok(boardWidth / mergeTiers[0].diameter >= 9.5);
-  assert.ok(mergeTiers.at(-1).diameter / boardWidth <= 0.52);
+  for (let index = 1; index < mergeTiers.length; index += 1) {
+    const result = tierRules.getPieceDiameter(mergeTiers[index]);
+    for (const isDrop of [false, true]) {
+      assert.ok(result > tierRules.getPieceDiameter(mergeTiers[index - 1], isDrop),
+        `${mergeTiers[index].name} must grow beyond its ingredients`);
+    }
+  }
+  assert.ok(tierRules.getPieceDiameter(mergeTiers.at(-1)) / boardWidth <= 0.6);
 });
 
-test('fresh drops stay larger than merged pieces', () => {
-  assert.equal(typeof tierRules.getPieceDiameter, 'function');
+test('the same item keeps its size whether dropped or created by a merge', () => {
   assert.deepEqual(mergeTiers.slice(0, 5).map((tier) => tierRules.getPieceDiameter(tier, true)), [83, 103, 130, 156, 186]);
-  assert.deepEqual(mergeTiers.slice(0, 5).map((tier) => tierRules.getPieceDiameter(tier, false)), [53, 66, 83, 100, 119]);
+  for (const tier of mergeTiers) {
+    assert.equal(tierRules.getPieceDiameter(tier, false), tierRules.getPieceDiameter(tier, true), tier.name);
+  }
 });
 
 test('a merge keeps settled pieces settled instead of launching them upward', () => {

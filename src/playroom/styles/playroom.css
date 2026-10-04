@@ -145,6 +145,7 @@
 }
 
 .joy-balance-card {
+  text-decoration: none;
   width: fit-content;
   min-width: 180px;
   margin-top: 1.2rem;
@@ -745,9 +746,13 @@
 }
 
 .memory-card-front img {
-  width: min(84%, 150px);
-  aspect-ratio: 1;
+  width: 92%;
+  height: 92%;
+  min-width: 0;
+  min-height: 0;
   object-fit: contain;
+  object-position: center;
+  filter: contrast(1.08) saturate(1.12) drop-shadow(0 0 0.35px rgba(74, 35, 29, 0.3));
 }
 
 .memory-card.is-matched .memory-card-face {
@@ -1128,7 +1133,8 @@
   }
 
   .memory-card-front img {
-    width: 88%;
+    width: 94%;
+    height: 94%;
   }
 }
 

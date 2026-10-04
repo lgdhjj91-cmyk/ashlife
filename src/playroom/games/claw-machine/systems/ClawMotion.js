@@ -42,6 +42,16 @@ export const getClawCableEnd = ({ x, y }) => ({
   y: y - 51,
 });
 
+// Connector coordinates in the original textures; the closing frames have
+// asymmetric transparent padding, so their image centres are not the spring.
+const clawTextureOrigins = {
+  'claw-open': { x: 117.5 / 233, y: 10 / 284 },
+  'claw-partial': { x: 86.5 / 231, y: 10 / 277 },
+  'claw-closed': { x: 65 / 212, y: 10 / 276 },
+};
+
+export const getClawTextureOrigin = (texture) => clawTextureOrigins[texture] || clawTextureOrigins['claw-open'];
+
 export const getClawTextureForState = (state) => {
   if (state === 'CLOSING') return 'claw-partial';
   if (state === 'LIFTING' || state === 'SWINGING') return 'claw-closed';

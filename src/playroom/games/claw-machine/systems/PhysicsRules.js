@@ -43,6 +43,13 @@ export const isPrizeInWinZone = (position, hole) => {
   return belowRim && insideX && insideY;
 };
 
+// Catch a downward-moving or settled prize at the mouth, before its wider
+// collision shape can bridge the two rims. Near misses outside stay in play.
+export const isPrizeEnteringChute = ({ x, y, bottom, velocityY }, hole) =>
+  Math.abs(x - hole.x) <= hole.sensorWidth / 2 - 12 &&
+  y >= hole.rimY - 80 && y <= hole.rimY + 12 &&
+  bottom >= hole.rimY - 20 && velocityY >= -0.5;
+
 export const getEffectiveHoleSensorWidth = ({ holeWidth, sensorWidth }) =>
   Math.max(sensorWidth, holeWidth - 8);
 

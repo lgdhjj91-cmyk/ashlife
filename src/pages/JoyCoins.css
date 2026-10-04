@@ -1,0 +1,10 @@
+.joy-coins-page { padding: 100px 0 4rem; background: linear-gradient(145deg, #fff7fb, #fffaf2); min-height: 80vh; color: #61325f; }
+.joy-coins-page .container { max-width: 1120px; }
+.joy-coins-navigation { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.joy-coins-navigation a, .joy-coins-play { display: inline-flex; align-items: center; gap: .5rem; color: #754369; font-weight: 700; text-decoration: none; }
+.joy-coins-hero { margin: 2.6rem 0 1.5rem; }
+.joy-coins-hero > span { text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; font-weight: 800; color: #b34872; }
+.joy-coins-hero h1 { font-size: clamp(2.7rem, 6vw, 4.2rem); line-height: 1.15; margin: .45rem 0; color: #61325f; }
+.joy-coins-hero p { color: #765f72; line-height: 1.7; max-width: 560px; }
+.joy-coins-play { padding: 1rem 0; }
+@media (max-width: 768px) { .joy-coins-page { padding-top: 130px; } .joy-coins-hero { margin-top: 1.5rem; } }

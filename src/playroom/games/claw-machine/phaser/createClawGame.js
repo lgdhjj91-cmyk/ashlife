@@ -41,7 +41,7 @@ export const createClawGame = async ({ parent, events, settings }) => {
     game,
     setMove(direction, isPressed) {
       controlState[direction] = isPressed;
-      getScene()?.markStarted();
+      if (isPressed) getScene()?.markStarted();
     },
     dropGrab() {
       getScene()?.dropGrab();

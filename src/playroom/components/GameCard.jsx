@@ -25,7 +25,7 @@ const GameCard = memo(({ card, isFaceUp, isHinting, reduceMotion, labels, onChoo
           <span className="card-back-bow">ASHLIFE</span>
         </span>
         <span className="memory-card-face memory-card-front">
-          <img src={card.sticker.image} alt={card.sticker.alt} loading="lazy" />
+          <img src={card.sticker.memoryImage || card.sticker.image} alt={card.sticker.alt} loading="lazy" decoding="async" />
         </span>
       </span>
     </button>

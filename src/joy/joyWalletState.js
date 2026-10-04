@@ -1,4 +1,4 @@
-import { getVoucherEligibility, selectBestVoucher } from './joyVoucherRules.js';
+import { getVoucherEligibility, JOY_REWARD_TIERS, selectBestVoucher } from './joyVoucherRules.js';
 
 const normalizeTimestamp = (value) => {
   if (!value) return value;
@@ -29,6 +29,15 @@ export const normalizeJoyWallet = (value) => {
   return {
     coins: Math.max(0, Math.round(Number(source.coins) || 0)),
     vouchers,
+    history: [
+      ...(source.claims || []).map((entry) => ({
+        ...entry, type: 'earned', amount: entry.amount, createdAt: normalizeTimestamp(entry.createdAt),
+      })),
+      ...(source.redemptions || []).map((entry) => ({
+        ...entry, type: 'redeemed', amount: -(JOY_REWARD_TIERS.find((tier) => tier.id === entry.tierId)?.coinCost || 0),
+        createdAt: normalizeTimestamp(entry.createdAt),
+      })),
+    ].sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || ''))),
     legacyMigrated: Boolean(source.legacyMigrated),
     updatedAt: normalizeTimestamp(source.updatedAt),
   };

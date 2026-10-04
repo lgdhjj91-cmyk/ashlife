@@ -15,11 +15,92 @@ service cloud.firestore {
         && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
+    // New reward administration is explicitly granted; customer registration is not an admin role.
+    function isRewardAdmin() {
+      return signedIn() && (request.auth.token.get('rewardAdmin', false) == true
+        || (exists(/databases/$(database)/documents/rewardAdmins/$(request.auth.uid))
+          && get(/databases/$(database)/documents/rewardAdmins/$(request.auth.uid)).data.enabled == true));
+    }
+
+    function giftTier(tierId) {
+      return tierId in ['nanotoy', 'keychain', 'plushie'];
+    }
+
+    function canSettleReward() {
+      return isRewardAdmin() || (resource.data.get('source', 'joy') != 'garden'
+        && !resource.data.get('stockReserved', false) && isAdmin());
+    }
+
+    function canIssueGardenGift(uid, tierId) {
+      let path = /databases/$(database)/documents/gardenRewardGuests/$(uid)/openGifts/$(tierId);
+      return !exists(path) || get(/databases/$(database)/documents/joyVouchers/$(get(path).data.code)).data.status == 'used';
+    }
+
+    function validGardenVoucher(code, data) {
+      let catalogue = get(/databases/$(database)/documents/giftCatalog/$(data.tierId)).data;
+      let stock = get(/databases/$(database)/documents/giftStock/$(data.tierId)).data;
+      let receipt = getAfter(/databases/$(database)/documents/gardenRewardGuests/$(request.auth.uid)/requests/$(data.requestId)).data;
+      let pointer = getAfter(/databases/$(database)/documents/gardenRewardGuests/$(request.auth.uid)/openGifts/$(data.tierId)).data;
+      return data.keys().hasOnly(['code', 'tierId', 'coinCost', 'valueSen', 'minSubtotalSen', 'ownerUid', 'status', 'createdAt', 'updatedAt', 'source', 'currency', 'requestId'])
+        && giftTier(data.tierId) && data.code == code
+        && data.source == 'garden' && data.currency == 'garden'
+        && data.ownerUid == request.auth.uid && data.status == 'available'
+        && data.valueSen == 0 && data.minSubtotalSen == 0
+        && data.coinCost is int && data.coinCost > 0 && data.coinCost <= 1000000
+        && catalogue.enabled == true && catalogue.coinCost == data.coinCost
+        && stock.available is int && stock.available > 0
+        && data.createdAt == request.time && data.updatedAt == request.time
+        && data.requestId is string && data.requestId.size() > 0 && data.requestId.size() <= 128
+        && ((data.tierId == 'nanotoy' && code.matches('^CG-NANOTOY-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'keychain' && code.matches('^CG-KEYCHAIN-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'plushie' && code.matches('^CG-PLUSHIE-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$')))
+        && canIssueGardenGift(request.auth.uid, data.tierId)
+        && !exists(/databases/$(database)/documents/gardenRewardGuests/$(request.auth.uid)/requests/$(data.requestId))
+        && receipt.code == code && receipt.tierId == data.tierId && receipt.coinCost == data.coinCost
+        && receipt.debitRequired == true && pointer.code == code;
+    }
+
+    function reserveGiftStock() {
+      let tierId = resource.data.tierId;
+      let path = /databases/$(database)/documents/giftStock/$(tierId);
+      return !giftTier(tierId) || ((!exists(path) && resource.data.get('source', 'joy') != 'garden'
+          && !('stockReserved' in request.resource.data))
+        || (exists(path) && get(path).data.available > 0
+          && request.resource.data.stockReserved == true
+          && getAfter(path).data.available == get(path).data.available - 1
+          && getAfter(path).data.lastVoucherCode == resource.data.code));
+    }
+
+    function releaseGiftStock() {
+      let path = /databases/$(database)/documents/giftStock/$(resource.data.tierId);
+      return !('stockReserved' in request.resource.data)
+        && (!resource.data.get('stockReserved', false)
+          || (getAfter(path).data.available == get(path).data.available + 1
+            && getAfter(path).data.lastVoucherCode == resource.data.code));
+    }
+
+    function validStockTransition(tierId) {
+      let code = request.resource.data.lastVoucherCode;
+      let before = get(/databases/$(database)/documents/joyVouchers/$(code)).data;
+      let after = getAfter(/databases/$(database)/documents/joyVouchers/$(code)).data;
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['available', 'lastVoucherCode', 'updatedAt'])
+        && request.resource.data.available is int && request.resource.data.available >= 0
+        && request.resource.data.updatedAt == request.time && before.tierId == tierId
+        && ((before.status == 'available' && after.status == 'reserved'
+            && after.reservedByUid == request.auth.uid && after.stockReserved == true
+            && request.resource.data.available == resource.data.available - 1)
+          || (before.status == 'reserved' && after.status == 'available'
+            && before.stockReserved == true && !('stockReserved' in after)
+            && (before.reservedByUid == request.auth.uid || isRewardAdmin())
+            && request.resource.data.available == resource.data.available + 1));
+    }
+
     function validTier(data) {
       let tierId = data.tierId;
       return (tierId == 'rm1' && data.coinCost == 100 && data.valueSen == 100 && data.minSubtotalSen == 1000)
         || (tierId == 'rm2' && data.coinCost == 200 && data.valueSen == 200 && data.minSubtotalSen == 1500)
-        || (tierId == 'rm5' && data.coinCost == 500 && data.valueSen == 500 && data.minSubtotalSen == 2000);
+        || (tierId == 'rm5' && data.coinCost == 500 && data.valueSen == 500 && data.minSubtotalSen == 2000)
+        || ((tierId == 'nanotoy' || tierId == 'keychain') && data.coinCost == 500 && data.valueSen == 0 && data.minSubtotalSen == 0);
     }
 
     function validWallet(data) {
@@ -111,7 +192,9 @@ service cloud.firestore {
         && validTier(data)
         && ((data.tierId == 'rm1' && code.matches('^JOY-RM1-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
           || (data.tierId == 'rm2' && code.matches('^JOY-RM2-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
-          || (data.tierId == 'rm5' && code.matches('^JOY-RM5-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$')));
+          || (data.tierId == 'rm5' && code.matches('^JOY-RM5-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'nanotoy' && code.matches('^JOY-NANOTOY-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$'))
+          || (data.tierId == 'keychain' && code.matches('^JOY-KEYCHAIN-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{10}$')));
     }
 
     function pairedRedemption(code) {
@@ -134,6 +217,7 @@ service cloud.firestore {
         'reservedAt',
         'usedAt',
         'restoredAt',
+        'stockReserved',
         'updatedAt'
       ]);
     }
@@ -146,9 +230,10 @@ service cloud.firestore {
         && request.resource.data.reservedOrderId.size() > 0
         && request.resource.data.reservedSubtotalSen is int
         && request.resource.data.reservedSubtotalSen >= resource.data.minSubtotalSen
+        && (!giftTier(resource.data.tierId) || request.resource.data.reservedSubtotalSen > 0)
         && request.resource.data.reservedAt == request.time
         && request.resource.data.updatedAt == request.time
-        && immutableVoucherFields();
+        && immutableVoucherFields() && reserveGiftStock();
     }
 
     function sameReservation() {
@@ -167,20 +252,21 @@ service cloud.firestore {
         && !('reservedOrderId' in request.resource.data)
         && !('reservedSubtotalSen' in request.resource.data)
         && !('reservedAt' in request.resource.data)
-        && immutableVoucherFields();
+        && immutableVoucherFields() && releaseGiftStock();
     }
 
     function validAdminConsumption() {
-      return isAdmin()
+      return canSettleReward()
         && resource.data.status == 'reserved'
         && request.resource.data.status == 'used'
         && request.resource.data.usedAt == request.time
         && request.resource.data.updatedAt == request.time
+        && request.resource.data.get('stockReserved', false) == resource.data.get('stockReserved', false)
         && immutableVoucherFields();
     }
 
     function validAdminRestoration() {
-      return isAdmin()
+      return canSettleReward()
         && resource.data.status == 'reserved'
         && request.resource.data.status == 'available'
         && request.resource.data.restoredAt == request.time
@@ -189,12 +275,13 @@ service cloud.firestore {
         && !('reservedOrderId' in request.resource.data)
         && !('reservedSubtotalSen' in request.resource.data)
         && !('reservedAt' in request.resource.data)
-        && immutableVoucherFields();
+        && !('usedAt' in request.resource.data)
+        && immutableVoucherFields() && releaseGiftStock();
     }
 
     function sameSettledVoucher() {
       return request.resource.data == resource.data
-        && (resource.data.status == 'available' || (isAdmin() && resource.data.status == 'used'));
+        && (resource.data.status == 'available' || (canSettleReward() && resource.data.status == 'used'));
     }
 
     match /joyWallets/{uid} {
@@ -206,7 +293,7 @@ service cloud.firestore {
 
       match /claims/{claimId} {
         allow get: if isOwner(uid);
-        allow list: if false;
+        allow list: if isOwner(uid) && request.query.limit <= 100;
         allow create: if isOwner(uid)
           && request.resource.data.keys().hasOnly(['amount', 'createdAt'])
           && request.resource.data.amount is int
@@ -220,7 +307,7 @@ service cloud.firestore {
 
       match /redemptions/{requestId} {
         allow get: if isOwner(uid);
-        allow list: if false;
+        allow list: if isOwner(uid) && request.query.limit <= 100;
         allow create: if isOwner(uid)
           && request.resource.data.keys().hasOnly(['code', 'tierId', 'createdAt'])
           && request.resource.data.code is string
@@ -237,8 +324,9 @@ service cloud.firestore {
       allow list: if signedIn()
         && resource.data.ownerUid == request.auth.uid;
       allow create: if signedIn()
-        && validVoucherShape(code, request.resource.data)
-        && pairedRedemption(code);
+        && ((request.resource.data.get('source', 'joy') == 'joy'
+          && validVoucherShape(code, request.resource.data) && pairedRedemption(code))
+          || (request.resource.data.get('source', '') == 'garden' && validGardenVoucher(code, request.resource.data)));
       allow update: if signedIn()
         && (validReservation()
           || sameReservation()
@@ -246,6 +334,58 @@ service cloud.firestore {
           || validCustomerRelease()
           || validAdminConsumption()
           || validAdminRestoration());
+      allow delete: if false;
+    }
+
+    match /giftCatalog/{tierId} {
+      allow read: if true;
+      allow create, update: if isRewardAdmin() && giftTier(tierId)
+        && request.resource.data.enabled is bool
+        && ((request.resource.data.coinCost is int && request.resource.data.coinCost > 0 && request.resource.data.coinCost <= 1000000)
+          || (request.resource.data.enabled == false && request.resource.data.coinCost == null));
+      allow delete: if false;
+    }
+
+    match /giftStock/{tierId} {
+      allow read: if signedIn();
+      allow create: if isRewardAdmin() && giftTier(tierId)
+        && request.resource.data.available is int && request.resource.data.available >= 0;
+      allow update: if signedIn() && giftTier(tierId)
+        && ((isRewardAdmin() && request.resource.data.available is int && request.resource.data.available >= 0)
+          || validStockTransition(tierId));
+      allow delete: if false;
+    }
+
+    match /gardenRewardGuests/{uid}/requests/{requestId} {
+      allow get: if isOwner(uid);
+      allow list: if isOwner(uid) && request.query.limit <= 50;
+      allow create: if isOwner(uid) && validGardenReceipt(uid, requestId);
+      allow update, delete: if false;
+    }
+
+    function validGardenReceipt(uid, requestId) {
+      let data = request.resource.data;
+      let path = /databases/$(database)/documents/joyVouchers/$(data.code);
+      let voucher = getAfter(path).data;
+      return data.keys().hasOnly(['code', 'tierId', 'coinCost', 'debitRequired', 'createdAt'])
+        && giftTier(data.tierId) && data.createdAt == request.time
+        && voucher.ownerUid == uid && voucher.source == 'garden'
+        && voucher.tierId == data.tierId && voucher.coinCost == data.coinCost
+        && ((data.debitRequired == true && !exists(path) && voucher.requestId == requestId)
+          || (data.debitRequired == false && exists(path) && get(path).data.status in ['available', 'reserved']
+            && get(/databases/$(database)/documents/gardenRewardGuests/$(uid)/openGifts/$(data.tierId)).data.code == data.code));
+    }
+
+    match /gardenRewardGuests/{uid}/openGifts/{tierId} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && giftTier(tierId)
+        && request.resource.data.keys().hasOnly(['code', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && canIssueGardenGift(uid, tierId)
+        && !exists(/databases/$(database)/documents/joyVouchers/$(request.resource.data.code))
+        && getAfter(/databases/$(database)/documents/joyVouchers/$(request.resource.data.code)).data.ownerUid == uid
+        && getAfter(/databases/$(database)/documents/joyVouchers/$(request.resource.data.code)).data.tierId == tierId
+        && getAfter(/databases/$(database)/documents/joyVouchers/$(request.resource.data.code)).data.source == 'garden';
       allow delete: if false;
     }
 

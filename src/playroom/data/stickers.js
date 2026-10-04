@@ -1,5 +1,12 @@
 const stickerAsset = (filename) => `${import.meta.env.BASE_URL}assets/game/stickers/${filename}`;
 
+// Dedicated, repaired card art keeps album and reward illustrations unchanged.
+const restoredMemoryArtwork = new Set([
+  'bear-notebook', 'bunny-pencil-case', 'diy-resin-jar', 'resin-letter-set',
+  'kawaii-washi-tape', 'sticky-notes-set', 'bunny-scissors', 'bear-pencil-holder',
+  'bubble-tea-keychain', 'puppy-calendar', 'cat-reading',
+]);
+
 export const stickerCategories = [
   'Stationery',
   'DIY Crafts',
@@ -146,6 +153,12 @@ export const memoryMatchStickers = [
     alt: 'Pink heart keychain sticker',
   },
 ];
+
+memoryMatchStickers.forEach((sticker) => {
+  if (restoredMemoryArtwork.has(sticker.id)) {
+    sticker.memoryImage = stickerAsset(`memory/${sticker.id}.webp`);
+  }
+});
 
 const mergeJoyRewardStickers = [
   {

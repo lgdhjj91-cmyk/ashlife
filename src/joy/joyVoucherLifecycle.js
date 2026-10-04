@@ -1,4 +1,4 @@
-import { JOY_VOUCHER_TIERS } from './joyVoucherRules.js';
+import { JOY_REWARD_TIERS, isGiftReward } from './joyVoucherRules.js';
 
 const createError = (code, message) => Object.assign(new Error(message), { code });
 
@@ -52,7 +52,7 @@ export const applyCoinClaim = (wallet, amount, mutation) => {
 };
 
 export const applyRedemption = (wallet, tierId, code, mutation) => {
-  const tier = JOY_VOUCHER_TIERS.find((candidate) => candidate.id === tierId);
+  const tier = JOY_REWARD_TIERS.find((candidate) => candidate.id === tierId);
   if (!tier) throw createError('invalid-argument', 'Unknown Joy voucher tier.');
   const current = createWalletSnapshot(wallet);
   if (current.coins < tier.coinCost) {
@@ -110,6 +110,9 @@ export const reserveVoucherRecord = (voucher, reservation) => {
   if (asInteger(reservation.subtotalSen) < asInteger(voucher.minSubtotalSen)) {
     throw createError('failed-precondition', 'The order does not meet the voucher minimum spend.');
   }
+  if (isGiftReward(voucher) && asInteger(reservation.subtotalSen) === 0) {
+    throw createError('failed-precondition', 'Add a purchased item to receive this gift.');
+  }
 
   return {
     ...voucher,
@@ -134,11 +137,12 @@ export const settleVoucherRecord = (voucher, settlement) => {
   if (!['confirmed', 'completed', 'rejected', 'cancelled'].includes(orderStatus)) {
     return voucher;
   }
-  if (voucher.status === 'used' && ['confirmed', 'completed'].includes(orderStatus)) return voucher;
   if (voucher.status === 'available' && ['rejected', 'cancelled'].includes(orderStatus)) return voucher;
-  if (voucher.status !== 'reserved' || voucher.reservedOrderId !== orderId) {
+  if (!['reserved', 'used'].includes(voucher.status) || voucher.reservedOrderId !== orderId) {
     throw createError('permission-denied', 'This voucher belongs to another order.');
   }
+  // Consumed rewards are never reopened by a later order status change.
+  if (voucher.status === 'used') return voucher;
 
   if (['confirmed', 'completed'].includes(orderStatus)) {
     return {

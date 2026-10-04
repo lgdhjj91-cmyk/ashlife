@@ -19,6 +19,7 @@ import MemoryGrid from '../components/MemoryGrid';
 import StickerAlbum from '../components/StickerAlbum';
 import TutorialModal from '../components/TutorialModal';
 import JoyRewardsPanel from '../../components/JoyRewardsPanel';
+import CozyGardenFeature from '../../components/CozyGardenFeature';
 import { memoryMatchStickers, stickers } from '../data/stickers';
 import { getDailyChallenge } from '../games/memory-match/dailyChallenge';
 import { difficultySettings, formatTime } from '../games/memory-match/scoring';
@@ -435,18 +436,20 @@ const PlayroomPage = () => {
                 <span className="playroom-pill">{labels.heroPill}</span>
                 <h1>{labels.heroTitle}</h1>
                 <p>{labels.heroDescription}</p>
-                <div className="joy-balance-card" aria-label={labels.joyCoins}>
+                <Link to="/joy-coins" className="joy-balance-card" aria-label={language === 'zh' ? '打开 Joy Coins 钱包' : 'Open Joy Coins wallet'}>
                   <Coins size={24} />
                   <div>
                     <strong>{summary.coins}</strong>
                     <span>{labels.joyCoins}</span>
                   </div>
-                </div>
+                  <span aria-hidden="true">→</span>
+                </Link>
               </div>
               <img src={mascotSrc} alt={labels.heroTitle} />
             </section>
 
             <section className="playroom-games-section" aria-label={labels.heroDescription}>
+              <CozyGardenFeature />
               <article className="merge-joy-feature-card">
                 <div className="merge-joy-feature-preview">
                   <img
@@ -514,7 +517,7 @@ const PlayroomPage = () => {
               <article className="memory-game-card">
                 <div className="memory-game-preview">
                   {memoryMatchStickers.slice(0, 6).map((sticker) => (
-                    <img key={sticker.id} src={sticker.image} alt="" loading="lazy" />
+                    <img key={sticker.id} src={sticker.memoryImage || sticker.image} alt="" loading="lazy" />
                   ))}
                 </div>
                 <div className="memory-game-copy">

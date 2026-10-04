@@ -7,6 +7,7 @@ import {
   getClawTextureForState,
   getClawTiltTarget,
 } from './ClawMotion.js';
+import * as clawMotion from './ClawMotion.js';
 
 test('visual claw tilt follows trolley lag but never tumbles', () => {
   const trailingLeft = getClawTiltTarget({
@@ -53,6 +54,19 @@ test('damped tilt moves toward center without overshooting', () => {
 
 test('cable ends at the claw top connector', () => {
   assert.deepEqual(getClawCableEnd({ x: 488, y: 334 }), { x: 488, y: 283 });
+});
+
+test('each texture anchors its visible spring connector to the cable', () => {
+  assert.equal(typeof clawMotion.getClawTextureOrigin, 'function');
+  for (const [texture, width, height, connectorX] of [
+    ['claw-open', 233, 284, 117.5],
+    ['claw-partial', 231, 277, 86.5],
+    ['claw-closed', 212, 276, 65],
+  ]) {
+    const origin = clawMotion.getClawTextureOrigin(texture);
+    assert.ok(Math.abs(origin.x * width - connectorX) < 0.01);
+    assert.ok(Math.abs(origin.y * height - 10) < 0.01);
+  }
 });
 
 test('claw textures communicate closing, carrying, and release states', () => {
