@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle, Coins, Ticket, X } from 'lucide-react';
 import { useJoyWallet } from '../context/JoyWalletContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getVoucherEligibility, isGiftReward } from '../joy/joyVoucherRules';
 import JoyGiftSelection from './JoyGiftSelection';
 import { resolveVoucherSelection } from '../joy/joyWalletState';
+import { applyCheckoutRewardCode, checkoutCodeCopy } from '../joy/checkoutRewardCode';
 import './JoyVoucherCard.css';
 
 const copy = {
@@ -29,7 +30,7 @@ const copy = {
     none: 'No saved voucher currently meets this cart’s minimum spend.',
     min: 'Min. items RM{amount}',
     discount: 'RM{amount} off',
-    onlineNote: 'Voucher reservation and one-time use are secured during Pay Online checkout.',
+    onlineNote: 'Gift stock and single-use codes are reserved when you submit an online or WhatsApp order.',
   },
   zh: {
     title: '优惠券与礼物代码',
@@ -52,7 +53,7 @@ const copy = {
     none: '目前没有符合购物车最低消费的优惠券。',
     min: '商品最低 RM{amount}',
     discount: '优惠 RM{amount}',
-    onlineNote: '使用在线付款结账时，系统会安全保留优惠券并确保只能使用一次。',
+    onlineNote: '提交在线或 WhatsApp 订单时，系统会保留礼物库存与一次性代码。',
   },
 };
 
@@ -61,6 +62,7 @@ const formatRm = (sen) => (Number(sen || 0) / 100).toFixed(2);
 const JoyVoucherCard = ({ subtotalSen }) => {
   const { language } = useLanguage();
   const labels = copy[language] || copy.en;
+  const codeLabels = checkoutCodeCopy[language] || checkoutCodeCopy.en;
   const {
     wallet,
     selectedVoucher,
@@ -74,6 +76,7 @@ const JoyVoucherCard = ({ subtotalSen }) => {
   const [manualCode, setManualCode] = useState('');
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState('');
+  const checkingRef = useRef(false);
 
   const availableVouchers = useMemo(
     () => wallet.vouchers.filter((voucher) => !isGiftReward(voucher) && voucher.status === 'available'),
@@ -100,20 +103,21 @@ const JoyVoucherCard = ({ subtotalSen }) => {
 
   const handleManualApply = async (event) => {
     event.preventDefault();
+    if (checkingRef.current || !manualCode.trim()) return;
+    checkingRef.current = true;
     setChecking(true);
     setMessage('');
-    const result = await previewVoucher(manualCode, subtotalSen);
+    const result = await applyCheckoutRewardCode({ code: manualCode, subtotalSen, preview: previewVoucher, chooseGift, chooseVoucher });
+    checkingRef.current = false;
     setChecking(false);
     if (result.success && result.valid && result.voucher) {
-      if (isGiftReward(result.voucher)) chooseGift(result.voucher);
-      else chooseVoucher(result.voucher);
       setManualCode(result.voucher.code);
-      setMessage(labels.applied);
+      setMessage(result.kind === 'gift' ? codeLabels.giftApplied : codeLabels.cashApplied);
       return;
     }
 
     const reason = result.reason || 'invalid';
-    setMessage(labels[reason] || result.error || labels.invalid);
+    setMessage(codeLabels[reason] || labels[reason] || result.error || labels.invalid);
   };
 
   const eligibleSaved = availableVouchers.filter(
@@ -173,7 +177,8 @@ const JoyVoucherCard = ({ subtotalSen }) => {
             id="joy-voucher-code"
             value={manualCode}
             onChange={(event) => setManualCode(event.target.value)}
-            placeholder={labels.placeholder}
+            placeholder={codeLabels.placeholder}
+            aria-describedby="joy-code-help"
             autoComplete="off"
           />
           <button type="submit" disabled={checking || !manualCode.trim()}>
@@ -181,6 +186,7 @@ const JoyVoucherCard = ({ subtotalSen }) => {
           </button>
         </div>
       </form>
+      <p id="joy-code-help" className="joy-online-note">{codeLabels.help}</p>
 
       {message && <p className="joy-code-message" role="status">{message}</p>}
       <JoyGiftSelection subtotalSen={subtotalSen} />

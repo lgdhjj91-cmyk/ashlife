@@ -1,6 +1,12 @@
 # Cozy Garden gifts — Ashlife integration
 
-Implemented locally on 4 October 2026. Nothing has been deployed or seeded into production.
+Implemented locally on 4 October 2026; checkout guidance enhanced on 5 October. Nothing has been deployed or seeded into production.
+
+Garden's voucher producer is now implemented in `D:/Development/GardenCozyGameWebsite`. Its real-SDK emulator test creates a CG keychain and calls this project's actual checkout-code helper and repository to preview, select, reserve and consume it as a different guest. Reuse is rejected. All five Garden adapter integration cases and the ten existing shop rules cases pass.
+
+Cart/Checkout → **Vouchers & gift codes** explicitly accepts `CG-KEYCHAIN-…` and other Garden gift codes as well as JOY codes. Paste a code, choose **Apply code**, and its free gift appears below. Gift selection is separate from the cash discount, requires a purchase, and confirms stock on order submission. A copied code does not require account linking.
+
+Live connection check on 5 October: anonymous authentication succeeds, but deployed rules deny `giftCatalog` and `giftStock` reads. The matching shared rules still require deployment; actual allocations/catalogue need owner setup. Firebase CLI is not signed into an owner account on this machine. Do not describe the live integration as enabled until those steps are complete.
 
 ## Customer experience
 
