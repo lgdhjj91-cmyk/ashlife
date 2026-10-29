@@ -1,11 +1,12 @@
 export const products = [
-  ['bear-notebook', 'Bear Notebook'],
-  ['bunny-pencil-case', 'Bunny Pencil Case'],
+  // Reuse the intact, outlined artwork so small icons keep their opaque details.
+  ['bear-notebook', 'Bear Notebook', 'memory/'],
+  ['bunny-pencil-case', 'Bunny Pencil Case', 'memory/'],
   ['bear-heart', 'Heart Keychain'],
-  ['bubble-tea-keychain', 'Bubble Tea Keychain'],
+  ['bubble-tea-keychain', 'Bubble Tea Keychain', 'memory/'],
   ['paw-squishy', 'Paw Squishy'],
-  ['kawaii-washi-tape', 'Kawaii Washi Tape'],
-].map(([id, name]) => ({ id, name, imagePath: 'assets/game/stickers/' + id + '.webp' }));
+  ['kawaii-washi-tape', 'Kawaii Washi Tape', 'memory/'],
+].map(([id, name, folder = '']) => ({ id, name, imagePath: 'assets/game/stickers/' + folder + id + '.webp' }));
 
 export const customers = ['bunny', 'bear', 'chick'].map(id => ({
   id,

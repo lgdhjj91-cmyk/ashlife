@@ -1179,3 +1179,20 @@
 .memory-card.reduce-motion.is-matched .memory-card-back {
   opacity: 0;
 }
+
+/* Keep every memory card and the game controls visible on a laptop. */
+@media (min-width:900px) {
+  .app:has(.memory-is-playing) > header, .app:has(.memory-is-playing) > footer { display:none; }
+  .memory-is-playing { min-height:100dvh; padding:8px 0; }
+  .memory-is-playing .playroom-topbar { min-height:44px; margin-bottom:6px; }
+  .memory-is-playing .memory-match-screen { padding:0; }
+  .memory-is-playing .memory-screen-toolbar { align-items:center; margin-bottom:6px; }
+  .memory-is-playing .difficulty-selector { margin:0; }
+  .memory-is-playing .difficulty-selector button { min-height:44px; padding:5px 14px; }
+  .memory-is-playing .game-header-panel { padding:8px 12px; margin-bottom:6px; }
+  .memory-is-playing .game-header-panel h2 { font-size:1.1rem; margin:4px 0; }
+  .memory-is-playing .game-progress-line { margin-bottom:8px; }
+  .memory-is-playing .memory-grid { --card-gap:8px; width:min(100%,calc(100dvh - 266px)); }
+  .memory-is-playing .memory-grid-easy { width:min(100%,calc((100dvh - 266px) * 1.333333)); }
+  .memory-is-playing .memory-grid-hard { width:min(100%,calc((100dvh - 266px) * 1.5)); grid-template-columns:repeat(6,minmax(0,1fr)); }
+}

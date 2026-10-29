@@ -2,6 +2,8 @@ body.merge-joy-active > div:not(#root) {
   display: none !important;
 }
 
+.merge-page > .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+
 .merge-page {
   min-height: 100vh;
   padding: calc(70px + 1rem) clamp(.5rem, 2vw, 1.5rem) 3rem;
@@ -172,4 +174,32 @@ body.merge-joy-active > div:not(#root) {
 
 @media (prefers-reduced-motion: reduce) {
   .merge-loading-star, .merge-page.has-warning .merge-canvas-shell, .merge-discovery-toast { animation: none; }
+}
+
+/* Size the whole play area from the browser height, including its controls. */
+@media (min-width: 900px) {
+  .app:has(.merge-page) > header, .app:has(.merge-page) > footer { display: none; }
+  .merge-page { --merge-board-width:min(560px,calc((100dvh - 210px) * .794872)); min-height:100dvh; padding:8px 16px; }
+  .merge-topbar { min-height:44px; gap:12px; }
+  .merge-topbar h1 { font-size:1.5rem; }
+  .merge-mode-picker { margin:4px auto 8px; }
+  .merge-mode-heading { margin-bottom:3px; }
+  .merge-mode-tabs button { min-height:44px; padding:5px 10px; }
+  .merge-game-layout { grid-template-columns:minmax(150px,220px) minmax(0,var(--merge-board-width)) minmax(190px,240px); gap:16px; }
+  .merge-rail { padding-top:0; gap:8px; }
+  .merge-rail-right { grid-column:3; grid-row:1; grid-template-columns:1fr; }
+  .merge-preview-row { grid-template-columns:1fr 1fr; gap:8px; }
+  .merge-piece-preview { min-height:112px; grid-template-rows:auto 58px auto; padding:6px; border-radius:16px; }
+  .merge-piece-preview img { width:58px; height:58px; }
+  .merge-stat-card { padding:10px; }
+  .merge-stat-card strong { font-size:2rem; }
+  .merge-daily-card { padding:10px; }
+  .merge-daily-heading { flex-wrap:wrap; }
+  .merge-daily-heading span { font-size:.65rem; }
+  .merge-daily-card p { margin:8px 0; }
+  .merge-bottom-controls { grid-template-columns:64px 1fr 48px; gap:6px; margin-top:6px; }
+  .merge-hold-button, .merge-drop-button, .merge-collection-button { min-height:50px; border-radius:12px; }
+  .merge-drop-button { font-size:1.15rem; }
+  .merge-collection-button { min-width:0; padding:6px; font-size:0; }
+  .merge-discovery-toast { top:60px; }
 }

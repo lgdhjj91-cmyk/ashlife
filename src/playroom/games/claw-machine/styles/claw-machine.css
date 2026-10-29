@@ -825,3 +825,41 @@
     transition: none;
   }
 }
+
+.claw-controls-help { grid-column:1 / -1; }
+.claw-controls-help summary { min-height:44px; padding:10px 4px; color:#5b315b; font-weight:900; cursor:pointer; }
+.claw-controls-help dl { margin:8px 0; }
+.claw-controls-help > button { margin:4px 0; }
+
+@media (min-width:900px) {
+  .app:has(.claw-page) > header, .app:has(.claw-page) > footer { display:none; }
+  .claw-page { min-height:100dvh; padding:8px 0; }
+  .claw-topbar { min-height:44px; padding:0; margin-bottom:6px; }
+  .claw-intro { flex-direction:row; align-items:center; gap:16px; margin-bottom:6px; }
+  .claw-intro h1 { font-size:1.6rem; }
+  .claw-intro p { display:none; }
+  .claw-mode-panel { min-width:0; display:grid; grid-template-columns:1.5fr 1fr; gap:8px; }
+  .claw-segmented button { min-height:44px; padding:5px 8px; font-size:.8rem; }
+  .claw-segmented span { font-size:.6rem; }
+  .claw-hud { padding:5px 10px; margin-bottom:8px; }
+  .claw-hud > .claw-stat-pill { min-height:44px; }
+  .claw-mobile-live-status { display:none; }
+  .claw-game-layout { grid-template-columns:minmax(0,min(720px,calc((100dvh - 258px) * 1.315789))) 300px; grid-template-rows:auto auto; gap:8px 16px; }
+  .claw-canvas-shell { grid-column:1; grid-row:1; min-height:0; width:100%; }
+  .claw-mobile-controls { grid-column:1; grid-row:2; flex-wrap:nowrap; padding:0; gap:8px; }
+  .claw-touch-row { gap:8px; }
+  .claw-touch-button { min-height:44px; min-width:44px; padding:6px; border-radius:12px; }
+  .claw-touch-button.action { min-width:90px; font-size:.8rem; }
+  .claw-side-panel { position:static; grid-column:2; grid-row:1 / span 2; grid-template-columns:1fr; width:300px; padding:8px; gap:8px; }
+  .claw-side-panel > .claw-live-status-card { display:grid; }
+  .claw-live-status-card, .claw-session-card { gap:6px; padding:8px; border-radius:14px; }
+  .claw-live-stats { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+  .claw-live-stats .claw-stat-pill { padding:5px; min-height:44px; gap:4px; }
+  .claw-live-stats .claw-stat-pill:last-child { grid-column:auto; }
+  .claw-live-stats svg { width:14px; }
+  .claw-stat-pill small { font-size:.6rem; }
+  .claw-status-message { font-size:.8rem; }
+  .claw-session-heading h2 { font-size:1rem; }
+  .claw-session-stats span { padding:5px; }
+  .claw-controls-help summary { padding:8px 4px; }
+}

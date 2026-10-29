@@ -398,7 +398,7 @@ const PlayroomPage = () => {
   };
 
   return (
-    <main className="page playroom-page animate-fade-in">
+    <main className={'page playroom-page animate-fade-in' + (view === 'game' ? ' memory-is-playing' : '')}>
       <div className="playroom-shell">
         <div className="playroom-topbar">
           <Link className="playroom-back-link" to="/">
@@ -449,7 +449,6 @@ const PlayroomPage = () => {
             </section>
 
             <section className="playroom-games-section" aria-label={labels.heroDescription}>
-              <CozyGardenFeature />
               <article className="merge-joy-feature-card">
                 <div className="merge-joy-feature-preview">
                   <img
@@ -538,6 +537,8 @@ const PlayroomPage = () => {
                 </div>
               </article>
             </section>
+
+            <CozyGardenFeature compact />
 
             <JoyRewardsPanel />
 

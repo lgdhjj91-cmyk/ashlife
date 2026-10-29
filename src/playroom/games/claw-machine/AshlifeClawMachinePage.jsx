@@ -325,31 +325,33 @@ const AshlifeClawMachinePage = () => {
           <aside className="claw-side-panel">
             <LiveGameStats status={status} copy={copy.hud} />
             <SessionCard mode={mode} entries={sessionEntries} copy={copy.session} prizeNames={copy.prizes} />
-            <h2>{copy.controlsTitle}</h2>
-            <dl>
-              <div>
-                <dt>{copy.controls.move}</dt>
-                <dd>{copy.controls.moveKeys}</dd>
-              </div>
-              <div>
-                <dt>{copy.controls.dropGrab}</dt>
-                <dd>{copy.controls.dropGrabKey}</dd>
-              </div>
-              <div>
-                <dt>{copy.controls.release}</dt>
-                <dd>{copy.controls.releaseKey}</dd>
-              </div>
-              <div>
-                <dt>{copy.controls.pause}</dt>
-                <dd>{copy.controls.pauseKey}</dd>
-              </div>
-            </dl>
-            <button className="playroom-button secondary" type="button" onClick={handleControlLayoutChange}>
-              {controlLayout === 'right' ? copy.controls.rightHanded : copy.controls.leftHanded}
-            </button>
-            <button className="playroom-button quiet" type="button" onClick={() => navigate('/shop')}>
-              {copy.controls.explore}
-            </button>
+            <details className="claw-controls-help">
+              <summary>{copy.controlsTitle}</summary>
+              <dl>
+                <div>
+                  <dt>{copy.controls.move}</dt>
+                  <dd>{copy.controls.moveKeys}</dd>
+                </div>
+                <div>
+                  <dt>{copy.controls.dropGrab}</dt>
+                  <dd>{copy.controls.dropGrabKey}</dd>
+                </div>
+                <div>
+                  <dt>{copy.controls.release}</dt>
+                  <dd>{copy.controls.releaseKey}</dd>
+                </div>
+                <div>
+                  <dt>{copy.controls.pause}</dt>
+                  <dd>{copy.controls.pauseKey}</dd>
+                </div>
+              </dl>
+              <button className="playroom-button secondary" type="button" onClick={handleControlLayoutChange}>
+                {controlLayout === 'right' ? copy.controls.rightHanded : copy.controls.leftHanded}
+              </button>
+              <button className="playroom-button quiet" type="button" onClick={() => navigate('/shop')}>
+                {copy.controls.explore}
+              </button>
+            </details>
           </aside>
         </section>
       </div>
